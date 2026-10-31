@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trust Courier Logistic</title>
+<style>
+  :root{
+    --navy:#0d2b6b; --navy-2:#163c8c; --navy-dark:#081b45;
+    --gold:#d4a017; --gold-2:#f2c14e; --gold-dark:#a87a0c;
+    --road:#1f2530;
+    --bg:#f3f5fa; --card:#ffffff; --line:#e6e9f2;
+    --text:#1b2540; --muted:#6b7590;
+    --green:#1fa463; --red:#e0524a; --blue:#2d6cdf;
+    --radius:14px; --shadow:0 4px 18px rgba(13,43,107,.07);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer}
+  .hidden{display:none!important}
+
+  /* ================= LOGIN ================= */
+  #login{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+  .login-left{background:linear-gradient(145deg,var(--navy-dark),var(--navy) 55%,var(--navy-2));color:#fff;
+    padding:48px;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;overflow:hidden}
+  .login-left::before{content:"";position:absolute;width:520px;height:520px;border-radius:50%;
+    border:60px solid rgba(212,160,23,.12);top:-180px;right:-200px}
+  .login-left::after{content:"";position:absolute;left:-60px;bottom:70px;width:140%;height:26px;background:var(--road);
+    transform:rotate(-6deg);background-image:repeating-linear-gradient(90deg,transparent 0 30px,#fff 30px 55px);
+    background-size:100% 3px;background-repeat:repeat-x;background-position:0 50%;opacity:.9}
+  .login-logo{background:#fff;border-radius:20px;padding:14px 22px;box-shadow:0 20px 50px rgba(0,0,0,.3);max-width:440px;width:100%;position:relative;z-index:1}
+  .login-logo img{width:100%;display:block}
+  .login-left h2{margin-top:34px;font-size:26px;text-align:center;position:relative;z-index:1}
+  .login-left h2 span{color:var(--gold-2)}
+  .login-left p{opacity:.8;margin-top:10px;text-align:center;max-width:420px;line-height:1.6;position:relative;z-index:1}
+  .login-stats{display:flex;gap:28px;margin-top:30px;position:relative;z-index:1}
+  .login-stats div{text-align:center}
+  .login-stats b{display:block;font-size:22px;color:var(--gold-2)}
+  .login-stats small{opacity:.75}
+  .login-right{display:flex;align-items:center;justify-content:center;padding:40px 24px;background:#fff}
+  .login-box{width:100%;max-width:400px}
+  .login-box h1{font-size:28px;color:var(--navy)}
+  .login-box .sub{color:var(--muted);margin:6px 0 30px}
+  .field{margin-bottom:18px}
+  .field label{display:block;font-weight:600;margin-bottom:7px;font-size:13px}
+  .input{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;outline:none;background:#fafbfe;transition:.2s;font-family:inherit}
+  .input:focus{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(212,160,23,.15)}
+  .row-between{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:22px}
+  .row-between a{color:var(--gold-dark);font-weight:600}
+  .btn{border:none;border-radius:10px;padding:12px 20px;font-weight:700;font-size:14px;transition:.2s}
+  .btn-gold{background:linear-gradient(135deg,var(--gold-dark),var(--gold) 50%,var(--gold-2));color:#fff;box-shadow:0 6px 16px rgba(212,160,23,.35)}
+  .btn-gold:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(212,160,23,.45)}
+  .btn-navy{background:var(--navy);color:#fff}
+  .btn-navy:hover{background:var(--navy-2)}
+  .btn-light{background:#eef1f8;color:var(--navy)}
+  .btn-block{width:100%}
+  .login-foot{margin-top:28px;text-align:center;color:var(--muted);font-size:13px}
+  .login-foot a{color:var(--navy);font-weight:700}
+  .demo-note{margin-top:18px;background:#fff8e6;border:1px dashed var(--gold);color:#7a5a06;padding:10px 12px;border-radius:10px;font-size:12px;text-align:center}
+
+  /* ================= TOP NAV ================= */
+  header.topbar{background:#fff;box-shadow:0 2px 10px rgba(13,43,107,.06);position:sticky;top:0;z-index:50;border-bottom:3px solid var(--gold)}
+  .nav-inner{position:relative;max-width:1440px;margin:auto;display:flex;align-items:center;gap:22px;padding:0 24px;height:70px}
+  .brand img{height:56px;display:block}
+  nav.menu{display:flex;gap:4px;flex:1;justify-content:center;height:100%}
+  .menu-item{position:static;display:flex;align-items:center;height:100%}
+  .menu-link{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-weight:600;color:var(--navy);font-size:15px;background:none;border:none}
+  .menu-link:hover,.menu-item.open .menu-link,.menu-link.active{background:#f1f4fb;color:var(--gold-dark)}
+  .menu-link svg{width:14px;height:14px;transition:.2s}
+  .menu-item.open .menu-link svg{transform:rotate(180deg)}
+  .mega{position:absolute;top:100%;left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);background:#fff;border-radius:14px;
+    box-shadow:0 20px 50px rgba(13,43,107,.18);border-top:4px solid var(--gold);padding:26px 30px;display:none;gap:36px;min-width:max-content}
+  .menu-item.open .mega{display:flex}
+  .mega-intro{width:190px;padding-right:20px;border-right:1px solid var(--line)}
+  .mega-intro h4{color:var(--navy);font-size:17px;margin-bottom:8px}
+  .mega-intro p{color:var(--muted);line-height:1.55;font-size:13px}
+  .mega-col h5{color:var(--gold-dark);font-size:12px;letter-spacing:.8px;text-transform:uppercase;margin:0 0 8px}
+  .mega-col h5:not(:first-child){margin-top:18px}
+  .mega-col a{display:block;padding:5px 0;color:var(--text);font-size:14px;transition:.15s}
+  .mega-col a:hover{color:var(--navy);padding-left:5px;font-weight:600}
+  .nav-tools{display:flex;align-items:center;gap:10px}
+  .track{display:flex;align-items:center;background:#f1f4fb;border-radius:30px;padding:3px 3px 3px 14px}
+  .track input{border:none;background:none;outline:none;width:150px;font-size:13px;font-family:inherit}
+  .icon-btn{width:38px;height:38px;border-radius:50%;border:none;background:var(--navy);color:#fff;display:grid;place-items:center;position:relative}
+  .icon-btn:hover{background:var(--gold)}
+  .icon-btn svg{width:18px;height:18px}
+  .track .icon-btn{width:32px;height:32px;background:var(--gold)}
+  .badge-dot{position:absolute;top:4px;right:5px;width:9px;height:9px;background:var(--red);border-radius:50%;border:2px solid #fff}
+  .dropdown{position:absolute;right:0;top:48px;background:#fff;border-radius:12px;box-shadow:0 16px 40px rgba(13,43,107,.18);min-width:240px;padding:8px;display:none;border-top:3px solid var(--gold)}
+  .dropdown.show{display:block}
+  .dropdown .dd-head{padding:10px 12px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .dropdown .dd-head b{display:block;color:var(--navy)}
+  .dropdown .dd-head small{color:var(--muted)}
+  .dropdown a{display:block;padding:9px 12px;border-radius:8px;font-size:13px}
+  .dropdown a:hover{background:#f1f4fb}
+  .notif{padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.4}
+  .notif:hover{background:#f1f4fb}
+  .notif small{color:var(--muted);display:block}
+  .hamburger{display:none;background:none;border:none;color:var(--navy)}
+  .hamburger svg{width:28px;height:28px}
+
+  /* ================= PAGE ================= */
+  main{max-width:1440px;margin:auto;padding:18px 24px 50px}
+  .welcome{text-align:center;color:var(--muted);margin-bottom:18px}
+  .welcome b{color:var(--navy)}
+  .grid{display:grid;gap:22px}
+  .g-3{grid-template-columns:repeat(3,1fr)}
+  .g-2{grid-template-columns:1fr 1.25fr}
+  .g-2eq{grid-template-columns:1fr 1fr}
+  .g-2b{grid-template-columns:1.1fr 1fr}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 26px}
+  .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .card-head h3{font-size:18px;color:var(--navy);font-weight:600}
+  .range{border:none;background:none;font-weight:700;font-size:12px;color:var(--text);outline:none;cursor:pointer;font-family:inherit}
+  .big{font-size:34px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:12px}
+  .pill{font-size:13px;padding:5px 12px;border-radius:30px;background:#fff6dd;color:var(--gold-dark);font-weight:600}
+  .card-foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;color:var(--muted)}
+  .card-foot b{color:var(--navy);font-size:18px}
+  .link{font-weight:700;letter-spacing:.8px;font-size:12px;color:var(--navy)}
+  .link:hover{color:var(--gold-dark)}
+  .card-today{background:linear-gradient(135deg,var(--navy-dark),var(--navy) 60%,var(--navy-2));color:#fff;position:relative;overflow:hidden}
+  .card-today::after{content:"";position:absolute;right:-50px;bottom:-60px;width:200px;height:200px;border-radius:50%;border:30px solid rgba(242,193,78,.18)}
+  .card-today h3{color:var(--gold-2);font-size:14px;letter-spacing:1px}
+  .today-amt{font-size:26px;font-weight:700;margin-top:6px}
+  .today-amt small{font-size:12px;opacity:.7;display:block;font-weight:400}
+  .today-stats{display:flex;justify-content:space-between;margin-top:22px;position:relative;z-index:1}
+  .today-stats b{font-size:21px;display:block}
+  .today-stats small{font-size:11px;opacity:.8}
+  .c-gold{color:var(--gold-2)} .c-green{color:#4ce39a} .c-white{color:#fff}
+
+  .txn{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px dashed var(--line)}
+  .txn:last-child{border-bottom:none}
+  .txn a{color:var(--blue);font-weight:600}
+  .txn small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+  .txn .amt{font-weight:600}
+  .clock{width:34px;height:34px;border-radius:50%;border:2px solid var(--gold);color:var(--gold);display:grid;place-items:center}
+  .clock svg{width:16px;height:16px}
+
+  .chart-wrap svg{width:100%;height:auto;display:block}
+  .legend{display:flex;gap:16px;justify-content:center;font-size:12px;color:var(--muted);margin-bottom:6px}
+  .legend i{display:inline-block;width:24px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+
+  .status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .stat{background:#f4f6fb;border-radius:12px;padding:16px 10px;text-align:center;border:1px solid transparent;transition:.2s;cursor:pointer;position:relative;overflow:hidden}
+  .stat::before{content:"";position:absolute;left:0;top:0;height:3px;width:100%;background:var(--accent,var(--navy))}
+  .stat:hover{border-color:var(--gold);transform:translateY(-2px);background:#fff;box-shadow:var(--shadow)}
+  .stat small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .stat b{display:block;font-size:30px;font-weight:500;margin-top:10px;color:var(--navy)}
+
+  .donuts{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .donut-box{text-align:center}
+  .donut-box h4{color:var(--navy);font-size:16px;margin-bottom:10px}
+  .donut-box .pct{font-size:13px;color:var(--muted);margin-top:8px}
+  .donut{width:170px;height:170px;margin:auto;position:relative}
+  .donut span{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:20px;color:var(--navy)}
+
+  .bars{margin-top:26px}
+  .bar-row{margin-bottom:14px}
+  .bar-row .bl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .bar{height:10px;background:#eef1f8;border-radius:10px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:10px}
+
+  /* sub pages */
+  .page-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+  .page-title h2{color:var(--navy);font-size:24px}
+  .crumb{color:var(--muted);font-size:13px;margin-top:4px}
+  .crumb b{color:var(--gold-dark)}
+  .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 20px}
+  .form-section{font-weight:700;color:var(--navy);margin:8px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--line);grid-column:1/-1}
+  .span-2{grid-column:span 2} .span-3{grid-column:1/-1}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:var(--navy);color:#fff;text-align:left;padding:12px;font-weight:600}
+  th:first-child{border-radius:10px 0 0 0} th:last-child{border-radius:0 10px 0 0}
+  td{padding:12px;border-bottom:1px solid var(--line)}
+  tr:hover td{background:#fafbfe}
+  .tag{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+  .t-del{background:#e3f7ec;color:var(--green)} .t-tr{background:#e6eefc;color:var(--blue)}
+  .t-ret{background:#fde8e7;color:var(--red)} .t-pen{background:#fff4d6;color:var(--gold-dark)}
+  .filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .filters .input{width:auto;min-width:160px}
+  .table-wrap{overflow-x:auto}
+  .empty{text-align:center;padding:60px 20px;color:var(--muted)}
+  .empty .ico{width:80px;height:80px;border-radius:50%;background:#fff6dd;display:grid;place-items:center;margin:0 auto 18px;color:var(--gold)}
+  .empty .ico svg{width:38px;height:38px}
+  .empty h3{color:var(--navy);margin-bottom:8px}
+  .perm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+  .perm-grid label{display:flex;gap:10px;align-items:center;background:#f4f6fb;padding:10px 12px;border-radius:8px}
+  input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px}
+  .toast{opacity:0;pointer-events:none;position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:14px 20px;border-radius:10px;border-left:5px solid var(--gold);box-shadow:0 10px 30px rgba(0,0,0,.2);transform:translateY(120px);transition:.3s;z-index:100}
+  .toast.show{transform:none;opacity:1}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+
+  @media (max-width:1150px){
+    .track input{width:100px}
+    .menu-link{padding:8px 9px;font-size:14px}
+    .g-3{grid-template-columns:1fr 1fr}
+    .g-3 .card-today{grid-column:1/-1}
+    .g-2,.g-2b{grid-template-columns:1fr}
+  }
+  @media (max-width:900px){
+    #login{grid-template-columns:1fr}
+    .login-left{padding:36px 20px 70px}
+    .login-left h2,.login-left p{display:none}
+    .hamburger{display:block}
+    nav.menu{position:fixed;top:73px;left:0;right:0;bottom:0;background:#fff;flex-direction:column;justify-content:flex-start;padding:12px 16px;overflow-y:auto;display:none;height:auto}
+    nav.menu.show{display:flex}
+    .menu-item{flex-direction:column;align-items:stretch;height:auto}
+    .menu-link{justify-content:space-between;width:100%;padding:14px}
+    .mega{position:static;transform:none;box-shadow:none;border-top:none;padding:6px 14px 14px;flex-direction:column;gap:6px;min-width:0;background:#f8f9fd;border-radius:10px}
+    .mega-intro{display:none}
+    .track{display:none}
+    .nav-inner{padding:0 16px;gap:10px}
+    .brand{flex:1}
+    main{padding:16px 16px 40px}
+    .g-3,.g-2eq{grid-template-columns:1fr}
+    .form-grid{grid-template-columns:1fr}
+    .span-2{grid-column:auto}
+  }
+  @media (max-width:520px){
+    .status-grid{grid-template-columns:1fr 1fr}
+    .donuts{grid-template-columns:1fr}
+    .big{font-size:28px}
+    .brand img{height:42px}
+    .card{padding:20px 18px}
+  }
+
+  /* ================= PUBLIC WEBSITE ================= */
+  html{scroll-behavior:smooth}
+  #site{background:#fff;overflow-x:hidden}
+  .w-wrap{max-width:1200px;margin:auto;padding:0 24px}
+  .w-head{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);box-shadow:0 2px 14px rgba(13,43,107,.07)}
+  .w-head-in{display:flex;align-items:center;gap:24px;height:78px}
+  .w-logo img{height:60px;display:block}
+  .w-nav{display:flex;gap:26px;flex:1;justify-content:center}
+  .w-nav a{font-weight:600;color:var(--navy);font-size:15px;position:relative;padding:6px 0}
+  .w-nav a::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--gold);transition:.25s}
+  .w-nav a:hover::after{width:100%}
+  .w-head-btns{display:flex;gap:10px;align-items:center}
+  .w-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:30px;padding:11px 22px;font-weight:700;font-size:14px;transition:.2s;cursor:pointer}
+  .w-btn svg{width:17px;height:17px}
+  .w-btn-gold{background:linear-gradient(135deg,var(--gold-dark),var(--gold) 50%,var(--gold-2));color:#fff;box-shadow:0 6px 16px rgba(212,160,23,.35)}
+  .w-btn-gold:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(212,160,23,.45)}
+  .w-btn-ghost{background:#f1f4fb;color:var(--navy)}
+  .w-btn-ghost:hover{background:#e4e9f6}
+  .w-btn-outline{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.5)}
+  .w-btn-outline:hover{border-color:var(--gold-2);color:var(--gold-2)}
+  .w-btn-lg{padding:15px 30px;font-size:15px}
+  .w-burger{display:none;background:none;border:none;color:var(--navy)}
+  .w-burger svg{width:28px;height:28px}
+
+  .w-hero{background:radial-gradient(1200px 500px at 85% -10%,rgba(242,193,78,.18),transparent 60%),linear-gradient(140deg,var(--navy-dark),var(--navy) 55%,var(--navy-2));color:#fff;position:relative;overflow:hidden;padding:70px 0 120px}
+  .w-hero::before{content:"";position:absolute;width:560px;height:560px;border-radius:50%;border:70px solid rgba(212,160,23,.09);left:-260px;top:-220px}
+  .w-hero-in>*,.w-pay>*,.w-contact>*{min-width:0}
+  .w-hero-in{display:grid;grid-template-columns:1.15fr 1fr;gap:50px;align-items:center;position:relative;z-index:1}
+  .w-chip{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);padding:7px 14px;border-radius:30px;font-size:13px;font-weight:600}
+  .w-hero h1{font-size:54px;line-height:1.1;margin:20px 0 18px;font-weight:800}
+  .w-hero h1 span{background:linear-gradient(90deg,var(--gold),var(--gold-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .w-hero p{font-size:17px;line-height:1.7;opacity:.88;max-width:560px}
+  .w-hero p b{color:var(--gold-2)}
+  .w-hero-btns{display:flex;gap:14px;margin-top:30px;flex-wrap:wrap}
+  .w-hero-badges{display:flex;gap:34px;margin-top:40px;flex-wrap:wrap}
+  .w-hero-badges b{display:block;font-size:28px;color:var(--gold-2)}
+  .w-hero-badges small{opacity:.75;font-size:13px}
+  .w-hero-card{background:#fff;color:var(--text);border-radius:20px;padding:28px;box-shadow:0 30px 70px rgba(0,0,0,.35);border-top:5px solid var(--gold)}
+  .w-hero-card h3{color:var(--navy);font-size:22px}
+  .w-hero-card>p{color:var(--muted);margin:4px 0 16px}
+  .w-track-form{display:flex;gap:10px}
+  .w-track-form input{flex:1;padding:13px 16px;border:1.5px solid var(--line);border-radius:30px;font-size:14px;outline:none;font-family:inherit;min-width:0}
+  .w-track-form input:focus{border-color:var(--gold)}
+  .w-track-res{margin-top:20px;padding-left:4px}
+  .w-tl{display:flex;gap:14px;position:relative;padding-bottom:16px}
+  .w-tl:not(:last-child)::before{content:"";position:absolute;left:7px;top:18px;bottom:0;width:2px;background:var(--line)}
+  .w-tl.done:not(:last-child)::before{background:var(--gold)}
+  .w-tl i{width:16px;height:16px;border-radius:50%;border:3px solid var(--line);background:#fff;flex-shrink:0;margin-top:2px}
+  .w-tl.done i{background:var(--gold);border-color:var(--gold)}
+  .w-tl.now i{border-color:var(--navy);box-shadow:0 0 0 5px rgba(13,43,107,.15)}
+  .w-tl b{font-size:14px;color:var(--navy)} .w-tl small{display:block;color:var(--muted);font-size:12px}
+  .w-pay-mini{display:flex;gap:14px;align-items:center;margin-top:22px;background:#fff8e6;border-radius:14px;padding:14px 16px}
+  .w-pay-ico{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--gold-dark),var(--gold-2));color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;flex-shrink:0}
+  .w-pay-mini b{color:var(--navy);display:block} .w-pay-mini small{color:var(--muted)}
+  .w-road{position:absolute;left:-5%;right:-5%;bottom:34px;height:26px;background:var(--road);transform:rotate(-1.5deg);
+    background-image:repeating-linear-gradient(90deg,transparent 0 34px,#fff 34px 60px);background-size:100% 3px;background-repeat:no-repeat;background-position:0 50%}
+
+  .w-stats{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-radius:20px;box-shadow:0 20px 50px rgba(13,43,107,.12);margin-top:-50px;position:relative;z-index:2;overflow:hidden}
+  .w-stats div{padding:30px 16px;text-align:center;border-right:1px solid var(--line)}
+  .w-stats div:last-child{border-right:none}
+  .w-stats b{display:block;font-size:34px;color:var(--navy);font-weight:800}
+  .w-stats div:nth-child(odd) b{color:var(--gold-dark)}
+  .w-stats span{color:var(--muted);font-weight:600;font-size:14px}
+
+  .w-sec{padding:90px 0}
+  .w-sec-alt{background:var(--bg)}
+  .w-kicker{display:inline-block;color:var(--gold-dark);font-weight:800;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+  .w-sec h2{font-size:38px;color:var(--navy);line-height:1.2;font-weight:800}
+  .w-sec h2 span{color:var(--gold)}
+  .w-title{text-align:center;max-width:720px;margin:0 auto 50px}
+  .w-title p{color:var(--muted);margin-top:12px;font-size:16px;line-height:1.6}
+  .w-lead{color:var(--muted);font-size:16px;line-height:1.7;margin:16px 0 22px}
+
+  .w-pay{display:grid;grid-template-columns:1fr 1.05fr;gap:60px;align-items:center}
+  .w-checks{list-style:none}
+  .w-checks li{padding:9px 0 9px 36px;position:relative;font-weight:600;color:var(--text)}
+  .w-checks li::before{content:"✓";position:absolute;left:0;top:7px;width:24px;height:24px;border-radius:50%;background:var(--navy);color:var(--gold-2);display:grid;place-items:center;font-size:13px}
+  .w-week{background:linear-gradient(145deg,var(--navy-dark),var(--navy));border-radius:22px;padding:28px;color:#fff;box-shadow:0 30px 60px rgba(13,43,107,.3)}
+  .w-week-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+  .w-week-head span{background:var(--gold);color:#fff;padding:5px 14px;border-radius:20px;font-weight:700;font-size:13px}
+  .w-days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .w-days .d{background:rgba(255,255,255,.08);border-radius:12px;padding:12px 4px;text-align:center}
+  .w-days small{font-size:11px;opacity:.7;font-weight:700}
+  .w-days i{display:block;font-style:normal;font-size:20px;margin:8px 0}
+  .w-days span{font-size:10px;opacity:.8;display:block;line-height:1.3}
+  .w-days .pay{background:linear-gradient(135deg,var(--gold-dark),var(--gold-2));box-shadow:0 8px 20px rgba(212,160,23,.4)}
+  .w-days .pay span,.w-days .pay small{opacity:1;font-weight:800}
+  .w-week-foot{display:flex;justify-content:space-between;margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.15)}
+  .w-week-foot small{display:block;opacity:.7;font-size:12px}
+  .w-week-foot b{font-size:22px;color:var(--gold-2)}
+
+  .w-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  .w-card{background:#fff;border-radius:18px;padding:30px;box-shadow:var(--shadow);transition:.25s;border-bottom:4px solid transparent}
+  .w-card:hover{transform:translateY(-6px);border-bottom-color:var(--gold);box-shadow:0 20px 40px rgba(13,43,107,.12)}
+  .w-ic{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,var(--navy),var(--navy-2));display:grid;place-items:center;font-size:26px;margin-bottom:18px}
+  .w-card h4{color:var(--navy);font-size:19px;margin-bottom:8px}
+  .w-card p{color:var(--muted);line-height:1.6}
+
+  .w-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;position:relative}
+  .w-steps::before{content:"";position:absolute;top:34px;left:12%;right:12%;border-top:3px dashed var(--gold)}
+  .w-step{text-align:center;position:relative}
+  .w-step b{width:68px;height:68px;border-radius:50%;background:var(--navy);color:var(--gold-2);display:grid;place-items:center;margin:0 auto 18px;font-size:26px;border:6px solid #fff;box-shadow:0 0 0 3px var(--gold)}
+  .w-step h4{color:var(--navy);font-size:18px;margin-bottom:8px}
+  .w-step p{color:var(--muted);line-height:1.6;font-size:14px}
+
+  .w-brands-sec{background:linear-gradient(140deg,var(--navy-dark),var(--navy));overflow:hidden}
+  .w-title.light h2{color:#fff}
+  .w-title.light h2 span{color:var(--gold-2)}
+  .w-title.light p{color:rgba(255,255,255,.75)}
+  .w-marquee{overflow:hidden;padding:8px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+  .w-track-row{display:flex;gap:16px;width:max-content;animation:wScroll 40s linear infinite}
+  .w-marquee.rev .w-track-row{animation-direction:reverse}
+  .w-marquee:hover .w-track-row{animation-play-state:paused}
+  @keyframes wScroll{to{transform:translateX(-50%)}}
+  .w-brand{background:#fff;border-radius:14px;padding:16px 26px;display:flex;align-items:center;gap:12px;min-width:200px;box-shadow:0 8px 20px rgba(0,0,0,.15)}
+  .w-brand i{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:#fff;font-style:normal;font-weight:800;font-size:16px}
+  .w-brand b{color:var(--navy);font-size:15px} .w-brand small{display:block;color:var(--muted);font-size:11px}
+
+  .w-contact{display:grid;grid-template-columns:1fr 1.1fr;gap:60px;align-items:center}
+  .w-info{display:flex;gap:14px;align-items:center;margin-bottom:16px}
+  .w-info i{width:48px;height:48px;border-radius:14px;background:#fff6dd;display:grid;place-items:center;font-style:normal;font-size:20px}
+  .w-info small{color:var(--muted);display:block} .w-info b{color:var(--navy)}
+  .w-form{background:#fff;border-radius:20px;padding:30px;box-shadow:0 20px 50px rgba(13,43,107,.12);border-top:5px solid var(--gold);display:grid;gap:14px}
+  .w-form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .w-form textarea{resize:vertical}
+
+  .w-foot{background:var(--navy-dark);color:rgba(255,255,255,.75);padding:60px 0 0}
+  .w-foot-in{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:30px}
+  .w-foot-logo{height:70px;background:#fff;border-radius:12px;padding:6px 10px;margin-bottom:14px}
+  .w-foot h5{color:var(--gold-2);font-size:15px;margin-bottom:14px}
+  .w-foot a{display:block;padding:5px 0}
+  .w-foot a:hover{color:var(--gold-2)}
+  .w-foot p{line-height:1.7}
+  .w-copy{text-align:center;padding:22px;margin-top:40px;border-top:1px solid rgba(255,255,255,.1);font-size:13px}
+  a.w-info:hover b{color:var(--gold-dark)}
+  .w-foot p.js-address{padding:5px 0}
+  .wa-float{position:fixed;right:20px;bottom:20px;z-index:70;width:58px;height:58px;border-radius:50%;background:#25d366;display:grid;place-items:center;box-shadow:0 10px 25px rgba(37,211,102,.45);transition:.2s}
+  .wa-float:hover{transform:scale(1.08)}
+  .wa-float svg{width:30px;height:30px}
+  .back-site{display:inline-block;margin-bottom:24px;color:var(--navy);font-weight:600;font-size:13px}
+  .back-site:hover{color:var(--gold-dark)}
+
+  @media (max-width:1000px){
+    .w-nav{position:fixed;top:78px;left:0;right:0;background:#fff;flex-direction:column;gap:0;padding:10px 24px 20px;box-shadow:0 20px 30px rgba(0,0,0,.1);display:none}
+    .w-nav.show{display:flex}
+    .w-nav a{padding:13px 0;border-bottom:1px solid var(--line)}
+    .w-burger{display:block}
+    .w-hide-sm{display:none}
+    .w-hero-in,.w-pay,.w-contact{grid-template-columns:1fr}
+    .w-hero h1{font-size:40px}
+    .w-cards{grid-template-columns:1fr 1fr}
+    .w-steps{grid-template-columns:1fr 1fr;row-gap:36px}
+    .w-steps::before{display:none}
+    .w-stats{grid-template-columns:1fr 1fr}
+    .w-stats div:nth-child(2){border-right:none}
+    .w-stats div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+    .w-foot-in{grid-template-columns:1fr 1fr}
+  }
+  @media (max-width:600px){
+    .w-wrap{padding:0 16px}
+    .w-logo img{height:46px}
+    .w-head-in{gap:10px}
+    .w-hero{padding:44px 0 100px}
+    .w-hero h1{font-size:32px}
+    .w-sec{padding:64px 0}
+    .w-sec h2{font-size:28px}
+    .w-cards,.w-steps,.w-foot-in,.w-form-row{grid-template-columns:1fr}
+    .w-days{gap:4px}
+    .w-days .d{padding:10px 2px}
+    .w-days span{display:none}
+    .w-hero-badges{gap:20px}
+    .w-hero-badges b{font-size:22px}
+    .w-hero-card{padding:22px 18px}
+    .w-stats b{font-size:26px}
+    .w-btn{padding:10px 16px}
+  }
+</style>
+</head>
+<body>
+<!-- ======================= PUBLIC WEBSITE ======================= -->
+<section id="site">
+  <div class="w-head">
+    <div class="w-wrap w-head-in">
+      <a href="#w-home" class="w-logo"><img src="logo.jpg" alt="Trust Courier Logistic"></a>
+      <nav class="w-nav" id="wNav">
+        <a href="#w-home">Home</a>
+        <a href="#w-payments">Weekly Payment</a>
+        <a href="#w-services">Services</a>
+        <a href="#w-how">How It Works</a>
+        <a href="#w-brands">Our Brands</a>
+        <a href="#w-contact">Contact</a>
+      </nav>
+      <div class="w-head-btns">
+        <a href="#w-track" class="w-btn w-btn-ghost w-hide-sm">Track Parcel</a>
+        <a href="#w-contact" class="w-btn w-btn-gold">Become a Merchant</a>
+        <button class="w-burger" onclick="document.getElementById('wNav').classList.toggle('show')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="w-hero" id="w-home">
+    <div class="w-wrap w-hero-in">
+      <div class="w-hero-text">
+        <span class="w-chip">🇵🇰 Pakistan-wide COD Delivery</span>
+        <h1>Your Destination,<br><span>Our Responsibility</span></h1>
+        <p>Aap ka parcel, hamari zimmedari. Shopify se order auto-book karein, live tracking dekhein aur <b>har hafte apni COD payment</b> seedha bank account mein payen.</p>
+        <div class="w-hero-btns">
+          <a href="#w-contact" class="w-btn w-btn-gold w-btn-lg">Become a Merchant</a>
+          <a class="w-btn w-btn-outline w-btn-lg js-wa" target="_blank" rel="noopener">WhatsApp Karein →</a>
+        </div>
+        <div class="w-hero-badges">
+          <div><b>200+</b><small>Brands trust us</small></div>
+          <div><b>7 Days</b><small>Payment settlement</small></div>
+          <div><b>120+</b><small>Cities covered</small></div>
+        </div>
+      </div>
+
+      <div class="w-hero-card" id="w-track">
+        <h3>Track Your Parcel</h3>
+        <p>Apna tracking number likhein, hamari team WhatsApp par status bata degi</p>
+        <form onsubmit="siteTrack(event)" class="w-track-form">
+          <input id="siteTrackIn" placeholder="e.g. TCL2344175020828">
+          <button class="w-btn w-btn-gold">Track</button>
+        </form>
+        <div class="w-pay-mini">
+          <div class="w-pay-ico">₨</div>
+          <div><b>Weekly COD Settlement</b><small>Har hafte payment — Bank / JazzCash / Easypaisa</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="w-road"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="w-wrap">
+    <div class="w-stats">
+      <div><b>200+</b><span>Brands Attached</span></div>
+      <div><b>1 Week</b><span>Payment Cycle</span></div>
+      <div><b>120+</b><span>Cities Nationwide</span></div>
+      <div><b>24/7</b><span>Live Tracking</span></div>
+    </div>
+  </div>
+
+  <!-- WEEKLY PAYMENT -->
+  <div class="w-sec" id="w-payments">
+    <div class="w-wrap w-pay">
+      <div>
+        <span class="w-kicker">Weekly Payment</span>
+        <h2>Aap ki COD payment — <span>har hafte settle</span></h2>
+        <p class="w-lead">Mahine bhar intezaar nahi. Jo orders is hafte deliver hue, un ki raqam agle hafte aap ke account mein. Har settlement ki CPR (Cash Payment Receipt) portal par mil jaati hai.</p>
+        <ul class="w-checks">
+          <li>Har hafte fixed din par settlement</li>
+          <li>Bank transfer, JazzCash ya Easypaisa</li>
+          <li>Har order ka hisaab — charges aur net payable saaf</li>
+          <li>Settled / Unsettled amount portal par live</li>
+        </ul>
+      </div>
+      <div class="w-week">
+        <div class="w-week-head"><b>Payment Cycle</b><span>1 Week</span></div>
+        <div class="w-days">
+          <div class="d"><small>MON</small><i>📦</i><span>Orders deliver</span></div>
+          <div class="d"><small>TUE</small><i>📦</i><span>Orders deliver</span></div>
+          <div class="d"><small>WED</small><i>📦</i><span>Orders deliver</span></div>
+          <div class="d"><small>THU</small><i>📦</i><span>Orders deliver</span></div>
+          <div class="d"><small>FRI</small><i>📦</i><span>Orders deliver</span></div>
+          <div class="d"><small>SAT</small><i>🧾</i><span>CPR ready</span></div>
+          <div class="d pay"><small>MON</small><i>💰</i><span>Payment!</span></div>
+        </div>
+        <div class="w-week-foot">
+          <div><small>This week settled</small><b>Rs 96,480</b></div>
+          <div><small>Next payment</small><b>Monday</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVICES -->
+  <div class="w-sec w-sec-alt" id="w-services">
+    <div class="w-wrap">
+      <div class="w-title"><span class="w-kicker">Our Services</span><h2>Online business ke liye <span>sab kuch aik jagah</span></h2></div>
+      <div class="w-cards">
+        <div class="w-card"><div class="w-ic">🚚</div><h4>Cash on Delivery</h4><p>Pakistan ke 120+ cities mein COD delivery, trusted courier partners ke through.</p></div>
+        <div class="w-card"><div class="w-ic">🛍️</div><h4>Shopify Auto Booking</h4><p>Store connect karein — naye orders khud portal mein aa kar book ho jaate hain.</p></div>
+        <div class="w-card"><div class="w-ic">📍</div><h4>Live Tracking</h4><p>Har parcel ka status portal par aur customer ko Shopify ke through update.</p></div>
+        <div class="w-card"><div class="w-ic">💳</div><h4>Weekly Settlement</h4><p>Har hafte payment, har order ka saaf hisaab aur downloadable CPR.</p></div>
+        <div class="w-card"><div class="w-ic">↩️</div><h4>Return Management</h4><p>Returned parcels ka record, status aur warehouse se wapsi — sab track.</p></div>
+        <div class="w-card"><div class="w-ic">📊</div><h4>Merchant Portal</h4><p>Dashboard, reports, load sheets, airway bills aur team users — aik login mein.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="w-sec" id="w-how">
+    <div class="w-wrap">
+      <div class="w-title"><span class="w-kicker">How It Works</span><h2>4 aasaan steps mein <span>shuru karein</span></h2></div>
+      <div class="w-steps">
+        <div class="w-step"><b>1</b><h4>Sign Up</h4><p>Merchant account banayen — form bharein, hamari team contact karegi.</p></div>
+        <div class="w-step"><b>2</b><h4>Connect / Book</h4><p>Shopify store connect karein ya portal se order book karein.</p></div>
+        <div class="w-step"><b>3</b><h4>We Deliver</h4><p>Rider parcel pick karta hai, aap live tracking dekhte hain.</p></div>
+        <div class="w-step"><b>4</b><h4>Get Paid Weekly</h4><p>Har hafte COD payment aap ke account mein.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BRANDS -->
+  <div class="w-sec w-brands-sec" id="w-brands">
+    <div class="w-wrap">
+      <div class="w-title light"><span class="w-kicker">Our Brands</span><h2><span>200+ Brands</span> hamare saath attached hain</h2>
+        <p>Fashion, beauty, electronics, home decor — har qisam ke online stores Trust Courier Logistic par bharosa karte hain.</p></div>
+    </div>
+    <div class="w-marquee"><div class="w-track-row" id="brandRow1"></div></div>
+    <div class="w-marquee rev"><div class="w-track-row" id="brandRow2"></div></div>
+    <div class="w-wrap" style="text-align:center;margin-top:34px">
+      <a href="#w-contact" class="w-btn w-btn-gold w-btn-lg">Apna Brand Join Karayen</a>
+    </div>
+  </div>
+
+  <!-- CONTACT -->
+  <div class="w-sec" id="w-contact">
+    <div class="w-wrap w-contact">
+      <div>
+        <span class="w-kicker">Become a Merchant</span>
+        <h2>Aaj hi <span>shuru karein</span></h2>
+        <p class="w-lead">Form bharein, hamari team 24 ghante mein aap se rabta karegi aur aap ka merchant account bana degi.</p>
+        <a class="w-info js-wa" target="_blank" rel="noopener"><i>📞</i><div><small>Phone / WhatsApp</small><b class="js-phone"></b></div></a>
+        <a class="w-info js-mail"><i>✉️</i><div><small>Email</small><b class="js-email"></b></div></a>
+        <div class="w-info"><i>📍</i><div><small>Head Office</small><b class="js-address"></b></div></div>
+      </div>
+      <form class="w-form" onsubmit="merchantSignup(event)">
+        <div class="w-form-row"><input class="input" id="mName" placeholder="Your Name" required><input class="input" id="mBrand" placeholder="Brand / Store Name" required></div>
+        <div class="w-form-row"><input class="input" id="mPhone" type="tel" placeholder="Phone Number" required><input class="input" id="mCity" placeholder="City"></div>
+        <select class="input" id="mOrders"><option value="">Orders per day</option><option>1 – 20</option><option>20 – 100</option><option>100+</option></select>
+        <textarea class="input" id="mMsg" rows="3" placeholder="Message (optional)"></textarea>
+        <button class="w-btn w-btn-gold w-btn-lg" style="width:100%">Submit on WhatsApp</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="w-foot">
+    <div class="w-wrap w-foot-in">
+      <div><img src="logo.jpg" alt="Trust Courier Logistic" class="w-foot-logo"><p>Your Destination, Our Responsibility. Pakistan-wide COD delivery with weekly payments.</p></div>
+      <div><h5>Quick Links</h5><a href="#w-services">Services</a><a href="#w-payments">Weekly Payment</a><a href="#w-brands">Our Brands</a><a href="#w-track">Track Parcel</a></div>
+      <div><h5>Merchants</h5><a href="#w-contact">Become a Merchant</a><a href="#w-how">How It Works</a></div>
+      <div><h5>Contact</h5><a class="js-wa js-phone" target="_blank" rel="noopener"></a><a class="js-mail js-email"></a><p class="js-address"></p></div>
+    </div>
+    <div class="w-copy">© <span id="wYear"></span> Trust Courier Logistic. All rights reserved.</div>
+  </div>
+
+  <a class="wa-float js-wa" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+    <svg viewBox="0 0 24 24"><path fill="#fff" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.8-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.8 0-1.4.7-2 1-2.3.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.3z"/></svg>
+  </a>
+</section>
+
+
+<!-- ======================= LOGIN PAGE ======================= -->
+<section id="login" class="hidden">
+  <div class="login-left">
+    <div class="login-logo"><img src="logo.jpg" alt="Trust Courier Logistic"></div>
+    <h2>Your Destination, <span>Our Responsibility</span></h2>
+    <p>Book orders, track parcels, manage Cash on Delivery payments and your team — all from one merchant portal.</p>
+    <div class="login-stats">
+      <div><b>120+</b><small>Cities</small></div>
+      <div><b>24/7</b><small>Tracking</small></div>
+      <div><b>Fast</b><small>COD Settlement</small></div>
+    </div>
+  </div>
+  <div class="login-right">
+    <form class="login-box" onsubmit="doLogin(event)">
+      <a href="#" class="back-site" onclick="showSite();return false">← Back to Website</a>
+      <h1>Welcome Back 👋</h1>
+      <p class="sub">Login to your merchant account</p>
+      <div class="field">
+        <label>Email / Username</label>
+        <input class="input" type="text" id="loginUser" placeholder="merchant@example.com" required>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input class="input" type="password" placeholder="••••••••" required>
+      </div>
+      <div class="row-between">
+        <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked> Remember me</label>
+        <a href="#">Forgot password?</a>
+      </div>
+      <button class="btn btn-gold btn-block" type="submit">LOGIN</button>
+      <div class="demo-note">Demo layout: koi bhi email/password likh kar Login karein</div>
+      <p class="login-foot">New merchant? <a href="#">Register your business</a></p>
+    </form>
+  </div>
+</section>
+
+<!-- ======================= APP ======================= -->
+<div id="app" class="hidden">
+  <header class="topbar">
+    <div class="nav-inner">
+      <a class="brand" href="#" onclick="go('dashboard');return false"><img src="logo.jpg" alt="Trust Courier Logistic"></a>
+
+      <nav class="menu" id="menu">
+        <div class="menu-item"><button class="menu-link active" data-page="dashboard" onclick="go('dashboard')">Dashboard</button></div>
+
+        <div class="menu-item">
+          <button class="menu-link" onclick="toggleMenu(this)">Cash on Delivery <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg></button>
+          <div class="mega">
+            <div class="mega-intro"><h4>Cash on Delivery</h4><p>A unified COD solution that helps your business grow. Book, ship and get paid — easy.</p></div>
+            <div class="mega-col">
+              <h5>Manage Orders</h5>
+              <a href="#" data-go="Create Order">Create Order</a>
+              <a href="#" data-go="Cancel Order">Cancel Order</a>
+              <a href="#" data-go="Transit Orders">Transit Orders</a>
+              <a href="#" data-go="Under Verification">Under Verification</a>
+              <a href="#" data-go="Order Logs">Order Logs</a>
+              <a href="#" data-go="Airway Bills">Airway Bills</a>
+              <a href="#" data-go="Bulk Upload">Bulk Upload</a>
+            </div>
+            <div class="mega-col">
+              <h5>Load Sheet</h5>
+              <a href="#" data-go="Generate Load Sheet">Generate Load Sheet</a>
+              <a href="#" data-go="Load Sheet Logs">Load Sheet Logs</a>
+              <h5>Special Request</h5>
+              <a href="#" data-go="New Special Request">New Request</a>
+              <a href="#" data-go="Special Request Logs">Request Logs</a>
+            </div>
+            <div class="mega-col">
+              <h5>Payments</h5>
+              <a href="#" data-go="Cash Payment Receipts (CPR)">Cash Payment Receipts (CPR)</a>
+              <a href="#" data-go="Settlement Logs">Settlement Logs</a>
+              <h5>Packaging</h5>
+              <a href="#" data-go="New Packaging Request">New Request</a>
+              <a href="#" data-go="Packaging Logs">Packaging Logs</a>
+            </div>
+            <div class="mega-col">
+              <h5>Reports</h5>
+              <a href="#" data-go="Monthly/Weekly Order Wise">Monthly/Weekly Order Wise</a>
+              <a href="#" data-go="Monthly/Weekly Amount Wise">Monthly/Weekly Amount Wise</a>
+              <a href="#" data-go="Order Status Report">Order Status Report</a>
+              <a href="#" data-go="InStock Report">InStock Report</a>
+              <a href="#" data-go="Pickup Report">Pickup Report</a>
+              <a href="#" data-go="Destination City Wise Performance">Destination City Wise Performance</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <button class="menu-link" onclick="toggleMenu(this)">Manage Users <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg></button>
+          <div class="mega">
+            <div class="mega-intro"><h4>Manage Users</h4><p>Add your team members and control what each one can access.</p></div>
+            <div class="mega-col">
+              <h5>Action</h5>
+              <a href="#" data-go="Create User">Create User</a>
+              <a href="#" data-go="User Permissions">User Permissions</a>
+              <a href="#" data-go="User Logs">User Logs</a>
+              <a href="#" data-go="Reset User Password">Reset User Password</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <button class="menu-link" onclick="toggleMenu(this)">Setting <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg></button>
+          <div class="mega">
+            <div class="mega-intro"><h4>Setting</h4><p>Manage your business profile, pickup points, bank account and integrations.</p></div>
+            <div class="mega-col">
+              <h5>Account</h5>
+              <a href="#" data-go="Business Profile">Business Profile</a>
+              <a href="#" data-go="Change Password">Change Password</a>
+              <a href="#" data-go="Bank Details">Bank Details</a>
+            </div>
+            <div class="mega-col">
+              <h5>Operations</h5>
+              <a href="#" data-go="Pickup Addresses">Pickup Addresses</a>
+              <a href="#" data-go="Airway Bill Settings">Airway Bill Settings</a>
+              <a href="#" data-go="Notification Settings">Notification Settings</a>
+            </div>
+            <div class="mega-col">
+              <h5>Integration</h5>
+              <a href="#" data-go="API Token">API Token</a>
+              <a href="#" data-go="Shopify / WooCommerce">Shopify / WooCommerce</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div class="nav-tools">
+        <form class="track" onsubmit="trackOrder(event)">
+          <input id="trackInput" placeholder="Tracking Number">
+          <button class="icon-btn" type="submit" title="Track"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
+        </form>
+        <div style="position:relative">
+          <button class="icon-btn" onclick="toggleDD('ddNotif',event)" title="Notifications"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.8V3a1.5 1.5 0 0 0-3 0v1.2A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/></svg><span class="badge-dot"></span></button>
+          <div class="dropdown" id="ddNotif">
+            <div class="dd-head"><b>Notifications</b><small>3 new</small></div>
+            <div class="notif">Settlement of Rs 48,520 processed<small>2 hours ago</small></div>
+            <div class="notif">18 orders under delivery review<small>Today, 10:12 AM</small></div>
+            <div class="notif">Load sheet #LS-1043 picked up by rider<small>Yesterday</small></div>
+          </div>
+        </div>
+        <div style="position:relative">
+          <button class="icon-btn" onclick="toggleDD('ddUser',event)" title="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></button>
+          <div class="dropdown" id="ddUser">
+            <div class="dd-head"><b id="ddName">Twisty Mart</b><small>Merchant ID: TCL-10245</small></div>
+            <a href="#" data-go="Business Profile">My Profile</a>
+            <a href="#" data-go="Change Password">Change Password</a>
+            <a href="#" onclick="logout();return false" style="color:var(--red)">Logout</a>
+          </div>
+        </div>
+        <button class="hamburger" onclick="document.getElementById('menu').classList.toggle('show')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ DASHBOARD ============ -->
+    <section id="page-dashboard">
+      <p class="welcome">Welcome, <b class="mName">Twisty Mart</b>!</p>
+
+      <div class="grid g-2eq">
+        <div class="card">
+          <div class="card-head"><h3>Cash On Delivery</h3>
+            <select class="range"><option>7 DAYS</option><option>15 DAYS</option><option>30 DAYS</option></select></div>
+          <div class="big">144,152.00 <span class="pill">48 orders</span></div>
+          <div class="card-foot"><span><b>205</b> orders pending</span><a href="#" class="link" data-go="Settlement Logs">VIEW</a></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Unsettled Amount</h3>
+            <select class="range"><option>7 DAYS</option><option>15 DAYS</option><option>30 DAYS</option></select></div>
+          <div class="big">47,672.00 <span class="pill" style="background:#fde8e7;color:var(--red)">22 orders</span></div>
+          <div class="card-foot"><span><b>22</b> orders unsettled</span><a href="#" class="link" data-go="Settlement Logs">VIEW</a></div>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:22px">
+        <div class="card">
+          <div class="card-head"><h3>Delivered Orders</h3>
+            <select class="range"><option>7 DAYS</option><option>15 DAYS</option><option>30 DAYS</option></select></div>
+          <div class="legend"><span><i style="background:var(--gold)"></i>Delivered</span><span><i style="background:var(--navy)"></i>Booked</span></div>
+          <div class="chart-wrap" id="lineChart"></div>
+        </div>
+      </div>
+
+      <div class="grid g-2b" style="margin-top:22px">
+        <div class="card">
+          <div class="card-head"><h3>Total Orders</h3>
+            <select class="range"><option>7 DAYS</option><option>15 DAYS</option><option>30 DAYS</option></select></div>
+          <div class="status-grid" id="statusGrid"></div>
+        </div>
+        <div class="card">
+          <div class="donuts">
+            <div class="donut-box"><h4>Successful Orders</h4><div class="donut" id="donutS"></div><p class="pct">48 delivered of 267 total</p></div>
+            <div class="donut-box"><h4>Return Orders</h4><div class="donut" id="donutR"></div><p class="pct">6 returned of 267 total</p></div>
+          </div>
+          <div class="bars">
+            <h4 style="color:var(--navy);margin-bottom:14px;font-size:16px">Booked Orders</h4>
+            <div class="bar-row"><div class="bl"><span>Booked</span><b>267</b></div><div class="bar"><i style="width:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold-2))"></i></div></div>
+            <div class="bar-row"><div class="bl"><span>Unbooked</span><b>0</b></div><div class="bar"><i style="width:1%;background:var(--red)"></i></div></div>
+            <h4 style="color:var(--navy);margin:22px 0 14px;font-size:16px">Top Destination Cities</h4>
+            <div class="bar-row"><div class="bl"><span>Karachi</span><b>84</b></div><div class="bar"><i style="width:84%;background:var(--navy)"></i></div></div>
+            <div class="bar-row"><div class="bl"><span>Lahore</span><b>61</b></div><div class="bar"><i style="width:61%;background:var(--navy-2)"></i></div></div>
+            <div class="bar-row"><div class="bl"><span>Islamabad</span><b>39</b></div><div class="bar"><i style="width:39%;background:var(--gold)"></i></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SUB PAGE (filled by JS) ============ -->
+    <section id="page-sub" class="hidden"></section>
+  </main>
+  <footer>© 2026 Trust Courier Logistic — Your Destination Our Responsibility</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ---------- business contact details (update with real info) ---------- */
+  const CONTACT = {
+    phone: '+92 3XX XXXXXXX',           // TODO: real phone number
+    whatsapp: '923000000000',           // TODO: WhatsApp number, country code, no + or spaces
+    email: 'trustcourierlogistic@gmail.com',
+    address: 'Lahore, Pakistan'
+  };
+  const waLink = text => `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(text)}`;
+  document.querySelectorAll('.js-phone').forEach(el=>el.textContent=CONTACT.phone);
+  document.querySelectorAll('.js-email').forEach(el=>el.textContent=CONTACT.email);
+  document.querySelectorAll('.js-address').forEach(el=>el.textContent=CONTACT.address);
+  document.querySelectorAll('.js-mail').forEach(a=>a.href='mailto:'+CONTACT.email);
+  document.querySelectorAll('.js-wa').forEach(a=>a.href=waLink('Assalam o Alaikum Trust Courier, mujhe aap ki services ke baare mein maloomat chahiye.'));
+  document.getElementById('wYear').textContent = new Date().getFullYear();
+
+  function merchantSignup(e){
+    e.preventDefault();
+    const v = id => document.getElementById(id).value.trim();
+    const lines = ['Assalam o Alaikum Trust Courier, mein merchant account banana chahta/chahti hoon.',
+      'Name: '+v('mName'), 'Brand / Store: '+v('mBrand'), 'Phone: '+v('mPhone')];
+    if(v('mCity')) lines.push('City: '+v('mCity'));
+    if(v('mOrders')) lines.push('Orders per day: '+v('mOrders'));
+    if(v('mMsg')) lines.push('Message: '+v('mMsg'));
+    window.open(waLink(lines.join('\n')),'_blank','noopener');
+    e.target.reset();
+    toast('Shukriya! WhatsApp par apni details bhej dein.');
+  }
+
+  /* ---------- login / logout ---------- */
+  function doLogin(e){
+    e.preventDefault();
+    const u = document.getElementById('loginUser').value.trim();
+    const name = u.includes('@') ? 'Twisty Mart' : (u || 'Twisty Mart');
+    document.querySelectorAll('.mName').forEach(el=>el.textContent=name);
+    document.getElementById('ddName').textContent = name;
+    document.getElementById('login').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    go('dashboard');
+  }
+  function logout(){
+    document.getElementById('app').classList.add('hidden');
+    showSite();
+  }
+  function showLogin(){
+    document.getElementById('site').classList.add('hidden');
+    document.getElementById('login').classList.remove('hidden');
+    window.scrollTo(0,0);
+  }
+  function showSite(){
+    document.getElementById('login').classList.add('hidden');
+    document.getElementById('site').classList.remove('hidden');
+    window.scrollTo(0,0);
+  }
+  function siteTrack(e){
+    e.preventDefault();
+    const v = document.getElementById('siteTrackIn').value.trim();
+    if(!v){ toast('Please enter a tracking number'); return; }
+    window.open(waLink('Assalam o Alaikum Trust Courier, mere parcel ka status bata dein.\nTracking number: '+v.toUpperCase()),'_blank','noopener');
+    toast('WhatsApp khul raha hai...');
+  }
+  document.querySelectorAll('#wNav a').forEach(a=>a.addEventListener('click',()=>document.getElementById('wNav').classList.remove('show')));
+
+  /* brand marquee (demo names — replace with real partner brands) */
+  (function brands(){
+    const list = [['Twisty Mart','Fashion'],['Glow Studio','Beauty'],['Urban Threads','Clothing'],['Gadget Hub','Electronics'],['Home Nest','Home Decor'],['Kids Corner','Toys'],
+      ['Pure Organics','Health'],['Shoe Vault','Footwear'],['Desi Kitchen','Food'],['Watch Lane','Accessories'],['Bloom Bags','Bags'],['Fit Zone','Fitness'],
+      ['Silk Route','Unstitched'],['Tech Treasure','Mobiles'],['Scent Story','Perfumes'],['Little Steps','Baby'],['Craft House','Handmade'],['Style Point','Fashion'],
+      ['Beauty Bay PK','Cosmetics'],['Gear Up','Sports'],['Book Nook','Books'],['Jewel Box','Jewellery'],['Smart Living','Home'],['Pet Pals','Pets']];
+    const colors=['#0d2b6b','#d4a017','#163c8c','#a87a0c','#1f2530','#2d6cdf'];
+    const tile=(b,i)=>`<div class="w-brand"><i style="background:${colors[i%colors.length]}">${b[0].split(' ').map(w=>w[0]).join('').slice(0,2)}</i><div><b>${b[0]}</b><small>${b[1]}</small></div></div>`;
+    const half=(arr,off)=>{ const h=arr.map((b,i)=>tile(b,i+off)).join(''); return h+h; };
+    document.getElementById('brandRow1').innerHTML = half(list.slice(0,12),0);
+    document.getElementById('brandRow2').innerHTML = half(list.slice(12),3);
+  })();
+
+  /* ---------- menus ---------- */
+  function closeAll(){
+    document.querySelectorAll('.menu-item.open').forEach(m=>m.classList.remove('open'));
+    document.querySelectorAll('.dropdown.show').forEach(d=>d.classList.remove('show'));
+  }
+  function toggleMenu(btn){
+    const item = btn.parentElement, was = item.classList.contains('open');
+    closeAll(); if(!was) item.classList.add('open');
+  }
+  function toggleDD(id,e){
+    e.stopPropagation();
+    const d = document.getElementById(id), was = d.classList.contains('show');
+    closeAll(); if(!was) d.classList.add('show');
+  }
+  document.addEventListener('click',e=>{
+    const link = e.target.closest('[data-go]');
+    if(link){ e.preventDefault(); go(link.dataset.go); return; }
+    if(!e.target.closest('.menu-item') && !e.target.closest('.dropdown')) closeAll();
+  });
+
+  function toast(msg){
+    const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'),2600);
+  }
+  function trackOrder(e){
+    e.preventDefault();
+    const v = document.getElementById('trackInput').value.trim();
+    toast(v ? 'Tracking '+v+' — In Transit (Lahore Hub)' : 'Please enter a tracking number');
+  }
+
+  /* ---------- router ---------- */
+  const section = {
+    'Create Order':'Cash on Delivery','Cancel Order':'Cash on Delivery','Transit Orders':'Cash on Delivery','Under Verification':'Cash on Delivery',
+    'Order Logs':'Cash on Delivery','Airway Bills':'Cash on Delivery','Bulk Upload':'Cash on Delivery','Generate Load Sheet':'Cash on Delivery',
+    'Load Sheet Logs':'Cash on Delivery','New Special Request':'Cash on Delivery','Special Request Logs':'Cash on Delivery',
+    'Cash Payment Receipts (CPR)':'Cash on Delivery','Settlement Logs':'Cash on Delivery','New Packaging Request':'Cash on Delivery','Packaging Logs':'Cash on Delivery',
+    'Monthly/Weekly Order Wise':'Reports','Monthly/Weekly Amount Wise':'Reports','Order Status Report':'Reports','InStock Report':'Reports','Pickup Report':'Reports','Destination City Wise Performance':'Reports',
+    'Create User':'Manage Users','User Permissions':'Manage Users','User Logs':'Manage Users','Reset User Password':'Manage Users'
+  };
+  function go(page){
+    closeAll();
+    document.getElementById('menu').classList.remove('show');
+    const dash = document.getElementById('page-dashboard'), sub = document.getElementById('page-sub');
+    document.querySelector('[data-page=dashboard]').classList.toggle('active', page==='dashboard');
+    if(page==='dashboard'){ dash.classList.remove('hidden'); sub.classList.add('hidden'); window.scrollTo(0,0); return; }
+    dash.classList.add('hidden'); sub.classList.remove('hidden');
+    const parent = section[page] || 'Setting';
+    sub.innerHTML = `
+      <div class="page-title">
+        <div><h2>${page}</h2><div class="crumb">Dashboard › ${parent} › <b>${page}</b></div></div>
+        <button class="btn btn-light" onclick="go('dashboard')">← Back to Dashboard</button>
+      </div>` + (pages[page] ? pages[page]() : genericPage(page, parent));
+    window.scrollTo(0,0);
+  }
+
+  /* ---------- sample data ---------- */
+  const cities = ['Karachi','Lahore','Islamabad','Rawalpindi','Faisalabad','Multan','Peshawar','Quetta','Sialkot','Hyderabad'];
+  const names = ['Ali Raza','Ayesha Khan','Usman Tariq','Fatima Noor','Hamza Iqbal','Sana Malik','Bilal Ahmed','Hira Shah','Zain Abbas','Maryam Javed'];
+  const statuses = [['Delivered','t-del'],['In Transit','t-tr'],['Returned','t-ret'],['Pending','t-pen'],['Out for Delivery','t-tr']];
+  const orders = Array.from({length:12},(_,i)=>({
+    trk:'TCL'+(2344175020828-i), ref:'#'+(2942+i), name:names[i%10], city:cities[(i*3)%10],
+    amt:[2199,1850,3499,999,2650,4200][i%6], st:statuses[i%5], date:'Oct '+(30-Math.floor(i/3))+', 2026'
+  }));
+  const fmt = n => n.toLocaleString('en-PK',{minimumFractionDigits:2});
+
+  function orderTable(rows, actions){
+    return `<div class="table-wrap"><table><thead><tr><th>Tracking #</th><th>Order Ref</th><th>Customer</th><th>City</th><th>COD Amount</th><th>Status</th><th>Date</th>${actions?'<th>Action</th>':''}</tr></thead><tbody>
+      ${rows.map(o=>`<tr><td><a style="color:var(--blue);font-weight:600" href="#">${o.trk}</a></td><td>${o.ref}</td><td>${o.name}</td><td>${o.city}</td><td>Rs ${fmt(o.amt)}</td>
+      <td><span class="tag ${o.st[1]}">${o.st[0]}</span></td><td>${o.date}</td>${actions?`<td>${actions}</td>`:''}</tr>`).join('')}
+    </tbody></table></div>`;
+  }
+  function filters(){
+    return `<div class="filters"><input class="input" placeholder="Search tracking / order #"><input class="input" type="date" value="2026-10-24"><input class="input" type="date" value="2026-10-30">
+      <select class="input"><option>All Status</option><option>Delivered</option><option>In Transit</option><option>Returned</option></select>
+      <button class="btn btn-navy">Search</button><button class="btn btn-light">Export CSV</button></div>`;
+  }
+
+  /* ---------- specific pages ---------- */
+  const pages = {
+    'Create Order': () => `<form class="card" onsubmit="event.preventDefault();toast('Order booked! Tracking #TCL2344175020829')">
+      <div class="form-grid">
+        <div class="form-section">Customer Information</div>
+        <div class="field"><label>Customer Name *</label><input class="input" required placeholder="e.g. Ali Raza"></div>
+        <div class="field"><label>Phone Number *</label><input class="input" required placeholder="03XX-XXXXXXX"></div>
+        <div class="field"><label>Destination City *</label><select class="input">${cities.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div class="field span-3"><label>Delivery Address *</label><input class="input" required placeholder="House #, Street, Area"></div>
+        <div class="form-section">Order Details</div>
+        <div class="field"><label>Order Reference #</label><input class="input" placeholder="#3001"></div>
+        <div class="field"><label>COD Amount (PKR) *</label><input class="input" type="number" required placeholder="2199"></div>
+        <div class="field"><label>Order Type</label><select class="input"><option>Normal</option><option>Reverse</option><option>Replacement</option><option>Overnight</option></select></div>
+        <div class="field"><label>No. of Items</label><input class="input" type="number" value="1"></div>
+        <div class="field"><label>Weight (kg)</label><input class="input" type="number" step="0.1" value="0.5"></div>
+        <div class="field"><label>Pickup Address</label><select class="input"><option>Main Warehouse – Lahore</option><option>Shop – Karachi</option></select></div>
+        <div class="field span-3"><label>Order Detail / Remarks</label><input class="input" placeholder="e.g. 1x Black Hoodie (L). Call before delivery."></div>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px">
+        <button type="reset" class="btn btn-light">Reset</button><button class="btn btn-gold">Book Order</button>
+      </div></form>`,
+    'Order Logs': () => `<div class="card">${filters()}${orderTable(orders,'<a href="#" class="link">AWB</a>')}</div>`,
+    'Transit Orders': () => `<div class="card">${filters()}${orderTable(orders.filter(o=>o.st[0].includes('Transit')||o.st[0].includes('Out')))}</div>`,
+    'Cancel Order': () => `<div class="card"><p style="color:var(--muted);margin-bottom:16px">Sirf un-picked (booked) orders cancel ho sakte hain.</p>${orderTable(orders.slice(0,5),'<button class="btn btn-light" style="padding:6px 12px;color:var(--red)" onclick="toast(\'Order cancelled\')">Cancel</button>')}</div>`,
+    'Under Verification': () => `<div class="card">${orderTable(orders.slice(3,8),'<button class="btn btn-navy" style="padding:6px 12px" onclick="toast(\'Verified\')">Verify</button>')}</div>`,
+    'Airway Bills': () => `<div class="card">${filters()}${orderTable(orders.slice(0,8),'<input type="checkbox">')}<div style="text-align:right;margin-top:16px"><button class="btn btn-gold" onclick="toast('Printing airway bills…')">Print Selected AWB</button></div></div>`,
+    'Generate Load Sheet': () => `<div class="card"><p style="color:var(--muted);margin-bottom:16px">Rider ko handover karne wale orders select karein.</p>${orderTable(orders.slice(0,6),'<input type="checkbox" checked>')}<div style="text-align:right;margin-top:16px"><button class="btn btn-gold" onclick="toast('Load sheet #LS-1044 generated')">Generate Load Sheet</button></div></div>`,
+    'Bulk Upload': () => `<div class="card"><div class="empty"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>
+      <h3>Upload orders in bulk</h3><p>CSV / Excel file drag & drop karein ya browse karein</p><div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><button class="btn btn-light">Download Sample File</button><button class="btn btn-gold">Browse File</button></div></div></div>`,
+    'Cash Payment Receipts (CPR)': () => `<div class="card"><div class="table-wrap"><table><thead><tr><th>CPR #</th><th>Date</th><th>Orders</th><th>COD Amount</th><th>Charges</th><th>Net Payable</th><th>Status</th></tr></thead><tbody>
+      ${[['CPR-5521','28 Oct 2026',22,48520,3960,'Paid','t-del'],['CPR-5498','24 Oct 2026',19,41230,3420,'Paid','t-del'],['CPR-5470','21 Oct 2026',16,36700,2880,'Paid','t-del'],['CPR-5530','30 Oct 2026',48,144152,8640,'Processing','t-pen']]
+        .map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>Rs ${fmt(r[3])}</td><td>Rs ${fmt(r[4])}</td><td><b>Rs ${fmt(r[3]-r[4])}</b></td><td><span class="tag ${r[6]}">${r[5]}</span></td></tr>`).join('')}
+      </tbody></table></div></div>`,
+    'Create User': () => `<form class="card" onsubmit="event.preventDefault();toast('User created successfully')"><div class="form-grid">
+      <div class="form-section">User Details</div>
+      <div class="field"><label>Full Name *</label><input class="input" required></div>
+      <div class="field"><label>Email *</label><input class="input" type="email" required></div>
+      <div class="field"><label>Phone</label><input class="input"></div>
+      <div class="field"><label>Role</label><select class="input"><option>Operator</option><option>Accounts</option><option>Admin</option></select></div>
+      <div class="field"><label>Password *</label><input class="input" type="password" required></div>
+      <div class="field"><label>Confirm Password *</label><input class="input" type="password" required></div>
+      </div><div style="text-align:right"><button class="btn btn-gold">Create User</button></div></form>`,
+    'User Permissions': () => `<div class="card"><div class="field" style="max-width:320px"><label>Select User</label><select class="input"><option>Ahmed (Operator)</option><option>Sara (Accounts)</option></select></div>
+      <div class="perm-grid">${['Create Order','Cancel Order','Order Logs','Airway Bills','Bulk Upload','Load Sheet','Special Request','Payments / CPR','Settlement Logs','Packaging','Reports','Manage Users','Settings']
+        .map((p,i)=>`<label><input type="checkbox" ${i<7?'checked':''}> ${p}</label>`).join('')}</div>
+      <div style="text-align:right;margin-top:20px"><button class="btn btn-gold" onclick="toast('Permissions saved')">Save Permissions</button></div></div>`,
+    'User Logs': () => `<div class="card"><div class="table-wrap"><table><thead><tr><th>User</th><th>Action</th><th>IP Address</th><th>Date / Time</th></tr></thead><tbody>
+      ${[['Ahmed','Created order #2947','39.45.12.8','Oct 30, 2026 11:28 AM'],['Ahmed','Generated load sheet LS-1043','39.45.12.8','Oct 29, 2026 05:10 PM'],['Sara','Downloaded CPR-5521','110.93.4.21','Oct 28, 2026 03:44 PM'],['Admin','Logged in','182.180.7.66','Oct 28, 2026 09:02 AM']]
+        .map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`,
+    'Business Profile': () => `<form class="card" onsubmit="event.preventDefault();toast('Profile updated')"><div class="form-grid">
+      <div class="form-section">Business Information</div>
+      <div class="field"><label>Business Name</label><input class="input" value="Twisty Mart"></div>
+      <div class="field"><label>Owner Name</label><input class="input" value=""></div>
+      <div class="field"><label>Phone</label><input class="input"></div>
+      <div class="field"><label>Email</label><input class="input"></div>
+      <div class="field"><label>CNIC</label><input class="input"></div>
+      <div class="field"><label>City</label><select class="input">${cities.map(c=>`<option>${c}</option>`).join('')}</select></div>
+      <div class="field span-3"><label>Business Address</label><input class="input"></div>
+      </div><div style="text-align:right"><button class="btn btn-gold">Save Changes</button></div></form>`,
+    'Bank Details': () => `<form class="card" onsubmit="event.preventDefault();toast('Bank details saved')"><div class="form-grid">
+      <div class="form-section">Settlement Account</div>
+      <div class="field"><label>Bank Name</label><select class="input"><option>Meezan Bank</option><option>HBL</option><option>UBL</option><option>MCB</option><option>JazzCash</option><option>Easypaisa</option></select></div>
+      <div class="field"><label>Account Title</label><input class="input"></div>
+      <div class="field"><label>Account / IBAN Number</label><input class="input" placeholder="PK00XXXX..."></div>
+      </div><div style="text-align:right"><button class="btn btn-gold">Save</button></div></form>`,
+    'Change Password': () => `<form class="card" style="max-width:520px" onsubmit="event.preventDefault();toast('Password changed')">
+      <div class="field"><label>Current Password</label><input class="input" type="password"></div>
+      <div class="field"><label>New Password</label><input class="input" type="password"></div>
+      <div class="field"><label>Confirm New Password</label><input class="input" type="password"></div>
+      <button class="btn btn-gold">Update Password</button></form>`
+  };
+  pages['Reset User Password'] = pages['Change Password'];
+
+  function genericPage(page){
+    return `<div class="card">${filters()}<div class="empty"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18M8 7V4h8v3"/></svg></div>
+      <h3>${page}</h3><p>Is page ka layout yahan aayega. Selected date range ke liye koi record nahi mila.</p></div></div>`;
+  }
+
+  /* ---------- dashboard widgets ---------- */
+  const stats = [['Total Orders',267,'var(--navy)'],['Unbooked',0,'var(--red)'],['Booked',0,'var(--navy-2)'],['TCL Warehouse',92,'var(--gold)'],
+    ['Out for Delivery',5,'var(--blue)'],['Delivered',48,'var(--green)'],['Attempted',47,'var(--gold)'],['Out for Return',4,'var(--red)'],['Returned',2,'var(--red)'],
+    ['Delivery Under Review',18,'var(--gold)'],['Transferred',51,'var(--navy-2)'],['Un-assigned by Me',0,'var(--muted)'],['Lost',0,'var(--muted)'],['Stolen',0,'var(--muted)'],['Damage',0,'var(--muted)']];
+  document.getElementById('statusGrid').innerHTML = stats.map(s=>`<div class="stat" style="--accent:${s[2]}" data-go="Order Status Report"><small>${s[0]}</small><b>${s[1]}</b></div>`).join('');
+
+  function donut(el, val, total, color){
+    const r=70, c=2*Math.PI*r, p=val/total;
+    document.getElementById(el).innerHTML = `<svg viewBox="0 0 170 170"><circle cx="85" cy="85" r="${r}" fill="none" stroke="#eef1f8" stroke-width="26"/>
+      <circle cx="85" cy="85" r="${r}" fill="none" stroke="${color}" stroke-width="26" stroke-dasharray="${c*p} ${c}" transform="rotate(-90 85 85)" stroke-linecap="round"/></svg><span>${Math.round(p*100)}%</span>`;
+  }
+  donut('donutS',48,267,'#d4a017');
+  donut('donutR',6,267,'#e0524a');
+
+  (function lineChart(){
+    const labels=['Oct 24','Oct 25','Oct 26','Oct 27','Oct 28','Oct 29','Oct 30','Oct 31'];
+    const delivered=[25,11,10,2,0,0,0,0], booked=[30,22,27,35,41,38,52,12];
+    const W=1200,H=320,pl=40,pr=20,pt=16,pb=36,max=60;
+    const x=i=>pl+i*(W-pl-pr)/(labels.length-1), y=v=>pt+(H-pt-pb)*(1-v/max);
+    const path=d=>d.map((v,i)=>{ if(!i) return `M${x(0)},${y(v)}`; const cx=(x(i-1)+x(i))/2; return `C${cx},${y(d[i-1])} ${cx},${y(v)} ${x(i)},${y(v)}`; }).join(' ');
+    let g='';
+    for(let v=0;v<=max;v+=10) g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#eef1f8"/><text x="${pl-8}" y="${y(v)+4}" font-size="11" fill="#6b7590" text-anchor="end">${v}</text>`;
+    labels.forEach((l,i)=> g+=`<text x="${x(i)}" y="${H-12}" font-size="11" fill="#6b7590" text-anchor="middle">${l}</text>`);
+    const area = path(delivered)+` L${x(labels.length-1)},${y(0)} L${x(0)},${y(0)} Z`;
+    document.getElementById('lineChart').innerHTML = `<svg viewBox="0 0 ${W} ${H}">
+      <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4a017" stop-opacity=".35"/><stop offset="1" stop-color="#d4a017" stop-opacity="0"/></linearGradient></defs>
+      ${g}<path d="${area}" fill="url(#ga)"/>
+      <path d="${path(booked)}" fill="none" stroke="#0d2b6b" stroke-width="2.5" stroke-dasharray="6 5"/>
+      <path d="${path(delivered)}" fill="none" stroke="#d4a017" stroke-width="3"/>
+      ${delivered.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="4.5" fill="#fff" stroke="#d4a017" stroke-width="2.5"><title>${labels[i]}: ${v} delivered</title></circle>`).join('')}
+    </svg>`;
+  })();
+</script>
+</body>
+</html>
