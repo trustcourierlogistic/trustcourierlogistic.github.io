@@ -366,6 +366,10 @@
   .wa-float svg{width:30px;height:30px}
   .back-site{display:inline-block;margin-bottom:24px;color:var(--navy);font-weight:600;font-size:13px}
   .back-site:hover{color:var(--gold-dark)}
+  .w-show-sm{display:none}
+  .login-msg{margin-top:14px;padding:10px 12px;border-radius:10px;font-size:13px;text-align:center;background:#fde8e7;color:var(--red)}
+  .login-msg.ok{background:#e7f6ec;color:#1b7a3d}
+  .sample-note{background:#fff8e6;border:1px dashed var(--gold);color:#7a5a06;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px}
 
   @media (max-width:1000px){
     .w-nav{position:fixed;top:78px;left:0;right:0;background:#fff;flex-direction:column;gap:0;padding:10px 24px 20px;box-shadow:0 20px 30px rgba(0,0,0,.1);display:none}
@@ -373,6 +377,7 @@
     .w-nav a{padding:13px 0;border-bottom:1px solid var(--line)}
     .w-burger{display:block}
     .w-hide-sm{display:none}
+    .w-show-sm{display:block}
     .w-hero-in,.w-pay,.w-contact{grid-template-columns:1fr}
     .w-hero h1{font-size:40px}
     .w-cards{grid-template-columns:1fr 1fr}
@@ -416,10 +421,12 @@
         <a href="#w-how">How It Works</a>
         <a href="#w-brands">Our Brands</a>
         <a href="#w-contact">Contact</a>
+        <a href="#w-contact" class="w-show-sm">Become a Merchant</a>
       </nav>
       <div class="w-head-btns">
         <a href="#w-track" class="w-btn w-btn-ghost w-hide-sm">Track Parcel</a>
-        <a href="#w-contact" class="w-btn w-btn-gold">Become a Merchant</a>
+        <a href="#" class="w-btn w-btn-ghost" onclick="showLogin();return false">Login</a>
+        <a href="#w-contact" class="w-btn w-btn-gold w-hide-sm">Become a Merchant</a>
         <button class="w-burger" onclick="document.getElementById('wNav').classList.toggle('show')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
       </div>
     </div>
@@ -598,20 +605,20 @@
       <h1>Welcome Back 👋</h1>
       <p class="sub">Login to your merchant account</p>
       <div class="field">
-        <label>Email / Username</label>
-        <input class="input" type="text" id="loginUser" placeholder="merchant@example.com" required>
+        <label>Email</label>
+        <input class="input" type="email" id="loginUser" placeholder="merchant@example.com" autocomplete="username" required>
       </div>
       <div class="field">
         <label>Password</label>
-        <input class="input" type="password" placeholder="••••••••" required>
+        <input class="input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" required>
       </div>
       <div class="row-between">
-        <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked> Remember me</label>
-        <a href="#">Forgot password?</a>
+        <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="loginRemember" checked> Remember me</label>
+        <a href="#" onclick="forgotPassword();return false">Forgot password?</a>
       </div>
-      <button class="btn btn-gold btn-block" type="submit">LOGIN</button>
-      <div class="demo-note">Demo layout: koi bhi email/password likh kar Login karein</div>
-      <p class="login-foot">New merchant? <a href="#">Register your business</a></p>
+      <button class="btn btn-gold btn-block" type="submit" id="loginBtn">LOGIN</button>
+      <div class="login-msg hidden" id="loginMsg"></div>
+      <p class="login-foot">New merchant? <a href="#w-contact" onclick="showSite()">Register your business</a></p>
     </form>
   </div>
 </section>
@@ -723,7 +730,7 @@
         <div style="position:relative">
           <button class="icon-btn" onclick="toggleDD('ddUser',event)" title="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></button>
           <div class="dropdown" id="ddUser">
-            <div class="dd-head"><b id="ddName">Twisty Mart</b><small>Merchant ID: TCL-10245</small></div>
+            <div class="dd-head"><b id="ddName">Twisty Mart</b><small id="ddEmail"></small></div>
             <a href="#" data-go="Business Profile">My Profile</a>
             <a href="#" data-go="Change Password">Change Password</a>
             <a href="#" onclick="logout();return false" style="color:var(--red)">Logout</a>
@@ -737,6 +744,7 @@
   <main>
     <!-- ============ DASHBOARD ============ -->
     <section id="page-dashboard">
+      <div class="sample-note">Merchant portal abhi setup ho raha hai — neeche dikhaye gaye figures sirf sample hain. Apne orders aur payments ke liye WhatsApp par rabta karein.</div>
       <p class="welcome">Welcome, <b class="mName">Twisty Mart</b>!</p>
 
       <div class="grid g-2eq">
@@ -796,6 +804,8 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
   /* ---------- business contact details (update with real info) ---------- */
   const CONTACT = {
@@ -825,22 +835,75 @@
     toast('Shukriya! WhatsApp par apni details bhej dein.');
   }
 
-  /* ---------- login / logout ---------- */
-  function doLogin(e){
-    e.preventDefault();
-    const u = document.getElementById('loginUser').value.trim();
-    const name = u.includes('@') ? 'Twisty Mart' : (u || 'Twisty Mart');
+  /* ---------- login / logout (Firebase email + password) ---------- */
+  // Firebase console > Project settings > Your apps > Web app config. These values are public, not secrets.
+  const FIREBASE_CONFIG = null; // TODO: paste { apiKey, authDomain, projectId, appId, ... }
+  const auth = FIREBASE_CONFIG ? (firebase.initializeApp(FIREBASE_CONFIG), firebase.auth()) : null;
+
+  function loginMsg(text, ok){
+    const m = document.getElementById('loginMsg');
+    m.textContent = text; m.classList.toggle('ok', !!ok); m.classList.toggle('hidden', !text);
+  }
+  const LOGIN_ERRORS = {
+    'auth/invalid-credential': 'Email ya password ghalat hai.',
+    'auth/wrong-password': 'Email ya password ghalat hai.',
+    'auth/user-not-found': 'Is email ka koi account nahi mila.',
+    'auth/invalid-email': 'Email sahi likhein.',
+    'auth/user-disabled': 'Yeh account band kar diya gaya hai. Trust Courier se rabta karein.',
+    'auth/too-many-requests': 'Bohat zyada koshishen ho gayi hain. Thori der baad try karein.',
+    'auth/network-request-failed': 'Internet connection check karein.'
+  };
+  const loginError = err => LOGIN_ERRORS[err.code] || 'Login nahi ho saka. Dobara try karein.';
+
+  function enterApp(user){
+    const name = user.displayName || user.email.split('@')[0];
     document.querySelectorAll('.mName').forEach(el=>el.textContent=name);
     document.getElementById('ddName').textContent = name;
+    document.getElementById('ddEmail').textContent = user.email;
+    document.getElementById('site').classList.add('hidden');
     document.getElementById('login').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     go('dashboard');
+    window.scrollTo(0,0);
+  }
+  async function doLogin(e){
+    e.preventDefault();
+    if(!auth){ loginMsg('Merchant login abhi setup ho raha hai. WhatsApp par rabta karein.'); return; }
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = 'LOGGING IN…'; loginMsg('');
+    try{
+      const remember = document.getElementById('loginRemember').checked;
+      await auth.setPersistence(remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION);
+      const cred = await auth.signInWithEmailAndPassword(
+        document.getElementById('loginUser').value.trim(), document.getElementById('loginPass').value);
+      document.getElementById('loginPass').value = '';
+      enterApp(cred.user);
+    }catch(err){
+      loginMsg(loginError(err));
+    }finally{
+      btn.disabled = false; btn.textContent = 'LOGIN';
+    }
+  }
+  async function forgotPassword(){
+    if(!auth){ loginMsg('Merchant login abhi setup ho raha hai. WhatsApp par rabta karein.'); return; }
+    const email = document.getElementById('loginUser').value.trim();
+    if(!email){ loginMsg('Pehle upar apna email likhein, phir "Forgot password?" dabayein.'); return; }
+    try{
+      await auth.sendPasswordResetEmail(email);
+      loginMsg('Password reset ka link aapke email par bhej diya gaya hai.', true);
+    }catch(err){
+      loginMsg(loginError(err));
+    }
   }
   function logout(){
+    if(auth) auth.signOut();
     document.getElementById('app').classList.add('hidden');
     showSite();
   }
   function showLogin(){
+    // already signed in (remember me) → straight to the portal
+    if(auth && auth.currentUser){ enterApp(auth.currentUser); return; }
+    loginMsg('');
     document.getElementById('site').classList.add('hidden');
     document.getElementById('login').classList.remove('hidden');
     window.scrollTo(0,0);
