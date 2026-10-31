@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trust Courier Logistic</title>
+<script>document.documentElement.classList.add('js-anim')</script>
 <style>
   :root{
     --navy:#0d2b6b; --navy-2:#163c8c; --navy-dark:#081b45;
@@ -233,7 +234,9 @@
   .w-head-in{display:flex;align-items:center;gap:24px;height:78px}
   .w-logo img{height:60px;display:block}
   .w-nav{display:flex;gap:26px;flex:1;justify-content:center}
-  .w-nav a{font-weight:600;color:var(--navy);font-size:15px;position:relative;padding:6px 0}
+  .w-nav a{font-weight:600;color:var(--navy);font-size:15px;position:relative;padding:6px 0;white-space:nowrap}
+  .w-head-btns .w-btn{white-space:nowrap}
+  @media (max-width:1300px) and (min-width:1001px){ .w-nav{gap:18px} .w-nav a{font-size:14px} .w-head-btns .w-hide-sm[href="#w-track"]{display:none} }
   .w-nav a::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--gold);transition:.25s}
   .w-nav a:hover::after{width:100%}
   .w-head-btns{display:flex;gap:10px;align-items:center}
@@ -281,6 +284,37 @@
   .w-pay-mini b{color:var(--navy);display:block} .w-pay-mini small{color:var(--muted)}
   .w-road{position:absolute;left:-5%;right:-5%;bottom:34px;height:26px;background:var(--road);transform:rotate(-1.5deg);
     background-image:repeating-linear-gradient(90deg,transparent 0 34px,#fff 34px 60px);background-size:100% 3px;background-repeat:no-repeat;background-position:0 50%}
+
+  /* ---- front page motion (all switched off under prefers-reduced-motion) ---- */
+  .w-road{animation:wRoad 1.2s linear infinite}
+  @keyframes wRoad{to{background-position:-60px 50%}}
+  .w-truck{position:absolute;bottom:20px;left:0;width:74px;height:40px;animation:wDrive 14s linear infinite}
+  .w-truck svg{width:100%;height:100%;display:block;animation:wBump .45s ease-in-out infinite alternate}
+  @keyframes wDrive{from{transform:translateX(-120px)}to{transform:translateX(calc(100vw + 120px))}}
+  @keyframes wBump{to{transform:translateY(-2px)}}
+  .w-hero::before{animation:wFloat 9s ease-in-out infinite alternate}
+  @keyframes wFloat{to{transform:translate(60px,40px) scale(1.08)}}
+  .w-hero h1 span{background-size:200% 100%;background-image:linear-gradient(90deg,var(--gold),var(--gold-2),#fff3c4,var(--gold-2),var(--gold));animation:wShine 5s linear infinite}
+  @keyframes wShine{to{background-position:-200% 0}}
+  .js-anim .w-hero-text>*,.js-anim .w-hero-card{opacity:0;animation:wUp .8s cubic-bezier(.2,.7,.2,1) forwards}
+  .js-anim .w-hero-text>:nth-child(2){animation-delay:.12s}
+  .js-anim .w-hero-text>:nth-child(3){animation-delay:.24s}
+  .js-anim .w-hero-text>:nth-child(4){animation-delay:.36s}
+  .js-anim .w-hero-text>:nth-child(5){animation-delay:.48s}
+  .js-anim .w-hero-card{animation-name:wLeft;animation-delay:.3s}
+  @keyframes wUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+  @keyframes wLeft{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+  .w-hero-card{transition:transform .3s}
+  .w-hero-card:hover{transform:translateY(-4px)}
+  .js-anim .rv{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+  .js-anim .rv.in{opacity:1;transform:none}
+  .wa-float::before{content:"";position:absolute;inset:0;border-radius:50%;background:#25d366;z-index:-1;animation:wPulse 2.2s ease-out infinite}
+  @keyframes wPulse{to{transform:scale(1.7);opacity:0}}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .js-anim .w-hero-text>*,.js-anim .w-hero-card,.js-anim .rv{opacity:1!important;transform:none!important}
+    .w-truck{display:none}
+  }
 
   .w-stats{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-radius:20px;box-shadow:0 20px 50px rgba(13,43,107,.12);margin-top:-50px;position:relative;z-index:2;overflow:hidden}
   .w-stats div{padding:30px 16px;text-align:center;border-right:1px solid var(--line)}
@@ -517,7 +551,12 @@
         </div>
       </div>
     </div>
-    <div class="w-road"></div>
+    <div class="w-road"><div class="w-truck" aria-hidden="true">
+      <svg viewBox="0 0 74 40"><rect x="1" y="4" width="46" height="26" rx="3" fill="#fff"/><rect x="1" y="4" width="46" height="26" rx="3" fill="none" stroke="#d4a017" stroke-width="2"/>
+        <text x="24" y="22" text-anchor="middle" font-family="Segoe UI,Arial" font-weight="800" font-size="12" fill="#0d2b6b">TCL</text>
+        <path d="M49 12h12l10 10v8H49z" fill="#d4a017"/><path d="M53 15h7l6 6h-13z" fill="#cfe3ff"/>
+        <circle cx="14" cy="32" r="6" fill="#1b2540"/><circle cx="14" cy="32" r="2.5" fill="#ccc"/><circle cx="60" cy="32" r="6" fill="#1b2540"/><circle cx="60" cy="32" r="2.5" fill="#ccc"/></svg>
+    </div></div>
   </div>
 
   <!-- STATS -->
@@ -1066,6 +1105,35 @@
     const half=(arr,off)=>{ const h=arr.map((b,i)=>tile(b,i+off)).join(''); return h+h; };
     document.getElementById('brandRow1').innerHTML = half(list.slice(0,12),0);
     document.getElementById('brandRow2').innerHTML = half(list.slice(12),3);
+  })();
+
+  /* ---------- front page motion: scroll reveal + count-up numbers ---------- */
+  (function frontMotion(){
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window);
+    const groups = ['.w-stats', '.w-title', '.w-pay>*', '.w-cards>.w-card', '.w-steps>.w-step', '.w-marquee', '.w-contact>*', '.w-foot-in>*'];
+    groups.forEach(sel => document.querySelectorAll('#site ' + sel).forEach((el, i) => {
+      el.classList.add('rv'); el.style.setProperty('--d', (i % 4) * 0.1 + 's');
+    }));
+    // only "200+"-style figures count up; labels like "1 Week" or "24/7" would read wrong mid-count
+    const countUp = el => {
+      const m = el.textContent.trim().match(/^(\d+)(\+)$/);
+      if(!m || still) return;
+      const end = +m[1], rest = m[2], t0 = performance.now();
+      const step = t => { const p = Math.min(1, (t - t0) / 1400); el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3))) + rest; if(p < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    };
+    if(still){ document.querySelectorAll('.rv').forEach(el => el.classList.add('in')); return; }
+    const io = new IntersectionObserver(entries => entries.forEach(e => {
+      if(!e.isIntersecting) return;
+      const el = e.target;
+      el.classList.add('in');
+      el.querySelectorAll('b').forEach(b => { if(b.closest('.w-stats')) countUp(b); });
+      io.unobserve(el);
+      // hand the element back to its own hover transitions once revealed
+      setTimeout(() => { el.classList.remove('rv', 'in'); el.style.removeProperty('--d'); }, 1300);
+    }), {threshold:.15, rootMargin:'0px 0px -40px 0px'});
+    document.querySelectorAll('.rv').forEach(el => io.observe(el));
+    document.querySelectorAll('.w-hero-badges b').forEach(b => setTimeout(() => countUp(b), 600));
   })();
 
   /* ---------- menus ---------- */
