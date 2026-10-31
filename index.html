@@ -367,6 +367,60 @@
   .back-site{display:inline-block;margin-bottom:24px;color:var(--navy);font-weight:600;font-size:13px}
   .back-site:hover{color:var(--gold-dark)}
   .w-show-sm{display:none}
+
+  /* ================= ADMIN PANEL ================= */
+  #admin{min-height:100vh;background:var(--bg)}
+  .adm-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;background:#fff;padding:10px 22px;box-shadow:var(--shadow)}
+  .adm-logo{height:42px}
+  .adm-badge{background:var(--navy);color:var(--gold-2);font-weight:700;font-size:12px;padding:4px 10px;border-radius:20px}
+  .adm-user{margin-left:auto;color:var(--muted);font-size:13px}
+  .adm-logout{padding:8px 14px}
+  .adm-burger{display:none;background:none;border:none;color:var(--navy);width:30px}
+  .adm-body{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 62px)}
+  .adm-nav{background:linear-gradient(180deg,var(--navy-dark),var(--navy));padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+  .adm-nav button{background:none;border:none;color:#cfd8f0;text-align:left;padding:12px 14px;border-radius:10px;font-size:14px;font-weight:600}
+  .adm-nav button:hover{background:rgba(255,255,255,.08);color:#fff}
+  .adm-nav button.active{background:var(--gold);color:var(--navy-dark)}
+  .adm-main{padding:26px;min-width:0}
+  .adm-main h2{color:var(--navy);font-size:22px;margin-bottom:4px}
+  .adm-sub{color:var(--muted);margin-bottom:20px}
+  .adm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+  .adm-stat{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;border-top:4px solid var(--navy)}
+  .adm-stat small{display:block;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+  .adm-stat b{display:block;font-size:22px;color:var(--navy);margin-top:8px}
+  .adm-stat em{display:block;font-style:normal;color:var(--muted);font-size:12px;margin-top:4px}
+  .adm-stat.gold{border-top-color:var(--gold)} .adm-stat.green{border-top-color:var(--green)} .adm-stat.red{border-top-color:var(--red)}
+  .adm-stat .neg{color:var(--red)} .adm-stat .pos{color:var(--green)}
+  .adm-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;margin-bottom:22px}
+  .adm-card h3{color:var(--navy);font-size:16px;margin-bottom:14px}
+  .adm-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end}
+  .adm-form label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  .adm-form .input{padding:10px 12px}
+  .adm-form .btn{padding:11px 16px}
+  .adm-table-wrap{overflow-x:auto}
+  .adm-table{width:100%;border-collapse:collapse;font-size:13px}
+  .adm-table th{text-align:left;color:var(--muted);font-weight:600;padding:10px;border-bottom:2px solid var(--line);white-space:nowrap}
+  .adm-table td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+  .adm-table td.num,.adm-table th.num{text-align:right;white-space:nowrap}
+  .adm-empty{color:var(--muted);padding:14px 0}
+  .pill-s{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;background:#eef1f8;color:var(--navy)}
+  .pill-s.ok{background:#e7f6ec;color:#1b7a3d} .pill-s.warn{background:#fff4dc;color:#8a6100} .pill-s.bad{background:#fde8e7;color:var(--red)}
+  .adm-link{color:var(--blue);font-weight:600}
+  .adm-mini{padding:6px 10px!important;font-size:12px!important}
+  .adm-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .adm-note{background:#fff8e6;border:1px dashed var(--gold);color:#7a5a06;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px}
+  @media (max-width:1100px){ .adm-stats{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:800px){
+    .adm-body{grid-template-columns:1fr}
+    .adm-nav{display:none;position:fixed;top:62px;left:0;right:0;z-index:19}
+    .adm-nav.show{display:flex}
+    .adm-burger{display:block}
+    .adm-user{display:none}
+    .adm-logout{margin-left:auto}
+    .adm-main{padding:16px}
+    .adm-stats{grid-template-columns:1fr 1fr;gap:10px}
+    .adm-stat b{font-size:18px}
+  }
   .login-msg{margin-top:14px;padding:10px 12px;border-radius:10px;font-size:13px;text-align:center;background:#fde8e7;color:var(--red)}
   .login-msg.ok{background:#e7f6ec;color:#1b7a3d}
   .sample-note{background:#fff8e6;border:1px dashed var(--gold);color:#7a5a06;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px}
@@ -567,6 +621,8 @@
         <select class="input" id="mOrders"><option value="">Orders per day</option><option>1 – 20</option><option>20 – 100</option><option>100+</option></select>
         <textarea class="input" id="mMsg" rows="3" placeholder="Message (optional)"></textarea>
         <div class="w-form-row"><input class="input" id="mEmail" type="email" placeholder="Email (login ke liye)" autocomplete="email" required><input class="input" id="mPass" type="password" placeholder="Password (kam az kam 8)" minlength="8" autocomplete="new-password" required></div>
+        <div class="w-form-row"><input class="input" id="mBank" placeholder="Bank Name (optional)"><input class="input" id="mAccTitle" placeholder="Account Title (optional)"></div>
+        <input class="input" id="mAccNum" placeholder="Account Number / IBAN (optional)">
         <button class="w-btn w-btn-gold w-btn-lg" style="width:100%" id="mSubmit">Create Merchant Account</button>
       </form>
     </div>
@@ -745,7 +801,11 @@
   <main>
     <!-- ============ DASHBOARD ============ -->
     <section id="page-dashboard">
-      <div class="sample-note">Merchant portal abhi setup ho raha hai — neeche dikhaye gaye figures sirf sample hain. Apne orders aur payments ke liye WhatsApp par rabta karein.</div>
+      <div class="card" style="margin-bottom:22px">
+        <div class="card-head"><h3>My Invoices</h3></div>
+        <div id="myInvoices" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
+      </div>
+      <div class="sample-note">Neeche wale charts aur figures abhi sample hain — courier API connect hone par aapka asli data yahan aayega.</div>
       <p class="welcome">Welcome, <b class="mName">Twisty Mart</b>!</p>
 
       <div class="grid g-2eq">
@@ -803,6 +863,28 @@
   <footer>© 2026 Trust Courier Logistic — Your Destination Our Responsibility</footer>
 </div>
 
+<!-- ======================= ADMIN PANEL ======================= -->
+<div id="admin" class="hidden">
+  <header class="adm-top">
+    <button class="adm-burger" onclick="document.getElementById('admNav').classList.toggle('show')" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    <img src="logo.jpg" alt="Trust Courier Logistic" class="adm-logo">
+    <span class="adm-badge">Admin</span>
+    <span class="adm-user" id="admUser"></span>
+    <button class="btn btn-light adm-logout" onclick="logout()">Logout</button>
+  </header>
+  <div class="adm-body">
+    <nav class="adm-nav" id="admNav">
+      <button data-tab="dashboard" class="active">📊 Dashboard</button>
+      <button data-tab="payments">💸 Payment Settled</button>
+      <button data-tab="clients">👥 Clients</button>
+      <button data-tab="invoices">🧾 Invoice Distribute</button>
+      <button data-tab="expenses">📉 Expense</button>
+      <button data-tab="api">🔌 Courier API</button>
+    </nav>
+    <main class="adm-main" id="admMain"></main>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -845,7 +927,8 @@
     btn.disabled = true; btn.textContent = 'Submitting…';
     try{
       const r = await loginApi({action:'register', name:v('mName'), brand:v('mBrand'), phone:v('mPhone'), city:v('mCity'),
-        orders:v('mOrders'), message:v('mMsg'), email:v('mEmail'), password:document.getElementById('mPass').value});
+        orders:v('mOrders'), message:v('mMsg'), email:v('mEmail'), password:document.getElementById('mPass').value,
+        bankName:v('mBank'), accountTitle:v('mAccTitle'), accountNumber:v('mAccNum')});
       if(!r.ok){ toast(SIGNUP_ERRORS[r.error] || 'Account nahi ban saka. Dobara try karein.'); return; }
       e.target.reset();
       toast('Shukriya! Aapka account review ho raha hai. Approve hote hi aap Login kar sakenge.');
@@ -887,7 +970,17 @@
     try{ localStorage.removeItem(SESSION_KEY); sessionStorage.removeItem(SESSION_KEY); }catch(e){}
   }
 
-  function enterApp(user){
+  let sessionToken = '';
+  // calls that need the logged-in user; an expired/blocked session sends them back to login
+  async function authApi(action, data){
+    const r = await loginApi(Object.assign({action, token:sessionToken}, data || {}));
+    if(!r.ok && ['expired','inactive','forbidden'].includes(r.error)){ logout(); toast(LOGIN_ERRORS[r.error] || 'Dobara login karein.'); }
+    return r;
+  }
+
+  function enterApp(user, token){
+    sessionToken = token || '';
+    if(user.role === 'Admin'){ openAdmin(user); return; }
     const name = user.business || user.name || user.email.split('@')[0];
     document.querySelectorAll('.mName').forEach(el=>el.textContent=name);
     document.getElementById('ddName').textContent = name + (user.role === 'Admin' ? ' (Admin)' : '');
@@ -897,6 +990,7 @@
     document.getElementById('login').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     go('dashboard');
+    loadClientInvoices();
     window.scrollTo(0,0);
   }
   async function doLogin(e){
@@ -912,7 +1006,7 @@
         const store = document.getElementById('loginRemember').checked ? localStorage : sessionStorage;
         store.setItem(SESSION_KEY, JSON.stringify({token:r.token, user:r.user}));
       }catch(err){}
-      enterApp(r.user);
+      enterApp(r.user, r.token);
     }catch(err){
       loginMsg('Internet connection check karein, phir dobara try karein.');
     }finally{
@@ -925,7 +1019,9 @@
   }
   function logout(){
     clearSession();
+    sessionToken = '';
     document.getElementById('app').classList.add('hidden');
+    document.getElementById('admin').classList.add('hidden');
     showSite();
   }
   async function showLogin(){
@@ -934,9 +1030,9 @@
     if(s){
       try{
         const r = await loginApi({action:'session', token:s.token});
-        if(r.ok){ enterApp(r.user); return; }
+        if(r.ok){ enterApp(r.user, s.token); return; }
         clearSession();
-      }catch(err){ enterApp(s.user); return; }
+      }catch(err){ enterApp(s.user, s.token); return; }
     }
     loginMsg('');
     document.getElementById('site').classList.add('hidden');
@@ -945,6 +1041,8 @@
   }
   function showSite(){
     document.getElementById('login').classList.add('hidden');
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('admin').classList.add('hidden');
     document.getElementById('site').classList.remove('hidden');
     window.scrollTo(0,0);
   }
@@ -1157,6 +1255,325 @@
       ${delivered.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="4.5" fill="#fff" stroke="#d4a017" stroke-width="2.5"><title>${labels[i]}: ${v} delivered</title></circle>`).join('')}
     </svg>`;
   })();
+</script>
+<script>
+  /* ================= ADMIN PANEL (talks to the TCL System sheet via authApi) ================= */
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const rs = v => v == null || v === '' ? '—' : (Number(v) < 0 ? '-' : '') + 'Rs ' + Math.abs(Number(v)).toLocaleString('en-PK', {maximumFractionDigits:2});
+  const today = () => new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const ADMIN_ERRORS = {
+    bad_amount: 'Amount sahi likhein (0 se zyada).', missing: 'Zaroori field khali hai.', no_client: 'Client nahi mila.',
+    bad_courier: 'Courier chunein.', no_file: 'PDF file chunein.', file_too_big: 'PDF 10 MB se choti honi chahiye.',
+    bad_status: 'Status sahi nahi.', not_found: 'Record nahi mila.'
+  };
+  const statusPill = s => {
+    const cls = /^(Active|Settled|Connected)$/.test(s) ? 'ok' : /^(Pending|Unsettled|Not tested|Saved)/.test(s) ? 'warn' : /^(Inactive|Invalid|Error)/.test(s) ? 'bad' : '';
+    return `<span class="pill-s ${cls}">${esc(s || '—')}</span>`;
+  };
+  const table = (heads, rows, empty) => rows.length
+    ? `<table class="adm-table"><thead><tr>${heads.map(h => `<th class="${h.num ? 'num' : ''}">${esc(h.t || h)}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`
+    : `<p class="adm-empty">${esc(empty)}</p>`;
+  const clientSelect = (id, list, blank) => `<select class="input" id="${id}">${blank ? `<option value="">${esc(blank)}</option>` : ''}${list.map(c => `<option value="${esc(c.id)}">${esc(c.label)} (${esc(c.id)})</option>`).join('')}</select>`;
+  const courierSelect = id => `<select class="input" id="${id}"><option>PostEx</option><option>CityLine</option></select>`;
+  const val = id => document.getElementById(id).value.trim();
+
+  let admTab = 'dashboard';
+  function openAdmin(user){
+    document.getElementById('admUser').textContent = user.email;
+    ['site','login','app'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById('admin').classList.remove('hidden');
+    admGo('dashboard');
+    window.scrollTo(0,0);
+  }
+  document.getElementById('admNav').addEventListener('click', e => {
+    const b = e.target.closest('button[data-tab]'); if(!b) return;
+    document.getElementById('admNav').classList.remove('show');
+    admGo(b.dataset.tab);
+  });
+  async function admGo(tabName){
+    admTab = tabName;
+    document.querySelectorAll('#admNav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+    const main = document.getElementById('admMain');
+    main.innerHTML = '<p class="adm-empty">Loading…</p>';
+    try{ await ADMIN_VIEWS[tabName](main); }
+    catch(err){ main.innerHTML = '<p class="adm-empty">Data load nahi ho saka. Internet check kar ke dobara try karein.</p>'; }
+  }
+  async function admCall(action, data, okMsg){
+    const r = await authApi(action, data);
+    if(!r.ok){ if(r.error !== 'expired' && r.error !== 'inactive' && r.error !== 'forbidden') toast(ADMIN_ERRORS[r.error] || r.message || 'Kaam nahi ho saka, dobara try karein.'); return null; }
+    if(okMsg) toast(okMsg);
+    return r;
+  }
+  async function admLoad(action){
+    const r = await authApi(action);
+    if(!r.ok) throw new Error(r.error);
+    return r;
+  }
+  function busy(btn, on, text){ if(!btn) return; btn.disabled = on; if(text) btn.textContent = text; }
+
+  const ADMIN_VIEWS = {
+    /* ---------- Dashboard ---------- */
+    async dashboard(main){
+      const d = await admLoad('admin_dashboard'), s = d.stats;
+      const stat = (label, value, cls, note) => `<div class="adm-stat ${cls||''}"><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
+      const signed = v => `<span class="${v < 0 ? 'neg' : 'pos'}">${rs(v)}</span>`;
+      main.innerHTML = `
+        <h2>Dashboard</h2><p class="adm-sub">Poore business ka khulasa — TCL System sheet se live.</p>
+        <div class="adm-stats">
+          ${stat('Total Clients', s.totalClients, '', s.pendingClients ? s.pendingClients + ' approval ke intezar me' : 'Active clients')}
+          ${stat('Expense', rs(s.expense), 'red')}
+          ${stat('Courier Payment Received', rs(s.courierReceived), 'green')}
+          ${stat('Payment Settled', rs(s.settled), 'gold', 'Clients ko diya gaya')}
+          ${stat('Unsettled Payment', rs(s.unsettled), 'red', 'Clients ko abhi dena hai')}
+          ${stat('Courier Unsettled Payment', s.courierUnsettled == null ? '—' : rs(s.courierUnsettled), '', 'Courier API connect hone par')}
+          ${stat('Remaining Amount', signed(s.remaining), 'gold', 'Received − Settled − Expense')}
+          ${stat('Profit / Loss', s.profitLoss == null ? '—' : signed(s.profitLoss), 'green', 'Formula aap batayenge')}
+        </div>
+        <div class="adm-card"><h3>Recent Invoices</h3><div class="adm-table-wrap">
+          ${table(['Invoice', 'Client', 'Courier', 'Date', {t:'Amount', num:1}, 'Status'],
+            d.recentInvoices.map(i => `<tr><td>${esc(i['Invoice No'] || i.ID)}</td><td>${esc(i.Client)}</td><td>${esc(i.Courier)}</td><td>${esc(i['Invoice Date'])}</td><td class="num">${rs(i.Amount)}</td><td>${statusPill(i.Status)}</td></tr>`),
+            'Abhi koi invoice upload nahi hui.')}
+        </div></div>`;
+    },
+
+    /* ---------- Payment Settled ---------- */
+    async payments(main){
+      const d = await admLoad('admin_payments');
+      main.innerHTML = `
+        <h2>Payment Settled</h2><p class="adm-sub">Kis client ka kitna paisa baqi hai, aur courier se kitna aaya.</p>
+        <div class="adm-card"><h3>Pending — clients ko dena hai</h3><div class="adm-table-wrap">
+          ${table(['Client', 'Bank Account', 'Invoices', {t:'Pending', num:1}, ''],
+            d.pending.map(p => `<tr><td><b>${esc(p.client)}</b><br><small>${esc(p.id)}</small></td><td>${esc(p.bank) || '<span class="pill-s bad">Bank detail nahi</span>'}</td>
+              <td>${p.invoices.map(i => esc(i.invoiceNo || i.id)).join(', ')}</td><td class="num"><b>${rs(p.amount)}</b></td>
+              <td><button class="btn btn-gold adm-mini" data-settle="${esc(p.id)}">Settle</button></td></tr>`),
+            'Kisi client ki payment pending nahi.')}
+        </div></div>
+        <div class="adm-card" id="settleBox" style="display:none"></div>
+        <div class="adm-card"><h3>Courier se payment aayi (CPR)</h3>
+          <div class="adm-form">
+            <div><label>Date</label><input class="input" type="date" id="cpDate" value="${today()}"></div>
+            <div><label>Courier</label>${courierSelect('cpCourier')}</div>
+            <div><label>Client (optional)</label>${clientSelect('cpClient', d.clients, '— Sab / koi nahi —')}</div>
+            <div><label>Amount (Rs)</label><input class="input" type="number" min="0" step="any" id="cpAmount"></div>
+            <div><label>CPR / Reference</label><input class="input" id="cpRef"></div>
+            <div><button class="btn btn-navy" id="cpAdd">Add</button></div>
+          </div>
+        </div>
+        <div class="adm-card"><h3>Settlement History</h3><div class="adm-table-wrap">
+          ${table(['Date', 'Client', 'Method', 'Reference', 'Invoices', {t:'Amount', num:1}],
+            d.settlements.map(s => `<tr><td>${esc(s.Date)}</td><td>${esc(s.Client)}</td><td>${esc(s.Method)}</td><td>${esc(s.Reference)}</td><td>${esc(s.Invoices)}</td><td class="num">${rs(s.Amount)}</td></tr>`),
+            'Abhi koi settlement nahi.')}
+        </div></div>
+        <div class="adm-card"><h3>Courier Payments History</h3><div class="adm-table-wrap">
+          ${table(['Date', 'Courier', 'Client', 'CPR / Reference', {t:'Amount', num:1}],
+            d.courierPayments.map(c => `<tr><td>${esc(c.Date)}</td><td>${esc(c.Courier)}</td><td>${esc(c.Client) || '—'}</td><td>${esc(c['CPR / Reference'])}</td><td class="num">${rs(c.Amount)}</td></tr>`),
+            'Abhi koi courier payment record nahi.')}
+        </div></div>`;
+      main.querySelectorAll('[data-settle]').forEach(b => b.onclick = () => showSettle(d.pending.find(p => p.id === b.dataset.settle)));
+      document.getElementById('cpAdd').onclick = async e => {
+        busy(e.target, true);
+        const r = await admCall('admin_courier_payment_add', {date:val('cpDate'), courier:val('cpCourier'), clientId:val('cpClient'), amount:val('cpAmount'), reference:val('cpRef')}, 'Courier payment add ho gayi.');
+        busy(e.target, false); if(r) admGo('payments');
+      };
+    },
+
+    /* ---------- Clients ---------- */
+    async clients(main){
+      const d = await admLoad('admin_clients');
+      const order = {Pending:0, Active:1, Inactive:2};
+      const list = d.clients.sort((a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3));
+      main.innerHTML = `
+        <h2>Clients</h2><p class="adm-sub">${list.filter(c => c.status === 'Active').length} active · ${list.filter(c => c.status === 'Pending').length} pending approval</p>
+        <div class="adm-tabs">
+          <button class="btn btn-navy adm-mini" data-filter="all">Sab</button>
+          <button class="btn btn-light adm-mini" data-filter="Active">Active</button>
+          <button class="btn btn-light adm-mini" data-filter="Pending">Pending</button>
+          <button class="btn btn-light adm-mini" data-filter="Inactive">Inactive</button>
+        </div>
+        <div class="adm-card"><div class="adm-table-wrap">
+          ${table(['Client', 'Contact', 'Orders/Day', 'Bank Account', 'Courier API', {t:'Pending', num:1}, 'Status', ''],
+            list.map(c => `<tr data-status="${esc(c.status)}">
+              <td><b>${esc(c.brand || '—')}</b><br>${esc(c.name)}<br><small>${esc(c.id)} · ${esc(c.created)}</small></td>
+              <td>${esc(c.email)}<br>${esc(c.phone)}<br>${esc(c.city)}</td>
+              <td>${esc(c.ordersPerDay) || '—'}</td>
+              <td>${c.accountNumber ? `${esc(c.bankName)}<br>${esc(c.accountTitle)}<br><small>${esc(c.accountNumber)}</small>` : '<span class="pill-s bad">Nahi</span>'}</td>
+              <td>${c.couriers.length ? c.couriers.map(a => `${esc(a.courier)}: ${statusPill(a.status)}`).join('<br>') : '—'}</td>
+              <td class="num">${rs(c.pending)}</td>
+              <td>${statusPill(c.status)}</td>
+              <td style="white-space:nowrap">
+                ${c.status !== 'Active' ? `<button class="btn btn-gold adm-mini" data-act="${esc(c.id)}" data-to="Active">Approve</button>` : `<button class="btn btn-light adm-mini" data-act="${esc(c.id)}" data-to="Inactive">Band karein</button>`}
+                <button class="btn btn-light adm-mini" data-edit="${esc(c.id)}">Bank</button>
+              </td></tr>`),
+            'Abhi koi client nahi. "Become a Merchant" form se clients yahan aayenge.')}
+        </div></div>
+        <div class="adm-card" id="bankBox" style="display:none"></div>`;
+      main.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => {
+        main.querySelectorAll('[data-filter]').forEach(x => x.className = 'btn adm-mini ' + (x === b ? 'btn-navy' : 'btn-light'));
+        main.querySelectorAll('tr[data-status]').forEach(tr => tr.style.display = b.dataset.filter === 'all' || tr.dataset.status === b.dataset.filter ? '' : 'none');
+      });
+      main.querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {
+        busy(b, true);
+        const r = await admCall('admin_client_update', {id:b.dataset.act, status:b.dataset.to}, b.dataset.to === 'Active' ? 'Client approve ho gaya.' : 'Client band kar diya gaya.');
+        busy(b, false); if(r) admGo('clients');
+      });
+      main.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
+        const c = list.find(x => x.id === b.dataset.edit), box = document.getElementById('bankBox');
+        box.style.display = '';
+        box.innerHTML = `<h3>Bank Details — ${esc(c.brand || c.name)}</h3><div class="adm-form">
+          <div><label>Bank Name</label><input class="input" id="bkName" value="${esc(c.bankName)}"></div>
+          <div><label>Account Title</label><input class="input" id="bkTitle" value="${esc(c.accountTitle)}"></div>
+          <div><label>Account Number / IBAN</label><input class="input" id="bkNum" value="${esc(c.accountNumber)}"></div>
+          <div><button class="btn btn-navy" id="bkSave">Save</button></div></div>`;
+        box.scrollIntoView({behavior:'smooth'});
+        document.getElementById('bkSave').onclick = async e => {
+          busy(e.target, true);
+          const r = await admCall('admin_client_update', {id:c.id, bankName:val('bkName'), accountTitle:val('bkTitle'), accountNumber:val('bkNum')}, 'Bank details save ho gayi.');
+          busy(e.target, false); if(r) admGo('clients');
+        };
+      });
+    },
+
+    /* ---------- Invoice Distribute ---------- */
+    async invoices(main){
+      const d = await admLoad('admin_invoices');
+      main.innerHTML = `
+        <h2>Invoice Distribute</h2><p class="adm-sub">Courier ki PDF invoice upload karein — wo seedha us client ke portal me chali jayegi.</p>
+        <div class="adm-card"><h3>Nayi Invoice Upload</h3>
+          ${d.clients.length ? '' : '<div class="adm-note">Pehle Clients me kisi client ko Approve karein.</div>'}
+          <div class="adm-form">
+            <div><label>Client</label>${clientSelect('invClient', d.clients)}</div>
+            <div><label>Courier</label>${courierSelect('invCourier')}</div>
+            <div><label>Invoice / CPR No</label><input class="input" id="invNo"></div>
+            <div><label>Invoice Date</label><input class="input" type="date" id="invDate" value="${today()}"></div>
+            <div><label>Client ko dena hai (Rs)</label><input class="input" type="number" min="0" step="any" id="invAmount"></div>
+            <div><label>PDF File</label><input class="input" type="file" accept="application/pdf,.pdf" id="invFile"></div>
+            <div><button class="btn btn-gold" id="invUpload">Upload & Send</button></div>
+          </div>
+        </div>
+        <div class="adm-card"><h3>Sab Invoices</h3><div class="adm-table-wrap">
+          ${table(['Invoice', 'Client', 'Courier', 'Date', {t:'Amount', num:1}, 'Status', 'PDF'],
+            d.invoices.map(i => `<tr><td>${esc(i['Invoice No'] || '—')}<br><small>${esc(i.ID)}</small></td><td>${esc(i.Client)}</td><td>${esc(i.Courier)}</td><td>${esc(i['Invoice Date'])}</td><td class="num">${rs(i.Amount)}</td><td>${statusPill(i.Status)}</td>
+              <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(i.File) ? `<a class="adm-link" href="${esc(i.File)}" target="_blank" rel="noopener">Open</a>` : '—'}</td></tr>`),
+            'Abhi koi invoice upload nahi hui.')}
+        </div></div>`;
+      document.getElementById('invUpload').onclick = async e => {
+        const file = document.getElementById('invFile').files[0];
+        if(!val('invClient')){ toast('Client chunein.'); return; }
+        if(!file){ toast('PDF file chunein.'); return; }
+        if(file.size > 10*1024*1024){ toast(ADMIN_ERRORS.file_too_big); return; }
+        busy(e.target, true, 'Uploading…');
+        const fileBase64 = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.onerror = no; fr.readAsDataURL(file); });
+        const r = await admCall('admin_invoice_upload', {clientId:val('invClient'), courier:val('invCourier'), invoiceNo:val('invNo'), invoiceDate:val('invDate'), amount:val('invAmount'), fileBase64}, 'Invoice client ke portal me bhej di gayi.');
+        busy(e.target, false, 'Upload & Send'); if(r) admGo('invoices');
+      };
+    },
+
+    /* ---------- Expense ---------- */
+    async expenses(main){
+      const d = await admLoad('admin_expenses');
+      const total = d.expenses.reduce((t, x) => t + Number(x.Amount || 0), 0);
+      main.innerHTML = `
+        <h2>Expense</h2><p class="adm-sub">Kul kharcha: <b>${rs(total)}</b></p>
+        <div class="adm-card"><h3>Naya Expense</h3>
+          <div class="adm-form">
+            <div><label>Date</label><input class="input" type="date" id="exDate" value="${today()}"></div>
+            <div><label>Category</label><select class="input" id="exCat">${['Rent','Salary','Fuel','Packing','Utility Bills','Marketing','Office','Other'].map(c => `<option>${c}</option>`).join('')}</select></div>
+            <div style="grid-column:span 2"><label>Description</label><input class="input" id="exDesc" placeholder="Kis cheez ka kharcha"></div>
+            <div><label>Amount (Rs)</label><input class="input" type="number" min="0" step="any" id="exAmount"></div>
+            <div><button class="btn btn-navy" id="exAdd">Add Expense</button></div>
+          </div>
+        </div>
+        <div class="adm-card"><div class="adm-table-wrap">
+          ${table(['Date', 'Category', 'Description', {t:'Amount', num:1}, ''],
+            d.expenses.map(x => `<tr><td>${esc(x.Date)}</td><td>${esc(x.Category)}</td><td>${esc(x.Description)}</td><td class="num">${rs(x.Amount)}</td>
+              <td><button class="btn btn-light adm-mini" data-del="${esc(x.ID)}">Delete</button></td></tr>`),
+            'Abhi koi expense nahi.')}
+        </div></div>`;
+      document.getElementById('exAdd').onclick = async e => {
+        busy(e.target, true);
+        const r = await admCall('admin_expense_add', {date:val('exDate'), category:val('exCat'), description:val('exDesc'), amount:val('exAmount')}, 'Expense add ho gaya.');
+        busy(e.target, false); if(r) admGo('expenses');
+      };
+      main.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
+        if(b.dataset.confirm !== '1'){ b.dataset.confirm = '1'; b.textContent = 'Pakka?'; b.className = 'btn btn-gold adm-mini'; return; }
+        busy(b, true);
+        const r = await admCall('admin_expense_delete', {id:b.dataset.del}, 'Expense delete ho gaya.');
+        if(r) admGo('expenses'); else busy(b, false);
+      });
+    },
+
+    /* ---------- Courier API ---------- */
+    async api(main){
+      const d = await admLoad('admin_api');
+      main.innerHTML = `
+        <h2>Courier API</h2><p class="adm-sub">Har client ke PostEx / CityLine account ki API token yahan lagayen — TCL System us account se jud jayega.</p>
+        <div class="adm-note">PostEx: merchant portal se API token len (ya PostEx representative se). CityLine ki API documentation abhi nahi mili — token save ho jayega, connection CityLine ke docs milne par banega.</div>
+        <div class="adm-card"><h3>Token Lagayen</h3>
+          <div class="adm-form">
+            <div><label>Client</label>${clientSelect('apiClient', d.clients)}</div>
+            <div><label>Courier</label>${courierSelect('apiCourier')}</div>
+            <div style="grid-column:span 2"><label>API Token</label><input class="input" id="apiToken" autocomplete="off" placeholder="Token paste karein"></div>
+            <div><button class="btn btn-gold" id="apiSave">Save & Test</button></div>
+          </div>
+        </div>
+        <div class="adm-card"><div class="adm-table-wrap">
+          ${table(['Client', 'Courier', 'Token', 'Status', 'Last Checked', ''],
+            d.accounts.map(a => `<tr><td>${esc(a.client)}<br><small>${esc(a.clientId)}</small></td><td>${esc(a.courier)}</td><td>${esc(a.token)}</td><td>${statusPill(a.status)}</td><td>${esc(a.lastChecked) || '—'}</td>
+              <td><button class="btn btn-light adm-mini" data-test="${esc(a.clientId)}" data-courier="${esc(a.courier)}">Test</button></td></tr>`),
+            'Abhi koi courier account nahi juda.')}
+        </div></div>`;
+      document.getElementById('apiSave').onclick = async e => {
+        if(!val('apiClient')){ toast('Client chunein.'); return; }
+        busy(e.target, true, 'Testing…');
+        const r = await admCall('admin_api_save', {clientId:val('apiClient'), courier:val('apiCourier'), apiToken:val('apiToken')});
+        busy(e.target, false, 'Save & Test');
+        if(r){ toast('Status: ' + r.status); admGo('api'); }
+      };
+      main.querySelectorAll('[data-test]').forEach(b => b.onclick = async () => {
+        busy(b, true, '…');
+        const r = await admCall('admin_api_test', {clientId:b.dataset.test, courier:b.dataset.courier});
+        if(r){ toast('Status: ' + r.status); admGo('api'); } else busy(b, false, 'Test');
+      });
+    }
+  };
+
+  function showSettle(p){
+    const box = document.getElementById('settleBox');
+    box.style.display = '';
+    box.innerHTML = `<h3>Settle — ${esc(p.client)}</h3>
+      <p class="adm-sub">${p.bank ? 'Bank: ' + esc(p.bank) : 'Is client ki bank detail nahi — Clients me add karein.'}</p>
+      <div style="margin-bottom:12px">${p.invoices.map(i => `<label style="display:block;margin:4px 0"><input type="checkbox" class="stInv" value="${esc(i.id)}" data-amount="${Number(i.amount)||0}" checked> ${esc(i.invoiceNo || i.id)} · ${esc(i.date)} · ${rs(i.amount)}</label>`).join('')}</div>
+      <div class="adm-form">
+        <div><label>Date</label><input class="input" type="date" id="stDate" value="${today()}"></div>
+        <div><label>Amount (Rs)</label><input class="input" type="number" min="0" step="any" id="stAmount" value="${p.amount}"></div>
+        <div><label>Method</label><select class="input" id="stMethod"><option>Bank Transfer</option><option>Cash</option><option>JazzCash</option><option>EasyPaisa</option><option>Cheque</option></select></div>
+        <div><label>Reference / TID</label><input class="input" id="stRef"></div>
+        <div><button class="btn btn-gold" id="stSave">Mark Settled</button></div>
+      </div>`;
+    box.querySelectorAll('.stInv').forEach(c => c.onchange = () => {
+      document.getElementById('stAmount').value = [...box.querySelectorAll('.stInv:checked')].reduce((t, x) => t + Number(x.dataset.amount), 0);
+    });
+    box.scrollIntoView({behavior:'smooth'});
+    document.getElementById('stSave').onclick = async e => {
+      busy(e.target, true);
+      const invoiceIds = [...box.querySelectorAll('.stInv:checked')].map(x => x.value);
+      const r = await admCall('admin_settle', {clientId:p.id, date:val('stDate'), amount:val('stAmount'), method:val('stMethod'), reference:val('stRef'), invoiceIds}, 'Payment settle ho gayi.');
+      busy(e.target, false); if(r) admGo('payments');
+    };
+  }
+
+  /* ---------- client portal: own invoices ---------- */
+  async function loadClientInvoices(){
+    const box = document.getElementById('myInvoices');
+    try{
+      const r = await authApi('client_invoices');
+      if(!r.ok) return;
+      box.innerHTML = table(['Invoice', 'Courier', 'Date', {t:'Amount', num:1}, 'Status', 'PDF'],
+        r.invoices.map(i => `<tr><td>${esc(i.invoiceNo || i.id)}</td><td>${esc(i.courier)}</td><td>${esc(i.date)}</td><td class="num">${rs(i.amount)}</td><td>${statusPill(i.status)}</td>
+          <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(i.file) ? `<a class="adm-link" href="${esc(i.file)}" target="_blank" rel="noopener">Download</a>` : '—'}</td></tr>`),
+        'Abhi aapki koi invoice nahi aayi.');
+    }catch(err){ box.innerHTML = '<p class="adm-empty">Invoices load nahi ho sakin.</p>'; }
+  }
 </script>
 </body>
 </html>
