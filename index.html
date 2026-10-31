@@ -804,8 +804,6 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
   /* ---------- business contact details (update with real info) ---------- */
   const CONTACT = {
@@ -835,31 +833,42 @@
     toast('Shukriya! WhatsApp par apni details bhej dein.');
   }
 
-  /* ---------- login / logout (Firebase email + password) ---------- */
-  // Firebase console > Project settings > Your apps > Web app config. These values are public, not secrets.
-  const FIREBASE_CONFIG = null; // TODO: paste { apiKey, authDomain, projectId, appId, ... }
-  const auth = FIREBASE_CONFIG ? (firebase.initializeApp(FIREBASE_CONFIG), firebase.auth()) : null;
+  /* ---------- login / logout (TCL System Google Sheet via Apps Script) ---------- */
+  // Apps Script > Deploy > Web app URL (see D:\TCL\apps-script\Code.gs). Public URL, not a secret.
+  const LOGIN_API = ''; // TODO: paste https://script.google.com/macros/s/.../exec
+  const SESSION_KEY = 'tclSession';
 
   function loginMsg(text, ok){
     const m = document.getElementById('loginMsg');
     m.textContent = text; m.classList.toggle('ok', !!ok); m.classList.toggle('hidden', !text);
   }
   const LOGIN_ERRORS = {
-    'auth/invalid-credential': 'Email ya password ghalat hai.',
-    'auth/wrong-password': 'Email ya password ghalat hai.',
-    'auth/user-not-found': 'Is email ka koi account nahi mila.',
-    'auth/invalid-email': 'Email sahi likhein.',
-    'auth/user-disabled': 'Yeh account band kar diya gaya hai. Trust Courier se rabta karein.',
-    'auth/too-many-requests': 'Bohat zyada koshishen ho gayi hain. Thori der baad try karein.',
-    'auth/network-request-failed': 'Internet connection check karein.'
+    invalid: 'Email ya password ghalat hai.',
+    missing: 'Email aur password dono likhein.',
+    inactive: 'Yeh account band hai. Trust Courier se rabta karein.',
+    locked: 'Bohat zyada ghalat koshishen. 15 minute baad try karein.',
+    expired: 'Session khatam ho gaya, dobara login karein.'
   };
-  const loginError = err => LOGIN_ERRORS[err.code] || 'Login nahi ho saka. Dobara try karein.';
+
+  // text/plain keeps the request "simple", so Apps Script doesn't need a CORS preflight
+  async function loginApi(body){
+    const res = await fetch(LOGIN_API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body)});
+    return res.json();
+  }
+  function savedSession(){
+    try{ return JSON.parse(localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY) || 'null'); }
+    catch(e){ return null; }
+  }
+  function clearSession(){
+    try{ localStorage.removeItem(SESSION_KEY); sessionStorage.removeItem(SESSION_KEY); }catch(e){}
+  }
 
   function enterApp(user){
-    const name = user.displayName || user.email.split('@')[0];
+    const name = user.business || user.name || user.email.split('@')[0];
     document.querySelectorAll('.mName').forEach(el=>el.textContent=name);
-    document.getElementById('ddName').textContent = name;
-    document.getElementById('ddEmail').textContent = user.email;
+    document.getElementById('ddName').textContent = name + (user.role === 'Admin' ? ' (Admin)' : '');
+    document.getElementById('ddEmail').textContent = user.id + ' · ' + user.email;
+    document.getElementById('app').dataset.role = user.role;
     document.getElementById('site').classList.add('hidden');
     document.getElementById('login').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
@@ -868,41 +877,43 @@
   }
   async function doLogin(e){
     e.preventDefault();
-    if(!auth){ loginMsg('Merchant login abhi setup ho raha hai. WhatsApp par rabta karein.'); return; }
+    if(!LOGIN_API){ loginMsg('Merchant login abhi setup ho raha hai. WhatsApp par rabta karein.'); return; }
     const btn = document.getElementById('loginBtn');
     btn.disabled = true; btn.textContent = 'LOGGING IN…'; loginMsg('');
     try{
-      const remember = document.getElementById('loginRemember').checked;
-      await auth.setPersistence(remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION);
-      const cred = await auth.signInWithEmailAndPassword(
-        document.getElementById('loginUser').value.trim(), document.getElementById('loginPass').value);
+      const r = await loginApi({action:'login', email:document.getElementById('loginUser').value.trim(), password:document.getElementById('loginPass').value});
+      if(!r.ok){ loginMsg(LOGIN_ERRORS[r.error] || 'Login nahi ho saka. Dobara try karein.'); return; }
       document.getElementById('loginPass').value = '';
-      enterApp(cred.user);
+      try{
+        const store = document.getElementById('loginRemember').checked ? localStorage : sessionStorage;
+        store.setItem(SESSION_KEY, JSON.stringify({token:r.token, user:r.user}));
+      }catch(err){}
+      enterApp(r.user);
     }catch(err){
-      loginMsg(loginError(err));
+      loginMsg('Internet connection check karein, phir dobara try karein.');
     }finally{
       btn.disabled = false; btn.textContent = 'LOGIN';
     }
   }
-  async function forgotPassword(){
-    if(!auth){ loginMsg('Merchant login abhi setup ho raha hai. WhatsApp par rabta karein.'); return; }
+  function forgotPassword(){
     const email = document.getElementById('loginUser').value.trim();
-    if(!email){ loginMsg('Pehle upar apna email likhein, phir "Forgot password?" dabayein.'); return; }
-    try{
-      await auth.sendPasswordResetEmail(email);
-      loginMsg('Password reset ka link aapke email par bhej diya gaya hai.', true);
-    }catch(err){
-      loginMsg(loginError(err));
-    }
+    window.open(waLink('Assalam o Alaikum Trust Courier, mera merchant portal ka password reset kar dein.' + (email ? '\nEmail: ' + email : '')),'_blank','noopener');
   }
   function logout(){
-    if(auth) auth.signOut();
+    clearSession();
     document.getElementById('app').classList.add('hidden');
     showSite();
   }
-  function showLogin(){
-    // already signed in (remember me) → straight to the portal
-    if(auth && auth.currentUser){ enterApp(auth.currentUser); return; }
+  async function showLogin(){
+    // remembered session → re-check with the sheet (user may have been set Inactive), then straight to the portal
+    const s = LOGIN_API && savedSession();
+    if(s){
+      try{
+        const r = await loginApi({action:'session', token:s.token});
+        if(r.ok){ enterApp(r.user); return; }
+        clearSession();
+      }catch(err){ enterApp(s.user); return; }
+    }
     loginMsg('');
     document.getElementById('site').classList.add('hidden');
     document.getElementById('login').classList.remove('hidden');
