@@ -566,7 +566,8 @@
         <div class="w-form-row"><input class="input" id="mPhone" type="tel" placeholder="Phone Number" required><input class="input" id="mCity" placeholder="City"></div>
         <select class="input" id="mOrders"><option value="">Orders per day</option><option>1 – 20</option><option>20 – 100</option><option>100+</option></select>
         <textarea class="input" id="mMsg" rows="3" placeholder="Message (optional)"></textarea>
-        <button class="w-btn w-btn-gold w-btn-lg" style="width:100%">Submit on WhatsApp</button>
+        <div class="w-form-row"><input class="input" id="mEmail" type="email" placeholder="Email (login ke liye)" autocomplete="email" required><input class="input" id="mPass" type="password" placeholder="Password (kam az kam 8)" minlength="8" autocomplete="new-password" required></div>
+        <button class="w-btn w-btn-gold w-btn-lg" style="width:100%" id="mSubmit">Create Merchant Account</button>
       </form>
     </div>
   </div>
@@ -820,17 +821,39 @@
   document.querySelectorAll('.js-wa').forEach(a=>a.href=waLink('Assalam o Alaikum Trust Courier, mujhe aap ki services ke baare mein maloomat chahiye.'));
   document.getElementById('wYear').textContent = new Date().getFullYear();
 
-  function merchantSignup(e){
+  const SIGNUP_ERRORS = {
+    exists: 'Is email se account pehle se bana hua hai. Login karein.',
+    bad_email: 'Email sahi likhein.',
+    short_password: 'Password kam az kam 8 characters ka ho.',
+    missing: 'Name, Brand, Phone aur Email zaroori hain.'
+  };
+  async function merchantSignup(e){
     e.preventDefault();
     const v = id => document.getElementById(id).value.trim();
-    const lines = ['Assalam o Alaikum Trust Courier, mein merchant account banana chahta/chahti hoon.',
-      'Name: '+v('mName'), 'Brand / Store: '+v('mBrand'), 'Phone: '+v('mPhone')];
-    if(v('mCity')) lines.push('City: '+v('mCity'));
-    if(v('mOrders')) lines.push('Orders per day: '+v('mOrders'));
-    if(v('mMsg')) lines.push('Message: '+v('mMsg'));
-    window.open(waLink(lines.join('\n')),'_blank','noopener');
-    e.target.reset();
-    toast('Shukriya! WhatsApp par apni details bhej dein.');
+    if(!LOGIN_API){
+      const lines = ['Assalam o Alaikum Trust Courier, mein merchant account banana chahta/chahti hoon.',
+        'Name: '+v('mName'), 'Brand / Store: '+v('mBrand'), 'Phone: '+v('mPhone'), 'Email: '+v('mEmail')];
+      if(v('mCity')) lines.push('City: '+v('mCity'));
+      if(v('mOrders')) lines.push('Orders per day: '+v('mOrders'));
+      if(v('mMsg')) lines.push('Message: '+v('mMsg'));
+      window.open(waLink(lines.join('\n')),'_blank','noopener');
+      e.target.reset();
+      toast('Shukriya! WhatsApp par apni details bhej dein.');
+      return;
+    }
+    const btn = document.getElementById('mSubmit');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+    try{
+      const r = await loginApi({action:'register', name:v('mName'), brand:v('mBrand'), phone:v('mPhone'), city:v('mCity'),
+        orders:v('mOrders'), message:v('mMsg'), email:v('mEmail'), password:document.getElementById('mPass').value});
+      if(!r.ok){ toast(SIGNUP_ERRORS[r.error] || 'Account nahi ban saka. Dobara try karein.'); return; }
+      e.target.reset();
+      toast('Shukriya! Aapka account review ho raha hai. Approve hote hi aap Login kar sakenge.');
+    }catch(err){
+      toast('Internet connection check karein, phir dobara try karein.');
+    }finally{
+      btn.disabled = false; btn.textContent = 'Create Merchant Account';
+    }
   }
 
   /* ---------- login / logout (TCL System Google Sheet via Apps Script) ---------- */
@@ -846,6 +869,7 @@
     invalid: 'Email ya password ghalat hai.',
     missing: 'Email aur password dono likhein.',
     inactive: 'Yeh account band hai. Trust Courier se rabta karein.',
+    pending: 'Aapka account abhi review me hai. Approve hote hi login ho sakega.',
     locked: 'Bohat zyada ghalat koshishen. 15 minute baad try karein.',
     expired: 'Session khatam ho gaya, dobara login karein.'
   };
