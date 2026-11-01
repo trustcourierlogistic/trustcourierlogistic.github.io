@@ -442,10 +442,19 @@
   .adm-link{color:var(--blue);font-weight:600}
   .adm-mini{padding:6px 10px!important;font-size:12px!important}
   .adm-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .cd-info{margin:14px 0 18px}
+  .cd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .cd-grid small{display:block;color:var(--muted);font-size:12px;font-weight:600}
+  .cd-grid b{color:var(--navy);word-break:break-word}
+  .cd-sync{color:var(--muted)}
+  #app .adm-stats{grid-template-columns:repeat(3,1fr)}
+  @media (max-width:800px){ #app .adm-stats{grid-template-columns:1fr 1fr} }
   .adm-gen{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-left:5px solid var(--gold)}
   .adm-gen h3{margin-bottom:4px}
   .adm-gen .btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
   .adm-num{width:110px;padding:8px 10px!important;text-align:right}
+  .adm-tok{width:170px;padding:7px 10px!important;font-size:12px!important;display:block}
+  .adm-tok+.adm-tok{margin-top:6px}
   .adm-note{background:#fff8e6;border:1px dashed var(--gold);color:#7a5a06;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px}
   @media (max-width:1100px){ .adm-stats{grid-template-columns:repeat(2,1fr)} }
   @media (max-width:800px){
@@ -844,59 +853,16 @@
   <main>
     <!-- ============ DASHBOARD ============ -->
     <section id="page-dashboard">
+      <p class="welcome">Welcome, <b class="mName"></b>!</p>
+      <div class="card cd-info" id="cdInfo"><p class="adm-empty">Loading…</p></div>
+      <div class="adm-stats" id="cdStats"></div>
+      <div class="card" style="margin-bottom:22px">
+        <div class="card-head"><h3>My Orders</h3><small class="cd-sync" id="cdSync"></small></div>
+        <div id="cdOrders" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
+      </div>
       <div class="card" style="margin-bottom:22px">
         <div class="card-head"><h3>My Invoices</h3></div>
         <div id="myInvoices" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
-      </div>
-      <div class="sample-note">Neeche wale charts aur figures abhi sample hain — courier API connect hone par aapka asli data yahan aayega.</div>
-      <p class="welcome">Welcome, <b class="mName">Twisty Mart</b>!</p>
-
-      <div class="grid g-2eq">
-        <div class="card">
-          <div class="card-head"><h3>Cash On Delivery</h3>
-            <select class="range"><option>7 DAYS</option><option>15 DAYS</option><option>30 DAYS</option></select></div>
-          <div class="big">144,152.00 <span class="pill">48 orders</span></div>
-          <div class="card-foot"><span><b>205</b> orders pending</span><a href="#" class="link" data-go="Settlement Logs">VIEW</a></div>
-        </div>
-
-        <div class="card">
-          <div class="card-head"><h3>Unsettled Amount</h3>
-            <select class="range"><option>7 DAYS</option><option>15 DAYS</option><option>30 DAYS</option></select></div>
-          <div class="big">47,672.00 <span class="pill" style="background:#fde8e7;color:var(--red)">22 orders</span></div>
-          <div class="card-foot"><span><b>22</b> orders unsettled</span><a href="#" class="link" data-go="Settlement Logs">VIEW</a></div>
-        </div>
-      </div>
-
-      <div class="grid" style="margin-top:22px">
-        <div class="card">
-          <div class="card-head"><h3>Delivered Orders</h3>
-            <select class="range"><option>7 DAYS</option><option>15 DAYS</option><option>30 DAYS</option></select></div>
-          <div class="legend"><span><i style="background:var(--gold)"></i>Delivered</span><span><i style="background:var(--navy)"></i>Booked</span></div>
-          <div class="chart-wrap" id="lineChart"></div>
-        </div>
-      </div>
-
-      <div class="grid g-2b" style="margin-top:22px">
-        <div class="card">
-          <div class="card-head"><h3>Total Orders</h3>
-            <select class="range"><option>7 DAYS</option><option>15 DAYS</option><option>30 DAYS</option></select></div>
-          <div class="status-grid" id="statusGrid"></div>
-        </div>
-        <div class="card">
-          <div class="donuts">
-            <div class="donut-box"><h4>Successful Orders</h4><div class="donut" id="donutS"></div><p class="pct">48 delivered of 267 total</p></div>
-            <div class="donut-box"><h4>Return Orders</h4><div class="donut" id="donutR"></div><p class="pct">6 returned of 267 total</p></div>
-          </div>
-          <div class="bars">
-            <h4 style="color:var(--navy);margin-bottom:14px;font-size:16px">Booked Orders</h4>
-            <div class="bar-row"><div class="bl"><span>Booked</span><b>267</b></div><div class="bar"><i style="width:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold-2))"></i></div></div>
-            <div class="bar-row"><div class="bl"><span>Unbooked</span><b>0</b></div><div class="bar"><i style="width:1%;background:var(--red)"></i></div></div>
-            <h4 style="color:var(--navy);margin:22px 0 14px;font-size:16px">Top Destination Cities</h4>
-            <div class="bar-row"><div class="bl"><span>Karachi</span><b>84</b></div><div class="bar"><i style="width:84%;background:var(--navy)"></i></div></div>
-            <div class="bar-row"><div class="bl"><span>Lahore</span><b>61</b></div><div class="bar"><i style="width:61%;background:var(--navy-2)"></i></div></div>
-            <div class="bar-row"><div class="bl"><span>Islamabad</span><b>39</b></div><div class="bar"><i style="width:39%;background:var(--gold)"></i></div></div>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -1034,6 +1000,7 @@
     document.getElementById('login').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     go('dashboard');
+    loadClientDashboard();
     loadClientInvoices();
     window.scrollTo(0,0);
   }
@@ -1296,38 +1263,6 @@
       <h3>${page}</h3><p>Is page ka layout yahan aayega. Selected date range ke liye koi record nahi mila.</p></div></div>`;
   }
 
-  /* ---------- dashboard widgets ---------- */
-  const stats = [['Total Orders',267,'var(--navy)'],['Unbooked',0,'var(--red)'],['Booked',0,'var(--navy-2)'],['TCL Warehouse',92,'var(--gold)'],
-    ['Out for Delivery',5,'var(--blue)'],['Delivered',48,'var(--green)'],['Attempted',47,'var(--gold)'],['Out for Return',4,'var(--red)'],['Returned',2,'var(--red)'],
-    ['Delivery Under Review',18,'var(--gold)'],['Transferred',51,'var(--navy-2)'],['Un-assigned by Me',0,'var(--muted)'],['Lost',0,'var(--muted)'],['Stolen',0,'var(--muted)'],['Damage',0,'var(--muted)']];
-  document.getElementById('statusGrid').innerHTML = stats.map(s=>`<div class="stat" style="--accent:${s[2]}" data-go="Order Status Report"><small>${s[0]}</small><b>${s[1]}</b></div>`).join('');
-
-  function donut(el, val, total, color){
-    const r=70, c=2*Math.PI*r, p=val/total;
-    document.getElementById(el).innerHTML = `<svg viewBox="0 0 170 170"><circle cx="85" cy="85" r="${r}" fill="none" stroke="#eef1f8" stroke-width="26"/>
-      <circle cx="85" cy="85" r="${r}" fill="none" stroke="${color}" stroke-width="26" stroke-dasharray="${c*p} ${c}" transform="rotate(-90 85 85)" stroke-linecap="round"/></svg><span>${Math.round(p*100)}%</span>`;
-  }
-  donut('donutS',48,267,'#d4a017');
-  donut('donutR',6,267,'#e0524a');
-
-  (function lineChart(){
-    const labels=['Oct 24','Oct 25','Oct 26','Oct 27','Oct 28','Oct 29','Oct 30','Oct 31'];
-    const delivered=[25,11,10,2,0,0,0,0], booked=[30,22,27,35,41,38,52,12];
-    const W=1200,H=320,pl=40,pr=20,pt=16,pb=36,max=60;
-    const x=i=>pl+i*(W-pl-pr)/(labels.length-1), y=v=>pt+(H-pt-pb)*(1-v/max);
-    const path=d=>d.map((v,i)=>{ if(!i) return `M${x(0)},${y(v)}`; const cx=(x(i-1)+x(i))/2; return `C${cx},${y(d[i-1])} ${cx},${y(v)} ${x(i)},${y(v)}`; }).join(' ');
-    let g='';
-    for(let v=0;v<=max;v+=10) g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#eef1f8"/><text x="${pl-8}" y="${y(v)+4}" font-size="11" fill="#6b7590" text-anchor="end">${v}</text>`;
-    labels.forEach((l,i)=> g+=`<text x="${x(i)}" y="${H-12}" font-size="11" fill="#6b7590" text-anchor="middle">${l}</text>`);
-    const area = path(delivered)+` L${x(labels.length-1)},${y(0)} L${x(0)},${y(0)} Z`;
-    document.getElementById('lineChart').innerHTML = `<svg viewBox="0 0 ${W} ${H}">
-      <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4a017" stop-opacity=".35"/><stop offset="1" stop-color="#d4a017" stop-opacity="0"/></linearGradient></defs>
-      ${g}<path d="${area}" fill="url(#ga)"/>
-      <path d="${path(booked)}" fill="none" stroke="#0d2b6b" stroke-width="2.5" stroke-dasharray="6 5"/>
-      <path d="${path(delivered)}" fill="none" stroke="#d4a017" stroke-width="3"/>
-      ${delivered.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="4.5" fill="#fff" stroke="#d4a017" stroke-width="2.5"><title>${labels[i]}: ${v} delivered</title></circle>`).join('')}
-    </svg>`;
-  })();
 </script>
 <script>
   /* ================= ADMIN PANEL (talks to the TCL System sheet via authApi) ================= */
@@ -1343,7 +1278,7 @@
     bad_status: 'Status sahi nahi.', not_found: 'Record nahi mila.'
   };
   const statusPill = s => {
-    const cls = /^(Active|Settled|Connected)$/.test(s) ? 'ok' : /^(Pending|Unsettled|Not tested|Saved)/.test(s) ? 'warn' : /^(Inactive|Invalid|Error)/.test(s) ? 'bad' : '';
+    const cls = /^(Active|Settled|Connected|Delivered)$/i.test(s) ? 'ok' : /^(Pending|Unsettled|Not tested|Saved)/.test(s) ? 'warn' : /^(Inactive|Invalid|Error|Returned)/i.test(s) ? 'bad' : '';
     return `<span class="pill-s ${cls}">${esc(s || '—')}</span>`;
   };
   const table = (heads, rows, empty) => rows.length
@@ -1395,6 +1330,10 @@
       main.innerHTML = `
         <h2>Dashboard</h2><p class="adm-sub">Poore business ka khulasa — TCL System sheet se live.</p>
         <div class="adm-card adm-gen">
+          <div><h3>Orders Sync</h3><p class="adm-sub" style="margin:0">Har client ke PostEx account se pichle 30 din ke orders us ki sheet me laayen. (Client ke portal kholne par bhi khud update hota hai.)</p></div>
+          <button class="btn btn-navy" id="syncOrd">🔄 Sync Orders</button>
+        </div>
+        <div class="adm-card adm-gen">
           <div><h3>Generate Invoice</h3><p class="adm-sub" style="margin:0">${d.waitingUploads ? `<b>${d.waitingUploads}</b> courier invoice upload hui hain — click karein, har client ki invoice ban kar us ke portal me chali jayegi.` : 'Pehle Invoice Distribute me courier ki invoice upload karein.'}</p></div>
           <button class="btn btn-gold" id="genInv" ${d.waitingUploads ? '' : 'disabled'}>⚡ Generate Invoice</button>
         </div>
@@ -1413,6 +1352,15 @@
             d.recentInvoices.map(i => `<tr><td>${esc(i['Invoice No'] || i.ID)}</td><td>${esc(i.Client)}</td><td>${esc(i.Courier)}</td><td>${esc(i['Invoice Date'])}</td><td class="num">${rs(i.Amount)}</td><td>${statusPill(i.Status)}</td></tr>`),
             'Abhi koi client invoice nahi bani.')}
         </div></div>`;
+      document.getElementById('syncOrd').onclick = async e => {
+        busy(e.target, true, 'Syncing…');
+        const r = await admCall('admin_sync_orders');
+        busy(e.target, false, '🔄 Sync Orders');
+        if(!r) return;
+        const added = r.results.reduce((t, x) => t + (x.added || 0), 0), updated = r.results.reduce((t, x) => t + (x.updated || 0), 0);
+        const failed = r.results.filter(x => x.error), noToken = r.results.filter(x => x.skipped === 'no_token');
+        toast(`${added} naye orders, ${updated} update` + (failed.length ? ` · ${failed.length} client ka token ghalat` : '') + (noToken.length ? ` · ${noToken.length} client ka token nahi laga` : ''));
+      };
       document.getElementById('genInv').onclick = async e => {
         busy(e.target, true, 'Generating…');
         const r = await admCall('admin_generate_invoices', {}, 'Sab clients ki invoices ban gayi.');
@@ -1424,10 +1372,11 @@
     async payments(main){
       const d = await admLoad('admin_payments');
       main.innerHTML = `
-        <h2>Payment Settled</h2><p class="adm-sub">Har client ki invoices aur us ka baqi paisa.</p>
+        <h2>Payment Settled</h2><p class="adm-sub">Har client ke orders, invoices aur us ka baqi paisa.</p>
         <div class="adm-card"><div class="adm-table-wrap">
-          ${table(['Client', 'Bank Account', {t:'Invoices', num:1}, {t:'Unsettled', num:1}, {t:'Pending', num:1}, ''],
+          ${table(['Client', 'Bank Account', {t:'Orders (pending / total)', num:1}, {t:'Invoices', num:1}, {t:'Unsettled', num:1}, {t:'Pending', num:1}, ''],
             d.clients.map(p => `<tr><td><b>${esc(p.client)}</b><br><small>${esc(p.id)}</small></td><td>${esc(p.bank) || '<span class="pill-s bad">Bank detail nahi</span>'}</td>
+              <td class="num">${p.pendingOrders ? `<span class="pill-s warn">${p.pendingOrders}</span>` : '0'} / ${p.totalOrders}</td>
               <td class="num">${p.totalInvoices}</td><td class="num">${p.unsettledInvoices ? `<span class="pill-s warn">${p.unsettledInvoices}</span>` : '0'}</td>
               <td class="num"><b>${rs(p.amount)}</b></td>
               <td>${p.amount > 0 ? `<button class="btn btn-gold adm-mini" data-settle="${esc(p.id)}">Settle</button>` : ''}</td></tr>`),
@@ -1570,14 +1519,16 @@
     async settings(main){
       const d = await admLoad('admin_client_settings');
       main.innerHTML = `
-        <h2>Client Setting</h2><p class="adm-sub">Har client ke parcel par kitne charges kaatne hain. Invoice banate waqt yahi lagenge.</p>
-        <div class="adm-note">Har parcel: <b>GST</b> = Courier Charges × GST % · <b>Govt Tax</b> = (COD − Courier Charges − GST) × Tax % · Client ko milega = COD − Charges − GST − Tax</div>
+        <h2>Client Setting</h2><p class="adm-sub">Har client ke parcel par kitne charges kaatne hain, aur us ke courier account ka token. Orders aur invoice isi se bante hain.</p>
+        <div class="adm-note">Har parcel: <b>GST</b> = Courier Charges × GST % · <b>Govt Tax</b> = (COD − Courier Charges − GST) × Tax % · Client ko milega = COD − Charges − GST − Tax. Returned parcel par COD 0 gina jata hai.</div>
         <div class="adm-card"><div class="adm-table-wrap">
-          ${table(['Client', {t:'Courier Charges (Rs / parcel)', num:1}, {t:'GST %', num:1}, {t:'Govt Tax %', num:1}, 'Misaal: COD Rs 1,000', ''],
-            d.clients.map(c => `<tr data-id="${esc(c.id)}"><td><b>${esc(c.client)}</b><br><small>${esc(c.id)}</small></td>
+          ${table(['Client', {t:'Courier Charges (Rs / parcel)', num:1}, {t:'GST %', num:1}, {t:'Govt Tax %', num:1}, 'Courier Tokens', 'Misaal: COD Rs 1,000', ''],
+            d.clients.map(c => `<tr data-id="${esc(c.id)}"><td><b>${esc(c.client)}</b><br><small>${esc(c.id)}${c.sheet ? ' · Sheet: ' + esc(c.sheet) : ''}${c.lastSync ? '<br>Sync: ' + esc(c.lastSync) : ''}</small></td>
               <td class="num"><input class="input adm-num" type="number" min="0" step="any" data-k="charges" value="${esc(c.charges)}"></td>
               <td class="num"><input class="input adm-num" type="number" min="0" max="100" step="any" data-k="gst" value="${esc(c.gst)}"></td>
               <td class="num"><input class="input adm-num" type="number" min="0" max="100" step="any" data-k="tax" value="${esc(c.tax)}"></td>
+              <td><input class="input adm-tok" data-k="postexToken" autocomplete="off" placeholder="${c.postex ? 'PostEx ' + esc(c.postex) : 'PostEx token'}">
+                <input class="input adm-tok" data-k="citylineToken" autocomplete="off" placeholder="${c.cityline ? 'CityLine ' + esc(c.cityline) : 'CityLine token'}"></td>
               <td class="adm-eg"></td>
               <td><button class="btn btn-navy adm-mini" data-save>Save</button></td></tr>`),
             'Abhi koi active client nahi. Clients me client Approve karein.')}
@@ -1594,8 +1545,10 @@
         tr.querySelector('[data-save]').onclick = async e => {
           const g = k => tr.querySelector(`[data-k="${k}"]`).value;
           busy(e.target, true);
-          await admCall('admin_client_settings_save', {clientId:tr.dataset.id, charges:g('charges'), gst:g('gst'), tax:g('tax')}, 'Setting save ho gayi.');
+          const r = await admCall('admin_client_settings_save', {clientId:tr.dataset.id, charges:g('charges'), gst:g('gst'), tax:g('tax'),
+            postexToken:g('postexToken').trim(), citylineToken:g('citylineToken').trim()}, 'Setting save ho gayi.');
           busy(e.target, false);
+          if(r && (g('postexToken') || g('citylineToken'))) admGo('settings');
         };
       });
     },
@@ -1639,6 +1592,7 @@
     box.style.display = '';
     box.innerHTML = `<h3>Settle — ${esc(p.client)}</h3>
       <p class="adm-sub">${p.bank ? 'Bank: ' + esc(p.bank) : 'Is client ki bank detail nahi — Clients me add karein.'}</p>
+      ${p.pendingOrders ? `<div class="adm-note">${p.pendingOrders} delivered/returned orders bhi client ki sheet me "Settled" ho jayenge.</div>` : ''}
       <div style="margin-bottom:12px">${p.invoices.map(i => `<label style="display:block;margin:4px 0"><input type="checkbox" class="stInv" value="${esc(i.id)}" data-amount="${Number(i.amount)||0}" checked> ${esc(i.invoiceNo || i.id)} · ${esc(i.date)} · ${rs(i.amount)}</label>`).join('')}</div>
       <div class="adm-form">
         <div><label>Date</label><input class="input" type="date" id="stDate" value="${today()}"></div>
@@ -1647,8 +1601,10 @@
         <div><label>Reference / TID</label><input class="input" id="stRef"></div>
         <div><button class="btn btn-gold" id="stSave">Mark Settled</button></div>
       </div>`;
+    // pending orders always settle; unticking an invoice only takes that invoice out of the amount
+    const ordersPart = p.amount - p.invoices.reduce((t, i) => t + (Number(i.amount) || 0), 0);
     box.querySelectorAll('.stInv').forEach(c => c.onchange = () => {
-      document.getElementById('stAmount').value = [...box.querySelectorAll('.stInv:checked')].reduce((t, x) => t + Number(x.dataset.amount), 0);
+      document.getElementById('stAmount').value = Math.round((ordersPart + [...box.querySelectorAll('.stInv:checked')].reduce((t, x) => t + Number(x.dataset.amount), 0)) * 100) / 100;
     });
     box.scrollIntoView({behavior:'smooth'});
     document.getElementById('stSave').onclick = async e => {
@@ -1657,6 +1613,28 @@
       const r = await admCall('admin_settle', {clientId:p.id, date:val('stDate'), amount:val('stAmount'), method:val('stMethod'), reference:val('stRef'), invoiceIds}, 'Payment settle ho gayi.');
       busy(e.target, false); if(r) admGo('payments');
     };
+  }
+
+  /* ---------- client portal: own details, totals and orders from the client's ledger sheet ---------- */
+  async function loadClientDashboard(){
+    const info = document.getElementById('cdInfo'), stats = document.getElementById('cdStats'), list = document.getElementById('cdOrders');
+    try{
+      const r = await authApi('client_dashboard');
+      if(!r.ok){ info.innerHTML = '<p class="adm-empty">Data load nahi ho saka.</p>'; return; }
+      const c = r.client, s = r.summary;
+      const row = (k, v) => `<div><small>${esc(k)}</small><b>${esc(v) || '—'}</b></div>`;
+      info.innerHTML = `<div class="cd-grid">${row('Client', c.brand || c.name)}${row('Client ID', c.id)}${row('Phone', c.phone)}${row('Email', c.email)}
+        ${row('Bank', c.bankName)}${row('Account Title', c.accountTitle)}${row('Account / IBAN', c.accountNumber)}</div>`;
+      const stat = (label, value, cls, note) => `<div class="adm-stat ${cls||''}"><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
+      stats.innerHTML = stat('Total Orders', s.total, '', `${s.inTransit} raste me`) + stat('Delivered', s.delivered, 'green') + stat('Returned', s.returned, 'red')
+        + stat('COD (Delivered)', rs(s.codDelivered), 'gold') + stat('Payment Pending', rs(s.pending), 'red', 'TCL se milna baqi') + stat('Payment Settled', rs(s.settled), 'green', 'Aap ko mil chuka');
+      document.getElementById('cdSync').textContent = r.connected ? (r.lastSync ? 'Last update: ' + r.lastSync : '') : 'Courier account abhi connect nahi hua — TCL se rabta karein.';
+      list.innerHTML = table(['Date', 'Tracking', 'Order Ref', 'City', 'Status', {t:'COD', num:1}, {t:'Charges', num:1}, {t:'GST + Tax', num:1}, {t:'Net', num:1}, 'Payment'],
+        r.orders.map(o => `<tr><td>${esc(o.date)}</td><td>${esc(o.tracking)}</td><td>${esc(o.ref)}</td><td>${esc(o.city)}</td><td>${statusPill(o.status)}</td>
+          <td class="num">${rs(o.cod)}</td><td class="num">${rs(o.charges)}</td><td class="num">${rs(o.gst + o.tax)}</td><td class="num"><b>${rs(o.net)}</b></td>
+          <td>${statusPill(o.payment)}${o.settledDate ? `<br><small>${esc(o.settledDate)}</small>` : ''}</td></tr>`),
+        r.connected ? 'Pichle 30 din me koi order nahi mila.' : 'Orders courier account connect hone ke baad yahan aayenge.');
+    }catch(err){ info.innerHTML = '<p class="adm-empty">Internet check karein.</p>'; }
   }
 
   /* ---------- client portal: own invoices ---------- */
