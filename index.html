@@ -494,6 +494,17 @@
   .adm-mini{padding:6px 10px!important;font-size:12px!important}
   .adm-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
   .pg-note{color:var(--muted);margin-bottom:14px}
+  .ol-filter{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+  .ol-filter .btn{width:100%}
+  @media (max-width:640px){ .ol-filter{grid-template-columns:1fr 1fr} }
+  .awb-pdf{border:2px solid #0d2b6b;margin:0 0 14px;padding:14px;font-family:Segoe UI,Arial,sans-serif;color:#1b2540;page-break-inside:avoid}
+  .awb-hd{display:flex;justify-content:space-between;border-bottom:2px solid #d4a017;padding-bottom:6px;margin-bottom:8px;font-size:13px}
+  .awb-hd b{color:#0d2b6b;font-size:17px}
+  .awb-code{text-align:center}
+  .awb-pdf table{width:100%;border-collapse:collapse}
+  .awb-pdf td{padding:5px 6px;font-size:13px;border:1px solid #e6e9f2;vertical-align:top}
+  .awb-pdf td:nth-child(odd){color:#6b7590;width:17%;background:#f6f7fb}
+  .awb-cod{font-size:18px;font-weight:800}
   .sp-link{display:flex;gap:10px}
   .sp-link .input{font-family:Consolas,monospace;font-size:12px}
   .sp-steps{margin:8px 0 16px 20px;line-height:1.9}
@@ -865,6 +876,7 @@
               <h5>Manage Orders</h5>
               <a href="#" data-go="Create Order">Create Order</a>
               <a href="#" data-go="Cancel Order">Cancel Order</a>
+              <a href="#" data-go="Order Logs">Order Logs</a>
               <a href="#" data-go="Airway Bills">Airway Bills</a>
             </div>
             <div class="mega-col">
@@ -1284,7 +1296,7 @@
 
   /* ---------- router ---------- */
   const section = {
-    'Create Order':'Cash on Delivery','Cancel Order':'Cash on Delivery','Airway Bills':'Cash on Delivery','Generate Load Sheet':'Cash on Delivery',
+    'Create Order':'Cash on Delivery','Cancel Order':'Cash on Delivery','Order Logs':'Cash on Delivery','Airway Bills':'Cash on Delivery','Generate Load Sheet':'Cash on Delivery',
     'Load Sheet Logs':'Cash on Delivery','Cash Payment Receipts (CPR)':'Cash on Delivery','New Packaging Request':'Cash on Delivery','Packaging Logs':'Cash on Delivery',
     'Create User':'Manage Users','User Permissions':'Manage Users','User Logs':'Manage Users','Reset User Password':'Manage Users'
   };
@@ -1337,8 +1349,14 @@
       </div></form>`;
     },
     'Cancel Order': () => `<div class="card"><p class="pg-note">Sirf <b>Unbooked</b> orders cancel ho sakte hain — courier par book hone ke baad TCL se rabta karein.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
-    'Airway Bills': () => `<div class="card"><p class="pg-note">Orders select kar ke airway bill print karein.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
-      <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="pgPrint">Print Selected AWB</button></div></div>`,
+    'Order Logs': () => `<div class="card"><div class="ol-filter">
+        <div class="co-field"><label>Start Date</label><input class="input" type="date" id="olFrom"></div>
+        <div class="co-field"><label>End Date</label><input class="input" type="date" id="olTo"></div>
+        <div class="co-field"><label>Status</label><select class="input" id="olStatus"><option value="">All</option><option>Unbooked</option><option>Booked</option><option>Delivered</option><option>Returned</option><option>Cancelled</option></select></div>
+        <div class="co-field"><label>&nbsp;</label><button class="btn btn-navy" id="olGo" type="button">Search</button></div>
+      </div><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
+    'Airway Bills': () => `<div class="card"><p class="pg-note">Orders select kar ke airway bill ki PDF download karein.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
+      <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="pgPrint">Download AWB PDF</button></div></div>`,
     'Generate Load Sheet': () => `<div class="card"><p class="pg-note">Load sheet un orders ki banti hai jo courier par book ho chuke hon (tracking number wale).</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
     'Load Sheet Logs': () => `<div class="card"><p class="adm-empty">Abhi koi load sheet nahi bani.</p></div>`,
     'Cash Payment Receipts (CPR)': () => `<div class="card"><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
@@ -1385,6 +1403,7 @@
   const PAGE_INIT = {
     'Create Order': () => initCreateOrder(),
     'Cancel Order': () => loadOrdersPage('cancel'),
+    'Order Logs': () => initOrderLogs(),
     'Airway Bills': () => loadOrdersPage('awb'),
     'Generate Load Sheet': () => loadOrdersPage('loadsheet'),
     'Cash Payment Receipts (CPR)': () => loadCprPage(),
@@ -1797,8 +1816,20 @@
     coPrev = r;
     fillList('coPickAddrList', r.pickupAddresses);
     fillList('coRetAddrList', r.returnAddresses);
-    if(r.pickupCities[0]) document.getElementById('coPickCity').value = r.pickupCities[0];
-    if(r.pickupAddresses[0]) document.getElementById('coPickAddr').value = r.pickupAddresses[0];
+    // pickup comes from the Business Profile; return follows pickup until the client changes it
+    const $id = id => document.getElementById(id);
+    $id('coPickCity').value = r.profileCity || r.pickupCities[0] || '';
+    $id('coPickAddr').value = r.profileAddress || r.pickupAddresses[0] || '';
+    $id('coRetCity').value = $id('coPickCity').value;
+    $id('coRetAddr').value = $id('coPickAddr').value;
+    let returnEdited = false;
+    ['coRetCity','coRetAddr'].forEach(id => $id(id).addEventListener('input', () => { returnEdited = true; }));
+    $id('coPickCity').addEventListener('input', () => { if(!returnEdited) $id('coRetCity').value = $id('coPickCity').value; });
+    $id('coPickAddr').addEventListener('input', () => { if(!returnEdited) $id('coRetAddr').value = $id('coPickAddr').value; });
+    if(!r.profileCity || !r.profileAddress){
+      const m = document.getElementById('coMsg');
+      m.textContent = 'Pickup ke liye Setting → Business Profile me City aur Business Address bhar dein.'; m.classList.remove('hidden', 'ok');
+    }
     document.getElementById('coCourier').onchange = loadCourierCities;
     loadCourierCities();
     let printAfter = false;
@@ -1814,13 +1845,21 @@
       if(['orderRef','amount','customerName','customerPhone','deliveryCity','deliveryAddress','pickupCity','pickupAddress'].some(k => order[k] === '')) return show(ORDER_ERRORS.missing);
       if(!/^03\d{9}$/.test(order.customerPhone.replace(/[\s-]/g, ''))) return show(ORDER_ERRORS.bad_phone);
       if(coCities.length && !coCities.includes(order.deliveryCity)) return show(ORDER_ERRORS.bad_city);
-      show('');
+      show(''); msg.classList.remove('ok');
       const btns = form.querySelectorAll('button');
       btns.forEach(b => b.disabled = true);
       try{
         const res = await authApi('client_create_order', order);
         if(!res.ok) return show(ORDER_ERRORS[res.error] || 'Order save nahi ho saka, dobara try karein.');
-        toast('Order save ho gaya (Unbooked). TCL courier par book karega.');
+        if(res.tracking){
+          toast(`Order book ho gaya ✓ Tracking: ${res.tracking}`);
+          msg.textContent = `${order.orderRef} PostEx par book ho gaya — Tracking: ${res.tracking}`; msg.classList.add('ok'); msg.classList.remove('hidden');
+        } else if(res.bookError){
+          msg.classList.remove('ok');
+          show(`Order save ho gaya lekin PostEx par book nahi hua: ${res.bookError}. Order Logs se dobara "Book" karein.`);
+        } else {
+          toast('Order save ho gaya (Unbooked). CityLine API judne par book hoga.');
+        }
         if(printAfter) printOrderSlip(Object.assign({id:res.id, date:res.date}, order));
         ['coRef','coAmount','coName','coPhone','coCity','coAddr','coWeight','coDetail','coNotes'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('coItems').value = 1;
@@ -1858,24 +1897,74 @@
     if(print) print.onclick = () => {
       const ids = [...box.querySelectorAll('.pgSel:checked')].map(c => c.value);
       if(!ids.length){ toast('Pehle orders select karein.'); return; }
-      printAirwayBills(list.filter(o => ids.includes(o.id)));
+      downloadAirwayBills(list.filter(o => ids.includes(o.id)), print);
     };
   }
-  function printAirwayBills(list){
-    const w = window.open('', '_blank', 'width=820,height=900');
-    if(!w){ toast('Print ke liye pop-up allow karein.'); return; }
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Airway Bills</title><style>
-      body{font-family:Segoe UI,Arial,sans-serif;margin:0;color:#1b2540}.awb{border:2px solid #0d2b6b;margin:14px;padding:14px;page-break-inside:avoid}
-      .hd{display:flex;justify-content:space-between;border-bottom:2px solid #d4a017;padding-bottom:6px;margin-bottom:8px}.hd b{color:#0d2b6b;font-size:16px}
-      .trk{font-size:20px;font-weight:800;letter-spacing:1px}table{width:100%;border-collapse:collapse}td{padding:4px 6px;font-size:13px;vertical-align:top}td:first-child{color:#6b7590;width:30%}
-      .cod{font-size:18px;font-weight:800}</style></head><body>
-      ${list.map(o => `<div class="awb"><div class="hd"><b>TRUST COURIER LOGISTIC</b><span>${esc(o.courier) || '—'}</span></div>
-        <div class="trk">${o.tracking ? esc(o.tracking) : 'UNBOOKED — ' + esc(o.ref)}</div><table>
-        <tr><td>Order Ref</td><td>${esc(o.ref)} · ${esc(o.date)}</td></tr><tr><td>Consignee</td><td>${esc(o.customer)} · ${esc(o.phone)}</td></tr>
-        <tr><td>Deliver to</td><td>${esc(o.address)}, <b>${esc(o.city)}</b></td></tr><tr><td>Shipper</td><td>${esc(o.pickupAddress)}, ${esc(o.pickupCity)}</td></tr>
-        <tr><td>Items / Weight</td><td>${esc(o.items)} item(s) · ${o.weight ? esc(o.weight) + ' kg' : '—'}</td></tr><tr><td>Detail</td><td>${esc(o.detail) || '—'}</td></tr>
-        <tr><td>COD Amount</td><td class="cod">Rs ${esc(o.amount)}</td></tr></table></div>`).join('')}</body></html>`);
-    w.document.close(); w.focus(); w.print();
+
+  /* ---------- Order Logs: every order between two dates, with Book for Unbooked ones ---------- */
+  async function initOrderLogs(){
+    const iso = d => new Date(d - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+    document.getElementById('olTo').value = iso(new Date());
+    document.getElementById('olFrom').value = iso(new Date(Date.now() - 30*86400e3));
+    const r = await authApi('client_orders');
+    if(!document.getElementById('olGo')) return;
+    const all = r.ok ? r.orders : [];
+    const render = () => {
+      const from = val('olFrom'), to = val('olTo'), st = val('olStatus');
+      const list = all.filter(o => (!from || o.date >= from) && (!to || o.date <= to) && (!st || o.status === st));
+      const box = document.getElementById('pgList');
+      box.innerHTML = list.length ? `<p class="pg-note">${list.length} orders · COD kul: <b>${rs(list.reduce((t, o) => t + (o.status === 'Cancelled' ? 0 : o.amount), 0))}</b></p>
+        <table class="adm-table"><thead><tr><th>Date</th><th>Order Ref</th><th>Tracking</th><th>Courier</th><th>Customer</th><th>City</th><th class="num">COD</th><th>Status</th><th></th></tr></thead><tbody>
+        ${list.map(o => `<tr><td>${esc(o.date)}</td><td><b>${esc(o.ref)}</b></td><td>${esc(o.tracking) || '—'}</td>
+          <td>${o.status === 'Unbooked' && !o.courier ? `<select class="input adm-mini" data-courier-for="${esc(o.id)}"><option value="">Courier?</option><option>PostEx</option><option>CityLine</option></select>` : esc(o.courier) || '—'}</td>
+          <td>${esc(o.customer)}<br><small>${esc(o.phone)}</small></td><td>${esc(o.city)}</td><td class="num">${rs(o.amount)}</td><td>${statusPill(o.status)}</td>
+          <td>${o.status === 'Unbooked' ? `<button class="btn btn-gold adm-mini" data-book="${esc(o.id)}">Book</button>` : ''}</td></tr>`).join('')}</tbody></table>`
+        : '<p class="adm-empty">Is date range me koi order nahi.</p>';
+      box.querySelectorAll('[data-book]').forEach(b => b.onclick = async () => {
+        const sel = box.querySelector(`[data-courier-for="${b.dataset.book}"]`);
+        if(sel && !sel.value){ toast('Pehle courier chunein.'); return; }
+        busy(b, true, '…');
+        const res = await authApi('client_book_order', {id:b.dataset.book, courier: sel ? sel.value : ''});
+        if(res.ok){ toast(`Book ho gaya ✓ Tracking: ${res.tracking}`); const o = all.find(x => x.id === b.dataset.book); Object.assign(o, {status:res.status, tracking:res.tracking, courier: sel ? sel.value : o.courier}); render(); loadClientDashboard(); }
+        else { toast(res.message || ({not_bookable:'Yeh order book nahi ho sakta.', courier_pending:'Is courier ki booking abhi nahi judi.'})[res.error] || 'Book nahi ho saka.'); busy(b, false, 'Book'); }
+      });
+    };
+    document.getElementById('olGo').onclick = render;
+    render();
+  }
+
+  /* ---------- Airway bill PDF (html2pdf + JsBarcode, loaded only when needed) ---------- */
+  const loadScript = src => new Promise((ok, no) => {
+    if(document.querySelector(`script[src="${src}"]`)) return ok();
+    const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s);
+  });
+  async function downloadAirwayBills(list, btn){
+    busy(btn, true, 'PDF ban rahi hai…');
+    try{
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js');
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:760px;background:#fff';
+      wrap.innerHTML = list.map(o => `<div class="awb-pdf">
+        <div class="awb-hd"><b>TRUST COURIER LOGISTIC</b><span>${esc(o.courier) || '—'} · COD</span></div>
+        <div class="awb-code"><svg class="awb-bar" data-code="${esc(o.tracking || o.ref)}"></svg></div>
+        <table>
+          <tr><td>Tracking</td><td><b>${esc(o.tracking) || 'UNBOOKED'}</b></td><td>Order Ref</td><td><b>${esc(o.ref)}</b></td></tr>
+          <tr><td>Date</td><td>${esc(o.date)}</td><td>Items / Weight</td><td>${esc(o.items)} · ${o.weight ? esc(o.weight) + ' kg' : '—'}</td></tr>
+          <tr><td>Consignee</td><td colspan="3"><b>${esc(o.customer)}</b> · ${esc(o.phone)}</td></tr>
+          <tr><td>Deliver to</td><td colspan="3">${esc(o.address)}, <b>${esc(o.city)}</b></td></tr>
+          <tr><td>Shipper</td><td colspan="3">${esc(o.pickupAddress)}, ${esc(o.pickupCity)}</td></tr>
+          <tr><td>Detail</td><td colspan="3">${esc(o.detail) || '—'}</td></tr>
+          <tr><td>COD Amount</td><td colspan="3" class="awb-cod">Rs ${esc(o.amount)}</td></tr>
+        </table></div>`).join('');
+      document.body.appendChild(wrap);
+      wrap.querySelectorAll('.awb-bar').forEach(svg => JsBarcode(svg, svg.dataset.code, {format:'CODE128', height:50, width:2, fontSize:14, margin:4}));
+      const name = list.length === 1 ? `AWB-${(list[0].tracking || list[0].ref).replace(/[^\w-]/g, '')}.pdf` : `AWB-${list.length}-orders.pdf`;
+      await html2pdf().set({margin:8, filename:name, html2canvas:{scale:2}, jsPDF:{unit:'mm', format:'a4'}, pagebreak:{mode:['css'], avoid:'.awb-pdf'}}).from(wrap).save();
+      wrap.remove();
+      toast('Airway bill PDF download ho gayi.');
+    }catch(err){ toast('PDF nahi ban saki — internet check karein.'); }
+    finally{ busy(btn, false, 'Download AWB PDF'); }
   }
   async function loadCprPage(){
     const box = document.getElementById('pgList');
