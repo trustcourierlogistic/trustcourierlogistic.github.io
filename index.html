@@ -421,29 +421,18 @@
   .w-foot{background:var(--navy-dark);color:rgba(255,255,255,.75);padding:60px 0 0}
   .w-foot-in{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:30px}
   .w-foot-logo{height:70px;background:#fff;border-radius:12px;padding:6px 10px;margin-bottom:14px}
-  /* animated footer logo */
-  .tcl-anim{max-width:560px;margin:0 auto 44px;background:#fff;border-radius:22px;padding:18px 24px 20px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25)}
-  .tcl-anim-svg{width:100%;height:auto;display:block;overflow:hidden}
-  .tcl-anim-img{display:none;width:100%}
-  .tcl-road-edge{fill:none;stroke:#d4a017;stroke-width:34;stroke-dasharray:600;stroke-dashoffset:600;transition:stroke-dashoffset 1.4s ease}
-  .tcl-road{fill:none;stroke:#1f2530;stroke-width:26;stroke-dasharray:600;stroke-dashoffset:600;transition:stroke-dashoffset 1.4s ease}
-  .tcl-road-dash{fill:none;stroke:#fff;stroke-width:2.5;stroke-dasharray:9 9;opacity:0;transition:opacity .6s 1.2s}
-  .tcl-plane{transform-box:fill-box;transform-origin:center;opacity:0;transform:translate(-140px,140px) rotate(25deg) scale(.6);transition:transform 1.6s cubic-bezier(.2,.7,.2,1) .3s,opacity .6s .3s}
-  .tcl-truck{opacity:0;transition:opacity .4s 1.4s}
-  .tcl-anim-name{font-weight:900;font-size:30px;letter-spacing:.5px;color:#0d2b6b;margin-top:2px}
-  .tcl-anim-name span{display:inline-block;opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s}
-  .tcl-anim-name .g{color:#d4a017}
-  .tcl-anim-tag{color:#0d2b6b;font-size:12px;font-weight:700;letter-spacing:3px;margin-top:4px;opacity:0;transition:opacity .8s 2.1s}
-  .tcl-anim.go .tcl-road-edge,.tcl-anim.go .tcl-road{stroke-dashoffset:0}
-  .tcl-anim.go .tcl-road-dash,.tcl-anim.go .tcl-truck,.tcl-anim.go .tcl-anim-tag{opacity:1}
-  .tcl-anim.go .tcl-plane{opacity:1;transform:none;animation:tclHover 3s ease-in-out 2s infinite alternate}
-  .tcl-anim.go .tcl-anim-name span{opacity:1;transform:none}
-  .tcl-anim.go .tcl-anim-name span:nth-child(1){transition-delay:1.5s}
-  .tcl-anim.go .tcl-anim-name span:nth-child(2){transition-delay:1.7s}
-  .tcl-anim.go .tcl-anim-name span:nth-child(3){transition-delay:1.9s}
-  @keyframes tclHover{from{transform:translateY(0) rotate(0)}to{transform:translateY(-6px) rotate(-2deg)}}
-  @media (max-width:520px){ .tcl-anim{padding:12px 14px 16px} .tcl-anim-name{font-size:19px} .tcl-anim-tag{font-size:9px;letter-spacing:2px} }
-  @media (prefers-reduced-motion:reduce){ .tcl-anim-svg,.tcl-anim-name,.tcl-anim-tag{display:none} .tcl-anim-img{display:block} }
+  /* footer logo: normally the plain logo image; when the footer scrolls into view an SVG copy takes over,
+     the plane flies off, the TCL truck drives the C (erasing it), everything fades, then the image comes back */
+  .foot-logo{position:relative;width:200px;background:#fff;border-radius:12px;padding:6px 10px;margin-bottom:14px;transition:background-color .5s}
+  .foot-logo img{width:100%;display:block;transition:opacity .5s}
+  .foot-logo svg{position:absolute;inset:6px 10px;width:calc(100% - 20px);height:calc(100% - 12px);opacity:0;pointer-events:none;overflow:visible}
+  .foot-logo.play img{opacity:0;transition:none}
+  .foot-logo.play svg{opacity:1}
+  .foot-logo.out{background-color:transparent}
+  .foot-logo.out svg{opacity:0;transition:opacity .5s}
+  .fl-plane{transform-box:fill-box;transform-origin:center;transition:transform 1.4s cubic-bezier(.5,0,.8,.4),opacity 1.2s .2s}
+  .foot-logo.fly .fl-plane{transform:translate(30px,-320px) rotate(8deg);opacity:0}
+  @media (prefers-reduced-motion:reduce){ .foot-logo svg{display:none} }
   .w-foot h5{color:var(--gold-2);font-size:15px;margin-bottom:14px}
   .w-foot a{display:block;padding:5px 0}
   .w-foot a:hover{color:var(--gold-2)}
@@ -736,41 +725,41 @@
   </div>
 
   <div class="w-foot">
-    <!-- footer logo, rebuilt in SVG so each letter can move: T = plane, C = road, L = truck -->
-    <div class="w-wrap"><div class="tcl-anim" id="tclAnim">
-      <svg class="tcl-anim-svg" viewBox="0 0 520 220" role="img" aria-labelledby="tclAnimTitle">
-        <title id="tclAnimTitle">Trust Courier Logistic</title>
-        <defs>
-          <path id="tclRoad" d="M330 44 A82 82 0 1 0 330 176 L560 176"/>
-          <path id="tclDrive" d="M199 110 A82 82 0 0 0 330 176 L580 176"/>
-        </defs>
-        <use href="#tclRoad" class="tcl-road-edge" pathLength="600"/>
-        <use href="#tclRoad" class="tcl-road" pathLength="600"/>
-        <use href="#tclRoad" class="tcl-road-dash" pathLength="600"/>
-        <g class="tcl-plane">
-          <path d="M82 95 L18 126 L18 139 L82 122 Z M108 95 L172 126 L172 139 L108 122 Z" fill="#163c8c"/>
-          <path d="M84 166 L58 185 L58 194 L86 183 Z M106 166 L132 185 L132 194 L104 183 Z" fill="#163c8c"/>
-          <rect x="49" y="116" width="9" height="19" rx="3" fill="#0d2b6b"/><rect x="132" y="116" width="9" height="19" rx="3" fill="#0d2b6b"/>
-          <path d="M95 26 C105 26 108 48 108 70 L108 160 C108 176 100 192 95 198 C90 192 82 176 82 160 L82 70 C82 48 85 26 95 26 Z" fill="#0d2b6b"/>
-          <ellipse cx="95" cy="46" rx="6" ry="9" fill="#cfe3ff"/>
-        </g>
-        <g class="tcl-truck">
-          <g transform="scale(1.25) translate(-26 -17)">
-            <rect x="1.5" y="1.5" width="32" height="21" rx="3" fill="#fff" stroke="#d4a017" stroke-width="3"/>
-            <path d="M34 7 H43 L51 15 V23 H34 Z" fill="#d4a017"/>
-            <path d="M37 9.5 H42 L47 14.5 H37 Z" fill="#cfe3ff"/>
-            <circle cx="9" cy="25" r="4.5" fill="#1f2530" stroke="#d4a017" stroke-width="1.5"/>
-            <circle cx="43" cy="25" r="4.5" fill="#1f2530" stroke="#d4a017" stroke-width="1.5"/>
-          </g>
-          <animateMotion id="tclTruckRun" dur="7s" begin="indefinite" repeatCount="indefinite" rotate="auto" keyPoints="0;1;1" keyTimes="0;0.7;1" calcMode="linear"><mpath href="#tclDrive"/></animateMotion>
-        </g>
-      </svg>
-      <img class="tcl-anim-img" src="logo.jpg" alt="Trust Courier Logistic">
-      <div class="tcl-anim-name"><span>TRUST</span> <span class="g">COURIER</span> <span>LOGISTIC</span></div>
-      <div class="tcl-anim-tag">YOUR DESTINATION OUR RESPONSIBILITY</div>
-    </div></div>
     <div class="w-wrap w-foot-in">
-      <div><p>Your Destination, Our Responsibility. Pakistan-wide COD delivery with weekly payments.</p></div>
+      <div><div class="foot-logo" id="footLogo">
+        <img src="logo.jpg" alt="Trust Courier Logistic">
+        <!-- SVG copy used only while animating: T = plane, C = road, L = truck -->
+        <svg viewBox="0 0 520 260" aria-hidden="true">
+          <defs>
+            <path id="flRoad" d="M330 40 A82 82 0 1 0 330 172 L500 172"/>
+            <mask id="flRoadMask" maskUnits="userSpaceOnUse" x="0" y="0" width="520" height="260">
+              <use href="#flRoad" id="flMaskPath" fill="none" stroke="#fff" stroke-width="44"/>
+            </mask>
+          </defs>
+          <g mask="url(#flRoadMask)">
+            <use href="#flRoad" fill="none" stroke="#d4a017" stroke-width="34"/>
+            <use href="#flRoad" fill="none" stroke="#1f2530" stroke-width="26"/>
+            <use href="#flRoad" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="9 9"/>
+          </g>
+          <g class="fl-plane">
+            <path d="M82 95 L18 126 L18 139 L82 122 Z M108 95 L172 126 L172 139 L108 122 Z" fill="#163c8c"/>
+            <path d="M84 166 L58 185 L58 194 L86 183 Z M106 166 L132 185 L132 194 L104 183 Z" fill="#163c8c"/>
+            <rect x="49" y="116" width="9" height="19" rx="3" fill="#0d2b6b"/><rect x="132" y="116" width="9" height="19" rx="3" fill="#0d2b6b"/>
+            <path d="M95 26 C105 26 108 48 108 70 L108 160 C108 176 100 192 95 198 C90 192 82 176 82 160 L82 70 C82 48 85 26 95 26 Z" fill="#0d2b6b"/>
+            <ellipse cx="95" cy="46" rx="6" ry="9" fill="#cfe3ff"/>
+          </g>
+          <g id="flTruck"><g transform="scale(1.4) translate(-29 -19)">
+            <rect x="1.5" y="1.5" width="38" height="24" rx="3" fill="#fff" stroke="#d4a017" stroke-width="3"/>
+            <text x="20.5" y="18" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-weight="900" font-size="11" fill="#0d2b6b">TCL</text>
+            <path d="M40 8 H49 L57 16 V26 H40 Z" fill="#d4a017"/>
+            <path d="M43 10.5 H48 L53 15.5 H43 Z" fill="#cfe3ff"/>
+            <circle cx="10" cy="28" r="4.5" fill="#1f2530" stroke="#d4a017" stroke-width="1.5"/>
+            <circle cx="48" cy="28" r="4.5" fill="#1f2530" stroke="#d4a017" stroke-width="1.5"/>
+          </g></g>
+          <text x="260" y="228" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-weight="900" font-size="38" fill="#0d2b6b">TRUST <tspan fill="#d4a017">COURIER</tspan> LOGISTIC</text>
+          <text x="260" y="252" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-weight="700" font-size="14" letter-spacing="4" fill="#0d2b6b">YOUR DESTINATION OUR RESPONSIBILITY</text>
+        </svg>
+      </div><p>Your Destination, Our Responsibility. Pakistan-wide COD delivery with weekly payments.</p></div>
       <div><h5>Quick Links</h5><a href="#w-services">Services</a><a href="#w-payments">Weekly Payment</a><a href="#w-brands">Our Brands</a><a href="#w-track">Track Parcel</a></div>
       <div><h5>Merchants</h5><a href="#w-contact">Become a Merchant</a><a href="#w-how">How It Works</a></div>
       <div><h5>Contact</h5><a class="js-wa js-phone" target="_blank" rel="noopener"></a><a class="js-mail js-email"></a><p class="js-address"></p></div>
@@ -1169,15 +1158,45 @@
     document.querySelectorAll('.rv').forEach(el => io.observe(el));
     document.querySelectorAll('.w-hero-badges b').forEach(b => setTimeout(() => countUp(b), 600));
 
-    // footer logo: road draws, plane lands in the T, truck drives the C and leaves to the right
-    const logo = document.getElementById('tclAnim');
-    const logoIo = new IntersectionObserver(entries => {
-      if(!entries[0].isIntersecting) return;
-      logo.classList.add('go');
-      setTimeout(() => { try{ document.getElementById('tclTruckRun').beginElement(); }catch(e){} }, 1400);
-      logoIo.disconnect();
-    }, {threshold:.4});
-    logoIo.observe(logo);
+    // footer logo: plays every time the footer comes into view, then settles back to the plain logo image
+    const flogo = document.getElementById('footLogo');
+    const road = document.getElementById('flRoad'), mask = document.getElementById('flMaskPath'), truck = document.getElementById('flTruck');
+    const roadLen = road.getTotalLength();
+    let playing = false;
+    const placeTruck = (s, facing) => {
+      const p = road.getPointAtLength(s), q = road.getPointAtLength(Math.min(roadLen, s + 2));
+      const dx = q.x - p.x, dy = q.y - p.y;
+      const left = dx < -0.01 ? true : dx > 0.01 ? false : facing;      // keep the truck upright, mirror it when driving left
+      let a = Math.atan2(dy, dx) * 180 / Math.PI;
+      if(left) a = a - 180;
+      a = ((a + 540) % 360) - 180;
+      const tilt = Math.max(-25, Math.min(25, a));
+      truck.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${tilt}) scale(${left ? -1 : 1} 1)`);
+      return left;
+    };
+    const playLogo = () => {
+      if(playing) return;
+      playing = true;
+      mask.style.strokeDasharray = roadLen + ' ' + roadLen;
+      mask.style.strokeDashoffset = 0;
+      let facing = placeTruck(0, true);
+      flogo.classList.remove('out', 'fly');
+      flogo.classList.add('play');
+      setTimeout(() => flogo.classList.add('fly'), 250);
+      const DRIVE = 3200, t0 = performance.now() + 500;
+      const frame = now => {
+        const k = Math.max(0, Math.min(1, (now - t0) / DRIVE));
+        const s = k * roadLen;
+        facing = placeTruck(s, facing);
+        mask.style.strokeDashoffset = -s;                              // road disappears behind the truck
+        if(k < 1) return requestAnimationFrame(frame);
+        truck.setAttribute('transform', 'translate(-200 -200)');
+        flogo.classList.add('out');                                    // text + white background fade
+        setTimeout(() => { flogo.classList.remove('play', 'fly', 'out'); playing = false; }, 1100);
+      };
+      requestAnimationFrame(frame);
+    };
+    new IntersectionObserver(entries => { if(entries[0].isIntersecting) playLogo(); }, {threshold:.6}).observe(flogo);
   })();
 
   /* ---------- menus ---------- */
