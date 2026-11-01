@@ -502,7 +502,6 @@
   .cd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
   .cd-grid small{display:block;color:var(--muted);font-size:12px;font-weight:600}
   .cd-grid b{color:var(--navy);word-break:break-word}
-  .cd-sync{color:var(--muted)}
   #app .adm-stats{grid-template-columns:repeat(3,1fr)}
   @media (max-width:800px){ #app .adm-stats{grid-template-columns:1fr 1fr} }
   .adm-gen{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-left:5px solid var(--gold)}
@@ -838,36 +837,19 @@
               <h5>Manage Orders</h5>
               <a href="#" data-go="Create Order">Create Order</a>
               <a href="#" data-go="Cancel Order">Cancel Order</a>
-              <a href="#" data-go="Transit Orders">Transit Orders</a>
-              <a href="#" data-go="Under Verification">Under Verification</a>
-              <a href="#" data-go="Order Logs">Order Logs</a>
               <a href="#" data-go="Airway Bills">Airway Bills</a>
-              <a href="#" data-go="Bulk Upload">Bulk Upload</a>
             </div>
             <div class="mega-col">
               <h5>Load Sheet</h5>
               <a href="#" data-go="Generate Load Sheet">Generate Load Sheet</a>
               <a href="#" data-go="Load Sheet Logs">Load Sheet Logs</a>
-              <h5>Special Request</h5>
-              <a href="#" data-go="New Special Request">New Request</a>
-              <a href="#" data-go="Special Request Logs">Request Logs</a>
             </div>
             <div class="mega-col">
               <h5>Payments</h5>
               <a href="#" data-go="Cash Payment Receipts (CPR)">Cash Payment Receipts (CPR)</a>
-              <a href="#" data-go="Settlement Logs">Settlement Logs</a>
               <h5>Packaging</h5>
               <a href="#" data-go="New Packaging Request">New Request</a>
               <a href="#" data-go="Packaging Logs">Packaging Logs</a>
-            </div>
-            <div class="mega-col">
-              <h5>Reports</h5>
-              <a href="#" data-go="Monthly/Weekly Order Wise">Monthly/Weekly Order Wise</a>
-              <a href="#" data-go="Monthly/Weekly Amount Wise">Monthly/Weekly Amount Wise</a>
-              <a href="#" data-go="Order Status Report">Order Status Report</a>
-              <a href="#" data-go="InStock Report">InStock Report</a>
-              <a href="#" data-go="Pickup Report">Pickup Report</a>
-              <a href="#" data-go="Destination City Wise Performance">Destination City Wise Performance</a>
             </div>
           </div>
         </div>
@@ -945,14 +927,6 @@
       <p class="welcome">Welcome, <b class="mName"></b>!</p>
       <div class="card cd-info" id="cdInfo"><p class="adm-empty">Loading…</p></div>
       <div class="adm-stats" id="cdStats"></div>
-      <div class="card" style="margin-bottom:22px">
-        <div class="card-head"><h3>My Orders</h3><small class="cd-sync" id="cdSync"></small></div>
-        <div id="cdOrders" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
-      </div>
-      <div class="card" style="margin-bottom:22px">
-        <div class="card-head"><h3>My Invoices</h3></div>
-        <div id="myInvoices" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
-      </div>
     </section>
 
     <!-- ============ SUB PAGE (filled by JS) ============ -->
@@ -1090,7 +1064,6 @@
     document.getElementById('app').classList.remove('hidden');
     go('dashboard');
     loadClientDashboard();
-    loadClientInvoices();
     window.scrollTo(0,0);
   }
   async function doLogin(e){
@@ -1239,11 +1212,8 @@
 
   /* ---------- router ---------- */
   const section = {
-    'Create Order':'Cash on Delivery','Cancel Order':'Cash on Delivery','Transit Orders':'Cash on Delivery','Under Verification':'Cash on Delivery',
-    'Order Logs':'Cash on Delivery','Airway Bills':'Cash on Delivery','Bulk Upload':'Cash on Delivery','Generate Load Sheet':'Cash on Delivery',
-    'Load Sheet Logs':'Cash on Delivery','New Special Request':'Cash on Delivery','Special Request Logs':'Cash on Delivery',
-    'Cash Payment Receipts (CPR)':'Cash on Delivery','Settlement Logs':'Cash on Delivery','New Packaging Request':'Cash on Delivery','Packaging Logs':'Cash on Delivery',
-    'Monthly/Weekly Order Wise':'Reports','Monthly/Weekly Amount Wise':'Reports','Order Status Report':'Reports','InStock Report':'Reports','Pickup Report':'Reports','Destination City Wise Performance':'Reports',
+    'Create Order':'Cash on Delivery','Cancel Order':'Cash on Delivery','Airway Bills':'Cash on Delivery','Generate Load Sheet':'Cash on Delivery',
+    'Load Sheet Logs':'Cash on Delivery','Cash Payment Receipts (CPR)':'Cash on Delivery','New Packaging Request':'Cash on Delivery','Packaging Logs':'Cash on Delivery',
     'Create User':'Manage Users','User Permissions':'Manage Users','User Logs':'Manage Users','Reset User Password':'Manage Users'
   };
   function go(page){
@@ -1305,14 +1275,9 @@
       <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px">
         <button type="reset" class="btn btn-light">Reset</button><button class="btn btn-gold">Book Order</button>
       </div></form>`,
-    'Order Logs': () => `<div class="card">${filters()}${orderTable(orders,'<a href="#" class="link">AWB</a>')}</div>`,
-    'Transit Orders': () => `<div class="card">${filters()}${orderTable(orders.filter(o=>o.st[0].includes('Transit')||o.st[0].includes('Out')))}</div>`,
     'Cancel Order': () => `<div class="card"><p style="color:var(--muted);margin-bottom:16px">Sirf un-picked (booked) orders cancel ho sakte hain.</p>${orderTable(orders.slice(0,5),'<button class="btn btn-light" style="padding:6px 12px;color:var(--red)" onclick="toast(\'Order cancelled\')">Cancel</button>')}</div>`,
-    'Under Verification': () => `<div class="card">${orderTable(orders.slice(3,8),'<button class="btn btn-navy" style="padding:6px 12px" onclick="toast(\'Verified\')">Verify</button>')}</div>`,
     'Airway Bills': () => `<div class="card">${filters()}${orderTable(orders.slice(0,8),'<input type="checkbox">')}<div style="text-align:right;margin-top:16px"><button class="btn btn-gold" onclick="toast('Printing airway bills…')">Print Selected AWB</button></div></div>`,
     'Generate Load Sheet': () => `<div class="card"><p style="color:var(--muted);margin-bottom:16px">Rider ko handover karne wale orders select karein.</p>${orderTable(orders.slice(0,6),'<input type="checkbox" checked>')}<div style="text-align:right;margin-top:16px"><button class="btn btn-gold" onclick="toast('Load sheet #LS-1044 generated')">Generate Load Sheet</button></div></div>`,
-    'Bulk Upload': () => `<div class="card"><div class="empty"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>
-      <h3>Upload orders in bulk</h3><p>CSV / Excel file drag & drop karein ya browse karein</p><div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><button class="btn btn-light">Download Sample File</button><button class="btn btn-gold">Browse File</button></div></div></div>`,
     'Cash Payment Receipts (CPR)': () => `<div class="card"><div class="table-wrap"><table><thead><tr><th>CPR #</th><th>Date</th><th>Orders</th><th>COD Amount</th><th>Charges</th><th>Net Payable</th><th>Status</th></tr></thead><tbody>
       ${[['CPR-5521','28 Oct 2026',22,48520,3960,'Paid','t-del'],['CPR-5498','24 Oct 2026',19,41230,3420,'Paid','t-del'],['CPR-5470','21 Oct 2026',16,36700,2880,'Paid','t-del'],['CPR-5530','30 Oct 2026',48,144152,8640,'Processing','t-pen']]
         .map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>Rs ${fmt(r[3])}</td><td>Rs ${fmt(r[4])}</td><td><b>Rs ${fmt(r[3]-r[4])}</b></td><td><span class="tag ${r[6]}">${r[5]}</span></td></tr>`).join('')}
@@ -1327,8 +1292,8 @@
       <div class="field"><label>Confirm Password *</label><input class="input" type="password" required></div>
       </div><div style="text-align:right"><button class="btn btn-gold">Create User</button></div></form>`,
     'User Permissions': () => `<div class="card"><div class="field" style="max-width:320px"><label>Select User</label><select class="input"><option>Ahmed (Operator)</option><option>Sara (Accounts)</option></select></div>
-      <div class="perm-grid">${['Create Order','Cancel Order','Order Logs','Airway Bills','Bulk Upload','Load Sheet','Special Request','Payments / CPR','Settlement Logs','Packaging','Reports','Manage Users','Settings']
-        .map((p,i)=>`<label><input type="checkbox" ${i<7?'checked':''}> ${p}</label>`).join('')}</div>
+      <div class="perm-grid">${['Create Order','Cancel Order','Airway Bills','Load Sheet','Payments / CPR','Packaging','Manage Users','Settings']
+        .map((p,i)=>`<label><input type="checkbox" ${i<5?'checked':''}> ${p}</label>`).join('')}</div>
       <div style="text-align:right;margin-top:20px"><button class="btn btn-gold" onclick="toast('Permissions saved')">Save Permissions</button></div></div>`,
     'User Logs': () => `<div class="card"><div class="table-wrap"><table><thead><tr><th>User</th><th>Action</th><th>IP Address</th><th>Date / Time</th></tr></thead><tbody>
       ${[['Ahmed','Created order #2947','39.45.12.8','Oct 30, 2026 11:28 AM'],['Ahmed','Generated load sheet LS-1043','39.45.12.8','Oct 29, 2026 05:10 PM'],['Sara','Downloaded CPR-5521','110.93.4.21','Oct 28, 2026 03:44 PM'],['Admin','Logged in','182.180.7.66','Oct 28, 2026 09:02 AM']]
@@ -1733,7 +1698,7 @@
 
   /* ---------- client portal: own details, totals and orders from the client's ledger sheet ---------- */
   async function loadClientDashboard(){
-    const info = document.getElementById('cdInfo'), stats = document.getElementById('cdStats'), list = document.getElementById('cdOrders');
+    const info = document.getElementById('cdInfo'), stats = document.getElementById('cdStats');
     try{
       const r = await authApi('client_dashboard');
       if(!r.ok){ info.innerHTML = '<p class="adm-empty">Data load nahi ho saka.</p>'; return; }
@@ -1742,28 +1707,9 @@
       info.innerHTML = `<div class="cd-grid">${row('Client', c.brand || c.name)}${row('Client ID', c.id)}${row('Phone', c.phone)}${row('Email', c.email)}
         ${row('Bank', c.bankName)}${row('Account Title', c.accountTitle)}${row('Account / IBAN', c.accountNumber)}</div>`;
       const stat = (label, value, cls, note) => `<div class="adm-stat ${cls||''}"><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
-      stats.innerHTML = stat('Total Orders', s.total, '', `${s.inTransit} raste me`) + stat('Delivered', s.delivered, 'green') + stat('Returned', s.returned, 'red')
-        + stat('COD (Delivered)', rs(s.codDelivered), 'gold') + stat('Payment Pending', rs(s.pending), 'red', 'TCL se milna baqi') + stat('Payment Settled', rs(s.settled), 'green', 'Aap ko mil chuka');
-      document.getElementById('cdSync').textContent = r.connected ? (r.lastSync ? 'Last update: ' + r.lastSync : '') : 'Courier account abhi connect nahi hua — TCL se rabta karein.';
-      list.innerHTML = table(['Date', 'Tracking', 'Order Ref', 'City', 'Status', {t:'Weight', num:1}, {t:'COD', num:1}, {t:'Charges', num:1}, {t:'GST + Tax', num:1}, {t:'Net', num:1}, 'Payment'],
-        r.orders.map(o => `<tr><td>${esc(o.date)}</td><td>${esc(o.tracking)}</td><td>${esc(o.ref)}</td><td>${esc(o.city)}</td><td>${statusPill(o.status)}</td>
-          <td class="num">${o.weight ? esc(o.weight) + ' kg' : '—'}</td><td class="num">${rs(o.cod)}</td><td class="num">${rs(o.charges)}</td><td class="num">${rs(o.gst + o.tax)}</td><td class="num"><b>${rs(o.net)}</b></td>
-          <td>${statusPill(o.payment)}${o.settledDate ? `<br><small>${esc(o.settledDate)}</small>` : ''}</td></tr>`),
-        r.connected ? 'Pichle 30 din me koi order nahi mila.' : 'Orders courier account connect hone ke baad yahan aayenge.');
+      stats.innerHTML = stat('Total Orders', s.total) + stat('Delivered', s.delivered, 'green') + stat('Returned', s.returned, 'red')
+        + stat('In Transit', s.inTransit, 'gold', 'Raste me orders') + stat('Payment Pending', rs(s.pending), 'red', 'TCL se milna baqi') + stat('Payment Settled', rs(s.settled), 'green', 'Aap ko mil chuka');
     }catch(err){ info.innerHTML = '<p class="adm-empty">Internet check karein.</p>'; }
-  }
-
-  /* ---------- client portal: own invoices ---------- */
-  async function loadClientInvoices(){
-    const box = document.getElementById('myInvoices');
-    try{
-      const r = await authApi('client_invoices');
-      if(!r.ok) return;
-      box.innerHTML = table(['Invoice', 'Courier', 'Date', {t:'Amount', num:1}, 'Status', 'PDF'],
-        r.invoices.map(i => `<tr><td>${esc(i.invoiceNo || i.id)}</td><td>${esc(i.courier)}</td><td>${esc(i.date)}</td><td class="num">${rs(i.amount)}</td><td>${statusPill(i.status)}</td>
-          <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(i.file) ? `<a class="adm-link" href="${esc(i.file)}" target="_blank" rel="noopener">Download</a>` : '—'}</td></tr>`),
-        'Abhi aapki koi invoice nahi aayi.');
-    }catch(err){ box.innerHTML = '<p class="adm-empty">Invoices load nahi ho sakin.</p>'; }
   }
 </script>
 </body>
