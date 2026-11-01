@@ -1275,6 +1275,7 @@
     bad_file_type: 'Sirf PDF, Excel ya CSV file upload karein.', bad_setting: 'Charges 0 ya zyada, GST/Tax 0 se 100 % ke beech likhein.',
     format_pending: 'Courier invoice ka format abhi set nahi hua — sample invoice milte hi Generate chalu ho jayega.',
     nothing_to_generate: 'Pehle courier ki invoice upload karein.',
+    postex_token: 'PostEx token ghalat hai ya laga nahi.', postex_error: 'PostEx se jawab nahi aaya, thori der baad try karein.',
     bad_status: 'Status sahi nahi.', not_found: 'Record nahi mila.'
   };
   const statusPill = s => {
@@ -1566,7 +1567,8 @@
             <div style="grid-column:span 2"><label>${a.token ? 'Naya API Token (badalna ho to)' : 'API Token'}</label><input class="input" data-token autocomplete="off" placeholder="Token paste karein"></div>
             <div><button class="btn btn-gold" data-save>Save & Test</button></div>
             ${a.token ? '<div><button class="btn btn-light" data-test>Test</button></div>' : ''}
-          </div></div>`).join('')}`;
+            ${a.token && a.courier === 'PostEx' ? '<div><button class="btn btn-light" data-probe>Orders Format Check</button></div>' : ''}
+          </div><div class="adm-probe"></div></div>`).join('')}`;
       main.querySelectorAll('[data-courier]').forEach(card => {
         const courier = card.dataset.courier;
         card.querySelector('[data-save]').onclick = async e => {
@@ -1576,6 +1578,16 @@
           const r = await admCall('admin_api_save', {courier, apiToken});
           busy(e.target, false, 'Save & Test');
           if(r){ toast(courier + ': ' + r.status); admGo('api'); }
+        };
+        // lists the field names PostEx returns for orders (no customer data), to confirm the sync mapping
+        const pr = card.querySelector('[data-probe]');
+        if(pr) pr.onclick = async () => {
+          busy(pr, true, 'Checking…');
+          const r = await admCall('admin_postex_probe');
+          busy(pr, false, 'Orders Format Check');
+          if(!r) return;
+          card.querySelector('.adm-probe').innerHTML = `<div class="adm-note" style="margin:14px 0 0">Pichle 30 din ke orders: <b>${r.count}</b><br>
+            PostEx fields: <code>${esc(r.fields.join(', ') || '—')}</code><br>System ne pehchane: <code>${esc(r.mapped.join(', ') || '—')}</code></div>`;
         };
         const t = card.querySelector('[data-test]');
         if(t) t.onclick = async () => {
