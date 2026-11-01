@@ -493,6 +493,10 @@
   .adm-link{color:var(--blue);font-weight:600}
   .adm-mini{padding:6px 10px!important;font-size:12px!important}
   .adm-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .pg-note{color:var(--muted);margin-bottom:14px}
+  .sp-link{display:flex;gap:10px}
+  .sp-link .input{font-family:Consolas,monospace;font-size:12px}
+  .sp-steps{margin:8px 0 16px 20px;line-height:1.9}
   .co-form{max-width:760px}
   .co-title{color:#3b2a7a;font-size:22px;margin-bottom:18px}
   .co-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 32px}
@@ -895,7 +899,7 @@
         <div class="menu-item">
           <button class="menu-link" onclick="toggleMenu(this)">Setting <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg></button>
           <div class="mega">
-            <div class="mega-intro"><h4>Setting</h4><p>Manage your business profile, pickup points, bank account and integrations.</p></div>
+            <div class="mega-intro"><h4>Setting</h4><p>Manage your business profile, password, bank account and Shopify integration.</p></div>
             <div class="mega-col">
               <h5>Account</h5>
               <a href="#" data-go="Business Profile">Business Profile</a>
@@ -903,15 +907,8 @@
               <a href="#" data-go="Bank Details">Bank Details</a>
             </div>
             <div class="mega-col">
-              <h5>Operations</h5>
-              <a href="#" data-go="Pickup Addresses">Pickup Addresses</a>
-              <a href="#" data-go="Airway Bill Settings">Airway Bill Settings</a>
-              <a href="#" data-go="Notification Settings">Notification Settings</a>
-            </div>
-            <div class="mega-col">
               <h5>Integration</h5>
-              <a href="#" data-go="API Token">API Token</a>
-              <a href="#" data-go="Shopify / WooCommerce">Shopify / WooCommerce</a>
+              <a href="#" data-go="Shopify Integration">Shopify Integration</a>
             </div>
           </div>
         </div>
@@ -923,18 +920,16 @@
           <button class="icon-btn" type="submit" title="Track"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
         </form>
         <div style="position:relative">
-          <button class="icon-btn" onclick="toggleDD('ddNotif',event)" title="Notifications"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.8V3a1.5 1.5 0 0 0-3 0v1.2A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/></svg><span class="badge-dot"></span></button>
+          <button class="icon-btn" onclick="toggleDD('ddNotif',event)" title="Notifications"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.8V3a1.5 1.5 0 0 0-3 0v1.2A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/></svg></button>
           <div class="dropdown" id="ddNotif">
-            <div class="dd-head"><b>Notifications</b><small>3 new</small></div>
-            <div class="notif">Settlement of Rs 48,520 processed<small>2 hours ago</small></div>
-            <div class="notif">18 orders under delivery review<small>Today, 10:12 AM</small></div>
-            <div class="notif">Load sheet #LS-1043 picked up by rider<small>Yesterday</small></div>
+            <div class="dd-head"><b>Notifications</b></div>
+            <div class="notif">Abhi koi notification nahi.</div>
           </div>
         </div>
         <div style="position:relative">
           <button class="icon-btn" onclick="toggleDD('ddUser',event)" title="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></button>
           <div class="dropdown" id="ddUser">
-            <div class="dd-head"><b id="ddName">Twisty Mart</b><small id="ddEmail"></small></div>
+            <div class="dd-head"><b id="ddName"></b><small id="ddEmail"></small></div>
             <a href="#" data-go="Business Profile">My Profile</a>
             <a href="#" data-go="Change Password">Change Password</a>
             <a href="#" onclick="logout();return false" style="color:var(--red)">Logout</a>
@@ -1275,10 +1270,16 @@
     const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
     clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'),2600);
   }
-  function trackOrder(e){
+  // portal header search: looks the number up in the client's own orders (tracking number or order ref)
+  async function trackOrder(e){
     e.preventDefault();
     const v = document.getElementById('trackInput').value.trim();
-    toast(v ? 'Tracking '+v+' — In Transit (Lahore Hub)' : 'Please enter a tracking number');
+    if(!v){ toast('Tracking number ya Order Ref likhein'); return; }
+    try{
+      const r = await authApi('client_orders');
+      const o = r.ok && r.orders.find(o => o.tracking === v || o.ref.toLowerCase() === v.toLowerCase());
+      toast(o ? `${o.ref}${o.tracking ? ' · ' + o.tracking : ''} — ${o.status} (${o.city})` : 'Is number ka koi order aap ke account me nahi mila.');
+    }catch(err){ toast('Internet connection check karein.'); }
   }
 
   /* ---------- router ---------- */
@@ -1300,30 +1301,8 @@
         <div><h2>${page}</h2><div class="crumb">Dashboard › ${parent} › <b>${page}</b></div></div>
         <button class="btn btn-light" onclick="go('dashboard')">← Back to Dashboard</button>
       </div>` + (pages[page] ? pages[page]() : genericPage(page, parent));
-    if(page === 'Create Order') initCreateOrder();
+    if(PAGE_INIT[page]) PAGE_INIT[page]();
     window.scrollTo(0,0);
-  }
-
-  /* ---------- sample data ---------- */
-  const cities = ['Karachi','Lahore','Islamabad','Rawalpindi','Faisalabad','Multan','Peshawar','Quetta','Sialkot','Hyderabad'];
-  const names = ['Ali Raza','Ayesha Khan','Usman Tariq','Fatima Noor','Hamza Iqbal','Sana Malik','Bilal Ahmed','Hira Shah','Zain Abbas','Maryam Javed'];
-  const statuses = [['Delivered','t-del'],['In Transit','t-tr'],['Returned','t-ret'],['Pending','t-pen'],['Out for Delivery','t-tr']];
-  const orders = Array.from({length:12},(_,i)=>({
-    trk:'TCL'+(2344175020828-i), ref:'#'+(2942+i), name:names[i%10], city:cities[(i*3)%10],
-    amt:[2199,1850,3499,999,2650,4200][i%6], st:statuses[i%5], date:'Oct '+(30-Math.floor(i/3))+', 2026'
-  }));
-  const fmt = n => n.toLocaleString('en-PK',{minimumFractionDigits:2});
-
-  function orderTable(rows, actions){
-    return `<div class="table-wrap"><table><thead><tr><th>Tracking #</th><th>Order Ref</th><th>Customer</th><th>City</th><th>COD Amount</th><th>Status</th><th>Date</th>${actions?'<th>Action</th>':''}</tr></thead><tbody>
-      ${rows.map(o=>`<tr><td><a style="color:var(--blue);font-weight:600" href="#">${o.trk}</a></td><td>${o.ref}</td><td>${o.name}</td><td>${o.city}</td><td>Rs ${fmt(o.amt)}</td>
-      <td><span class="tag ${o.st[1]}">${o.st[0]}</span></td><td>${o.date}</td>${actions?`<td>${actions}</td>`:''}</tr>`).join('')}
-    </tbody></table></div>`;
-  }
-  function filters(){
-    return `<div class="filters"><input class="input" placeholder="Search tracking / order #"><input class="input" type="date" value="2026-10-24"><input class="input" type="date" value="2026-10-30">
-      <select class="input"><option>All Status</option><option>Delivered</option><option>In Transit</option><option>Returned</option></select>
-      <button class="btn btn-navy">Search</button><button class="btn btn-light">Export CSV</button></div>`;
   }
 
   /* ---------- specific pages ---------- */
@@ -1357,56 +1336,66 @@
         <button type="button" class="btn co-close" onclick="go('dashboard')">Close</button>
       </div></form>`;
     },
-    'Cancel Order': () => `<div class="card"><p style="color:var(--muted);margin-bottom:16px">Sirf un-picked (booked) orders cancel ho sakte hain.</p>${orderTable(orders.slice(0,5),'<button class="btn btn-light" style="padding:6px 12px;color:var(--red)" onclick="toast(\'Order cancelled\')">Cancel</button>')}</div>`,
-    'Airway Bills': () => `<div class="card">${filters()}${orderTable(orders.slice(0,8),'<input type="checkbox">')}<div style="text-align:right;margin-top:16px"><button class="btn btn-gold" onclick="toast('Printing airway bills…')">Print Selected AWB</button></div></div>`,
-    'Generate Load Sheet': () => `<div class="card"><p style="color:var(--muted);margin-bottom:16px">Rider ko handover karne wale orders select karein.</p>${orderTable(orders.slice(0,6),'<input type="checkbox" checked>')}<div style="text-align:right;margin-top:16px"><button class="btn btn-gold" onclick="toast('Load sheet #LS-1044 generated')">Generate Load Sheet</button></div></div>`,
-    'Cash Payment Receipts (CPR)': () => `<div class="card"><div class="table-wrap"><table><thead><tr><th>CPR #</th><th>Date</th><th>Orders</th><th>COD Amount</th><th>Charges</th><th>Net Payable</th><th>Status</th></tr></thead><tbody>
-      ${[['CPR-5521','28 Oct 2026',22,48520,3960,'Paid','t-del'],['CPR-5498','24 Oct 2026',19,41230,3420,'Paid','t-del'],['CPR-5470','21 Oct 2026',16,36700,2880,'Paid','t-del'],['CPR-5530','30 Oct 2026',48,144152,8640,'Processing','t-pen']]
-        .map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>Rs ${fmt(r[3])}</td><td>Rs ${fmt(r[4])}</td><td><b>Rs ${fmt(r[3]-r[4])}</b></td><td><span class="tag ${r[6]}">${r[5]}</span></td></tr>`).join('')}
-      </tbody></table></div></div>`,
-    'Create User': () => `<form class="card" onsubmit="event.preventDefault();toast('User created successfully')"><div class="form-grid">
-      <div class="form-section">User Details</div>
-      <div class="field"><label>Full Name *</label><input class="input" required></div>
-      <div class="field"><label>Email *</label><input class="input" type="email" required></div>
-      <div class="field"><label>Phone</label><input class="input"></div>
-      <div class="field"><label>Role</label><select class="input"><option>Operator</option><option>Accounts</option><option>Admin</option></select></div>
-      <div class="field"><label>Password *</label><input class="input" type="password" required></div>
-      <div class="field"><label>Confirm Password *</label><input class="input" type="password" required></div>
-      </div><div style="text-align:right"><button class="btn btn-gold">Create User</button></div></form>`,
-    'User Permissions': () => `<div class="card"><div class="field" style="max-width:320px"><label>Select User</label><select class="input"><option>Ahmed (Operator)</option><option>Sara (Accounts)</option></select></div>
-      <div class="perm-grid">${['Create Order','Cancel Order','Airway Bills','Load Sheet','Payments / CPR','Packaging','Manage Users','Settings']
-        .map((p,i)=>`<label><input type="checkbox" ${i<5?'checked':''}> ${p}</label>`).join('')}</div>
-      <div style="text-align:right;margin-top:20px"><button class="btn btn-gold" onclick="toast('Permissions saved')">Save Permissions</button></div></div>`,
-    'User Logs': () => `<div class="card"><div class="table-wrap"><table><thead><tr><th>User</th><th>Action</th><th>IP Address</th><th>Date / Time</th></tr></thead><tbody>
-      ${[['Ahmed','Created order #2947','39.45.12.8','Oct 30, 2026 11:28 AM'],['Ahmed','Generated load sheet LS-1043','39.45.12.8','Oct 29, 2026 05:10 PM'],['Sara','Downloaded CPR-5521','110.93.4.21','Oct 28, 2026 03:44 PM'],['Admin','Logged in','182.180.7.66','Oct 28, 2026 09:02 AM']]
-        .map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`,
-    'Business Profile': () => `<form class="card" onsubmit="event.preventDefault();toast('Profile updated')"><div class="form-grid">
-      <div class="form-section">Business Information</div>
-      <div class="field"><label>Business Name</label><input class="input" value="Twisty Mart"></div>
-      <div class="field"><label>Owner Name</label><input class="input" value=""></div>
-      <div class="field"><label>Phone</label><input class="input"></div>
-      <div class="field"><label>Email</label><input class="input"></div>
-      <div class="field"><label>CNIC</label><input class="input"></div>
-      <div class="field"><label>City</label><select class="input">${cities.map(c=>`<option>${c}</option>`).join('')}</select></div>
-      <div class="field span-3"><label>Business Address</label><input class="input"></div>
-      </div><div style="text-align:right"><button class="btn btn-gold">Save Changes</button></div></form>`,
-    'Bank Details': () => `<form class="card" onsubmit="event.preventDefault();toast('Bank details saved')"><div class="form-grid">
-      <div class="form-section">Settlement Account</div>
-      <div class="field"><label>Bank Name</label><select class="input"><option>Meezan Bank</option><option>HBL</option><option>UBL</option><option>MCB</option><option>JazzCash</option><option>Easypaisa</option></select></div>
-      <div class="field"><label>Account Title</label><input class="input"></div>
-      <div class="field"><label>Account / IBAN Number</label><input class="input" placeholder="PK00XXXX..."></div>
-      </div><div style="text-align:right"><button class="btn btn-gold">Save</button></div></form>`,
-    'Change Password': () => `<form class="card" style="max-width:520px" onsubmit="event.preventDefault();toast('Password changed')">
-      <div class="field"><label>Current Password</label><input class="input" type="password"></div>
-      <div class="field"><label>New Password</label><input class="input" type="password"></div>
-      <div class="field"><label>Confirm New Password</label><input class="input" type="password"></div>
-      <button class="btn btn-gold">Update Password</button></form>`
+    'Cancel Order': () => `<div class="card"><p class="pg-note">Sirf <b>Unbooked</b> orders cancel ho sakte hain — courier par book hone ke baad TCL se rabta karein.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
+    'Airway Bills': () => `<div class="card"><p class="pg-note">Orders select kar ke airway bill print karein.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
+      <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="pgPrint">Print Selected AWB</button></div></div>`,
+    'Generate Load Sheet': () => `<div class="card"><p class="pg-note">Load sheet un orders ki banti hai jo courier par book ho chuke hon (tracking number wale).</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
+    'Load Sheet Logs': () => `<div class="card"><p class="adm-empty">Abhi koi load sheet nahi bani.</p></div>`,
+    'Cash Payment Receipts (CPR)': () => `<div class="card"><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
+    'Create User': () => SOON('Team members (users) add karne ka feature jald aa raha hai.'),
+    'User Permissions': () => SOON('Users ki permissions ka feature jald aa raha hai.'),
+    'User Logs': () => SOON('Abhi koi user log nahi.'),
+    'Reset User Password': () => SOON('Team users ka feature aane ke baad yahan password reset hoga. Apna password badalne ke liye Setting → Change Password istemal karein.'),
+    'New Packaging Request': () => SOON('Packaging request ka feature jald aa raha hai. Tab tak WhatsApp par rabta karein.'),
+    'Packaging Logs': () => `<div class="card"><p class="adm-empty">Abhi koi packaging request nahi.</p></div>`,
+    'Business Profile': () => `<form class="card co-form" id="pgForm" novalidate><h3 class="co-title">Business Profile</h3><div class="co-grid">
+      <div class="co-field"><label>Business Name <span class="co-req">*</span></label><input class="input" id="bpBrand" maxlength="120"></div>
+      <div class="co-field"><label>Phone <span class="co-req">*</span></label><input class="input" id="bpPhone" placeholder="03xxxxxxxxx" inputmode="numeric" maxlength="13"></div>
+      <div class="co-field"><label>CNIC</label><input class="input" id="bpCnic" placeholder="xxxxx-xxxxxxx-x" maxlength="15"></div>
+      <div class="co-field"><label>City <span class="co-req">*</span></label><input class="input" id="bpCity" list="bpCityList" placeholder="Search" autocomplete="off"><datalist id="bpCityList"></datalist><small class="co-hint" id="bpCityHint"></small></div>
+      <div class="co-field co-wide"><label>Business Address <span class="co-req">*</span></label><input class="input" id="bpAddr" maxlength="300"></div>
+      </div><div class="login-msg hidden" id="pgMsg"></div><button class="btn btn-gold">Save Changes</button></form>`,
+    'Bank Details': () => `<form class="card co-form" id="pgForm" novalidate><h3 class="co-title">Bank Details</h3><div class="co-grid">
+      <div class="co-field"><label>Bank Name <span class="co-req">*</span></label><input class="input" id="bkBank" list="bkBankList" maxlength="80"><datalist id="bkBankList">${['Meezan Bank','HBL','UBL','MCB','Allied Bank','Bank Alfalah','Faysal Bank','Bank Al Habib','Askari Bank','Standard Chartered','JazzCash','Easypaisa'].map(b => `<option value="${b}">`).join('')}</datalist></div>
+      <div class="co-field"><label>Account Title <span class="co-req">*</span></label><input class="input" id="bkTitle" maxlength="120"></div>
+      <div class="co-field co-wide"><label>IBAN / Account Number <span class="co-req">*</span></label><input class="input" id="bkNum" placeholder="PK00XXXX… ya account number" maxlength="40"></div>
+      </div><div class="login-msg hidden" id="pgMsg"></div><button class="btn btn-gold">Save</button></form>`,
+    'Change Password': () => `<form class="card co-form" id="pgForm" style="max-width:520px" novalidate><h3 class="co-title">Change Password</h3>
+      <div class="co-field"><label>Old Password <span class="co-req">*</span></label><input class="input" type="password" id="cpOld" autocomplete="current-password"></div>
+      <div class="co-field"><label>New Password <span class="co-req">*</span></label><input class="input" type="password" id="cpNew" autocomplete="new-password" placeholder="Kam az kam 8 characters"></div>
+      <div class="co-field"><label>Confirm Password <span class="co-req">*</span></label><input class="input" type="password" id="cpConfirm" autocomplete="new-password"></div>
+      <div class="login-msg hidden" id="pgMsg"></div><button class="btn btn-gold">Update Password</button></form>`,
+    'Shopify Integration': () => `<div class="card co-form"><h3 class="co-title">Shopify Integration</h3>
+      <p class="pg-note">Apna Shopify store TCL se jodne ke baad har naya Shopify order khud aap ke TCL portal me <b>Unbooked</b> aa jayega. Aap courier chun kar book karenge.</p>
+      <div class="co-field"><label>Aap ka TCL Shopify Link (kisi ko share na karein)</label>
+        <div class="sp-link"><input class="input" id="spUrl" readonly value="Loading…"><button class="btn btn-navy" id="spCopy" type="button">Copy</button></div></div>
+      <ol class="sp-steps">
+        <li>Shopify admin kholein → <b>Settings</b> → <b>Notifications</b>.</li>
+        <li>Neeche <b>Webhooks</b> section me <b>Create webhook</b> dabayein.</li>
+        <li><b>Event:</b> <i>Order creation</i> · <b>Format:</b> <i>JSON</i>.</li>
+        <li><b>URL</b> me upar wala TCL Shopify Link paste karein. <b>Webhook API version:</b> latest.</li>
+        <li><b>Save</b> dabayein. Phir Shopify me ek test order lagayein — woh kuch second me Cancel Order / Airway Bills list me "Unbooked" nazar aayega.</li>
+        <li>Order me customer ka phone, address aur shehar sahi hona chahiye; pickup address aap ka pichla pickup address lag jata hai.</li>
+      </ol>
+      <p class="pg-note">Link leak ho jaye to <a href="#" class="adm-link" id="spRegen">naya link banayein</a> — purana link band ho jayega aur Shopify me naya link dobara lagana hoga.</p></div>`
   };
-  pages['Reset User Password'] = pages['Change Password'];
+  const SOON = text => `<div class="card"><div class="empty"><h3>Jald aa raha hai</h3><p>${text}</p></div></div>`;
+
+  /* pages that load real data after they render (see go()) */
+  const PAGE_INIT = {
+    'Create Order': () => initCreateOrder(),
+    'Cancel Order': () => loadOrdersPage('cancel'),
+    'Airway Bills': () => loadOrdersPage('awb'),
+    'Generate Load Sheet': () => loadOrdersPage('loadsheet'),
+    'Cash Payment Receipts (CPR)': () => loadCprPage(),
+    'Business Profile': () => initProfilePage(),
+    'Bank Details': () => initBankPage(),
+    'Change Password': () => initPasswordPage(),
+    'Shopify Integration': () => initShopifyPage()
+  };
 
   function genericPage(page){
-    return `<div class="card">${filters()}<div class="empty"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18M8 7V4h8v3"/></svg></div>
-      <h3>${page}</h3><p>Is page ka layout yahan aayega. Selected date range ke liye koi record nahi mila.</p></div></div>`;
+    return SOON(esc(page) + ' jald aa raha hai.');
   }
 
 </script>
@@ -1840,6 +1829,125 @@
       finally{ btns.forEach(b => b.disabled = false); }
     };
   }
+  /* ---------- client portal: order lists (Cancel Order / Airway Bills / Load Sheet) ---------- */
+  async function loadOrdersPage(kind){
+    const box = document.getElementById('pgList');
+    const r = await authApi('client_orders');
+    if(!document.getElementById('pgList')) return;                    // user left the page
+    if(!r.ok){ box.innerHTML = '<p class="adm-empty">Orders load nahi ho sake.</p>'; return; }
+    let list = r.orders.filter(o => o.status !== 'Cancelled');
+    if(kind === 'cancel') list = list.filter(o => o.status === 'Unbooked');
+    if(kind === 'loadsheet') list = list.filter(o => o.tracking);
+    const empty = {cancel:'Koi Unbooked order nahi jo cancel ho sake.', awb:'Abhi koi order nahi. Create Order se order banayein.', loadsheet:'Abhi koi booked order (tracking number wala) nahi.'}[kind];
+    const pick = kind === 'awb' ? `<th><input type="checkbox" id="pgAll"></th>` : '';
+    box.innerHTML = list.length ? `<table class="adm-table"><thead><tr>${pick}<th>Order Ref</th><th>Tracking</th><th>Courier</th><th>Customer</th><th>City</th><th class="num">COD</th><th>Date</th><th>Status</th>${kind === 'cancel' ? '<th></th>' : ''}</tr></thead><tbody>
+      ${list.map(o => `<tr>${kind === 'awb' ? `<td><input type="checkbox" class="pgSel" value="${esc(o.id)}"></td>` : ''}<td><b>${esc(o.ref)}</b></td><td>${esc(o.tracking) || '—'}</td><td>${esc(o.courier) || '—'}</td>
+        <td>${esc(o.customer)}<br><small>${esc(o.phone)}</small></td><td>${esc(o.city)}</td><td class="num">${rs(o.amount)}</td><td>${esc(o.date)}</td><td>${statusPill(o.status)}</td>
+        ${kind === 'cancel' ? `<td><button class="btn btn-light adm-mini" style="color:var(--red)" data-cancel="${esc(o.id)}">Cancel</button></td>` : ''}</tr>`).join('')}
+      </tbody></table>` : `<p class="adm-empty">${empty}</p>`;
+    box.querySelectorAll('[data-cancel]').forEach(b => b.onclick = async () => {
+      if(b.dataset.sure !== '1'){ b.dataset.sure = '1'; b.textContent = 'Pakka?'; return; }
+      b.disabled = true;
+      const res = await authApi('client_cancel_order', {id:b.dataset.cancel});
+      if(res.ok){ toast('Order cancel ho gaya.'); loadOrdersPage('cancel'); loadClientDashboard(); }
+      else { toast(res.error === 'not_cancellable' ? 'Yeh order ab cancel nahi ho sakta.' : 'Cancel nahi ho saka.'); b.disabled = false; }
+    });
+    const all = document.getElementById('pgAll');
+    if(all) all.onchange = () => box.querySelectorAll('.pgSel').forEach(c => c.checked = all.checked);
+    const print = document.getElementById('pgPrint');
+    if(print) print.onclick = () => {
+      const ids = [...box.querySelectorAll('.pgSel:checked')].map(c => c.value);
+      if(!ids.length){ toast('Pehle orders select karein.'); return; }
+      printAirwayBills(list.filter(o => ids.includes(o.id)));
+    };
+  }
+  function printAirwayBills(list){
+    const w = window.open('', '_blank', 'width=820,height=900');
+    if(!w){ toast('Print ke liye pop-up allow karein.'); return; }
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Airway Bills</title><style>
+      body{font-family:Segoe UI,Arial,sans-serif;margin:0;color:#1b2540}.awb{border:2px solid #0d2b6b;margin:14px;padding:14px;page-break-inside:avoid}
+      .hd{display:flex;justify-content:space-between;border-bottom:2px solid #d4a017;padding-bottom:6px;margin-bottom:8px}.hd b{color:#0d2b6b;font-size:16px}
+      .trk{font-size:20px;font-weight:800;letter-spacing:1px}table{width:100%;border-collapse:collapse}td{padding:4px 6px;font-size:13px;vertical-align:top}td:first-child{color:#6b7590;width:30%}
+      .cod{font-size:18px;font-weight:800}</style></head><body>
+      ${list.map(o => `<div class="awb"><div class="hd"><b>TRUST COURIER LOGISTIC</b><span>${esc(o.courier) || '—'}</span></div>
+        <div class="trk">${o.tracking ? esc(o.tracking) : 'UNBOOKED — ' + esc(o.ref)}</div><table>
+        <tr><td>Order Ref</td><td>${esc(o.ref)} · ${esc(o.date)}</td></tr><tr><td>Consignee</td><td>${esc(o.customer)} · ${esc(o.phone)}</td></tr>
+        <tr><td>Deliver to</td><td>${esc(o.address)}, <b>${esc(o.city)}</b></td></tr><tr><td>Shipper</td><td>${esc(o.pickupAddress)}, ${esc(o.pickupCity)}</td></tr>
+        <tr><td>Items / Weight</td><td>${esc(o.items)} item(s) · ${o.weight ? esc(o.weight) + ' kg' : '—'}</td></tr><tr><td>Detail</td><td>${esc(o.detail) || '—'}</td></tr>
+        <tr><td>COD Amount</td><td class="cod">Rs ${esc(o.amount)}</td></tr></table></div>`).join('')}</body></html>`);
+    w.document.close(); w.focus(); w.print();
+  }
+  async function loadCprPage(){
+    const box = document.getElementById('pgList');
+    const r = await authApi('client_invoices');
+    if(!document.getElementById('pgList')) return;
+    box.innerHTML = r.ok ? table(['CPR / Invoice', 'Courier', 'Date', {t:'Amount', num:1}, 'Status', 'PDF'],
+      r.invoices.map(i => `<tr><td><b>${esc(i.invoiceNo || i.id)}</b></td><td>${esc(i.courier)}</td><td>${esc(i.date)}</td><td class="num">${rs(i.amount)}</td><td>${statusPill(i.status)}</td>
+        <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(i.file) ? `<a class="adm-link" href="${esc(i.file)}" target="_blank" rel="noopener">Download</a>` : '—'}</td></tr>`),
+      'Abhi koi CPR nahi aayi. Weekly payment hone par yahan aayegi.') : '<p class="adm-empty">CPR load nahi ho sakin.</p>';
+  }
+
+  /* ---------- client portal: settings pages ---------- */
+  const SETTING_ERRORS = {
+    missing: 'Star (*) wale saare khane bharein.', bad_phone: 'Phone 03xxxxxxxxx likhein.', bad_cnic: 'CNIC 13 hindse ka hona chahiye (xxxxx-xxxxxxx-x).',
+    bad_city: 'City list me se chunein.', wrong_password: 'Old password ghalat hai.', short_password: 'Naya password kam az kam 8 characters ka ho.',
+    password_mismatch: 'New aur Confirm password ek jaise nahi.'
+  };
+  function settingsForm(action, collect, okMsg, after){
+    const form = document.getElementById('pgForm'), msg = document.getElementById('pgMsg');
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const btn = form.querySelector('button');
+      msg.classList.add('hidden'); btn.disabled = true;
+      try{
+        const r = await authApi(action, collect());
+        if(!r.ok){ msg.textContent = SETTING_ERRORS[r.error] || 'Save nahi ho saka.'; msg.classList.toggle('ok', false); msg.classList.remove('hidden'); return; }
+        msg.textContent = okMsg; msg.classList.add('ok'); msg.classList.remove('hidden');
+        if(after) after();
+      }catch(err){ msg.textContent = 'Internet connection check karein.'; msg.classList.remove('hidden'); }
+      finally{ btn.disabled = false; }
+    };
+  }
+  async function initProfilePage(){
+    const [p, c] = await Promise.all([authApi('client_profile'), authApi('client_courier_cities', {courier:'PostEx'})]);
+    if(!document.getElementById('pgForm') || !p.ok) return;
+    const v = p.profile, set = (id, x) => document.getElementById(id).value = x || '';
+    set('bpBrand', v.brand); set('bpPhone', v.phone); set('bpCnic', v.cnic); set('bpCity', v.city); set('bpAddr', v.address);
+    const cities = c.ok ? c.cities : [];
+    fillList('bpCityList', cities);
+    document.getElementById('bpCityHint').textContent = cities.length ? `Poore Pakistan ki ${cities.length} cities` : '';
+    settingsForm('client_profile_save', () => ({brand:val('bpBrand'), phone:val('bpPhone'), cnic:val('bpCnic'), city:val('bpCity'), address:val('bpAddr')}),
+      'Business profile save ho gayi.', loadClientDashboard);
+  }
+  async function initBankPage(){
+    const p = await authApi('client_profile');
+    if(!document.getElementById('pgForm') || !p.ok) return;
+    document.getElementById('bkBank').value = p.profile.bankName || '';
+    document.getElementById('bkTitle').value = p.profile.accountTitle || '';
+    document.getElementById('bkNum').value = p.profile.accountNumber || '';
+    settingsForm('client_bank_save', () => ({bankName:val('bkBank'), accountTitle:val('bkTitle'), accountNumber:val('bkNum')}), 'Bank details save ho gayi.', loadClientDashboard);
+  }
+  function initPasswordPage(){
+    settingsForm('client_password', () => ({oldPassword:document.getElementById('cpOld').value, newPassword:document.getElementById('cpNew').value,
+      confirmPassword:document.getElementById('cpConfirm').value}), 'Password badal gaya. Agli dafa naya password istemal karein.',
+      () => ['cpOld','cpNew','cpConfirm'].forEach(id => document.getElementById(id).value = ''));
+  }
+  async function initShopifyPage(regenerate){
+    const r = await authApi('client_shopify', regenerate ? {regenerate:true} : {});
+    const url = document.getElementById('spUrl');
+    if(!url || !r.ok) return;
+    url.value = LOGIN_API + '?shopify=' + r.key;
+    document.getElementById('spCopy').onclick = async () => {
+      try{ await navigator.clipboard.writeText(url.value); toast('Link copy ho gaya.'); }catch(e){ url.select(); toast('Link select ho gaya — Ctrl+C dabayein.'); }
+    };
+    const regen = document.getElementById('spRegen');
+    regen.onclick = e => {
+      e.preventDefault();
+      if(regen.dataset.sure !== '1'){ regen.dataset.sure = '1'; regen.textContent = 'pakka? dobara dabayein'; return; }
+      initShopifyPage(true).then(() => toast('Naya link ban gaya — Shopify me bhi badal dein.'));
+    };
+  }
+
   function printOrderSlip(o){
     const w = window.open('', '_blank', 'width=720,height=900');
     if(!w){ toast('Print ke liye pop-up allow karein.'); return; }
