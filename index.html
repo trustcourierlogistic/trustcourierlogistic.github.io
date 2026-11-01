@@ -442,6 +442,10 @@
   .adm-link{color:var(--blue);font-weight:600}
   .adm-mini{padding:6px 10px!important;font-size:12px!important}
   .adm-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .adm-gen{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-left:5px solid var(--gold)}
+  .adm-gen h3{margin-bottom:4px}
+  .adm-gen .btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+  .adm-num{width:110px;padding:8px 10px!important;text-align:right}
   .adm-note{background:#fff8e6;border:1px dashed var(--gold);color:#7a5a06;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px}
   @media (max-width:1100px){ .adm-stats{grid-template-columns:repeat(2,1fr)} }
   @media (max-width:800px){
@@ -918,6 +922,7 @@
       <button data-tab="clients">👥 Clients</button>
       <button data-tab="invoices">🧾 Invoice Distribute</button>
       <button data-tab="expenses">📉 Expense</button>
+      <button data-tab="settings">⚙️ Client Setting</button>
       <button data-tab="api">🔌 Courier API</button>
     </nav>
     <main class="adm-main" id="admMain"></main>
@@ -1331,7 +1336,10 @@
   const today = () => new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
   const ADMIN_ERRORS = {
     bad_amount: 'Amount sahi likhein (0 se zyada).', missing: 'Zaroori field khali hai.', no_client: 'Client nahi mila.',
-    bad_courier: 'Courier chunein.', no_file: 'PDF file chunein.', file_too_big: 'PDF 10 MB se choti honi chahiye.',
+    bad_courier: 'Courier chunein.', no_file: 'File chunein.', file_too_big: 'File 10 MB se choti honi chahiye.',
+    bad_file_type: 'Sirf PDF, Excel ya CSV file upload karein.', bad_setting: 'Charges 0 ya zyada, GST/Tax 0 se 100 % ke beech likhein.',
+    format_pending: 'Courier invoice ka format abhi set nahi hua — sample invoice milte hi Generate chalu ho jayega.',
+    nothing_to_generate: 'Pehle courier ki invoice upload karein.',
     bad_status: 'Status sahi nahi.', not_found: 'Record nahi mila.'
   };
   const statusPill = s => {
@@ -1341,7 +1349,6 @@
   const table = (heads, rows, empty) => rows.length
     ? `<table class="adm-table"><thead><tr>${heads.map(h => `<th class="${h.num ? 'num' : ''}">${esc(h.t || h)}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`
     : `<p class="adm-empty">${esc(empty)}</p>`;
-  const clientSelect = (id, list, blank) => `<select class="input" id="${id}">${blank ? `<option value="">${esc(blank)}</option>` : ''}${list.map(c => `<option value="${esc(c.id)}">${esc(c.label)} (${esc(c.id)})</option>`).join('')}</select>`;
   const courierSelect = id => `<select class="input" id="${id}"><option>PostEx</option><option>CityLine</option></select>`;
   const val = id => document.getElementById(id).value.trim();
 
@@ -1384,65 +1391,55 @@
     async dashboard(main){
       const d = await admLoad('admin_dashboard'), s = d.stats;
       const stat = (label, value, cls, note) => `<div class="adm-stat ${cls||''}"><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
-      const signed = v => `<span class="${v < 0 ? 'neg' : 'pos'}">${rs(v)}</span>`;
+      const signed = v => v == null ? '—' : `<span class="${v < 0 ? 'neg' : 'pos'}">${rs(v)}</span>`;
       main.innerHTML = `
         <h2>Dashboard</h2><p class="adm-sub">Poore business ka khulasa — TCL System sheet se live.</p>
+        <div class="adm-card adm-gen">
+          <div><h3>Generate Invoice</h3><p class="adm-sub" style="margin:0">${d.waitingUploads ? `<b>${d.waitingUploads}</b> courier invoice upload hui hain — click karein, har client ki invoice ban kar us ke portal me chali jayegi.` : 'Pehle Invoice Distribute me courier ki invoice upload karein.'}</p></div>
+          <button class="btn btn-gold" id="genInv" ${d.waitingUploads ? '' : 'disabled'}>⚡ Generate Invoice</button>
+        </div>
         <div class="adm-stats">
           ${stat('Total Clients', s.totalClients, '', s.pendingClients ? s.pendingClients + ' approval ke intezar me' : 'Active clients')}
           ${stat('Expense', rs(s.expense), 'red')}
-          ${stat('Courier Payment Received', rs(s.courierReceived), 'green')}
+          ${stat('Courier Payment Received', s.courierReceived == null ? '—' : rs(s.courierReceived), 'green', 'Generate Invoice se aayega')}
           ${stat('Payment Settled', rs(s.settled), 'gold', 'Clients ko diya gaya')}
           ${stat('Unsettled Payment', rs(s.unsettled), 'red', 'Clients ko abhi dena hai')}
           ${stat('Courier Unsettled Payment', s.courierUnsettled == null ? '—' : rs(s.courierUnsettled), '', 'Courier API connect hone par')}
           ${stat('Remaining Amount', signed(s.remaining), 'gold', 'Received − Settled − Expense')}
-          ${stat('Profit / Loss', s.profitLoss == null ? '—' : signed(s.profitLoss), 'green', 'Formula aap batayenge')}
+          ${stat('Profit / Loss', signed(s.profitLoss), 'green', 'Formula aap batayenge')}
         </div>
         <div class="adm-card"><h3>Recent Invoices</h3><div class="adm-table-wrap">
           ${table(['Invoice', 'Client', 'Courier', 'Date', {t:'Amount', num:1}, 'Status'],
             d.recentInvoices.map(i => `<tr><td>${esc(i['Invoice No'] || i.ID)}</td><td>${esc(i.Client)}</td><td>${esc(i.Courier)}</td><td>${esc(i['Invoice Date'])}</td><td class="num">${rs(i.Amount)}</td><td>${statusPill(i.Status)}</td></tr>`),
-            'Abhi koi invoice upload nahi hui.')}
+            'Abhi koi client invoice nahi bani.')}
         </div></div>`;
+      document.getElementById('genInv').onclick = async e => {
+        busy(e.target, true, 'Generating…');
+        const r = await admCall('admin_generate_invoices', {}, 'Sab clients ki invoices ban gayi.');
+        busy(e.target, false, '⚡ Generate Invoice'); if(r) admGo('dashboard');
+      };
     },
 
     /* ---------- Payment Settled ---------- */
     async payments(main){
       const d = await admLoad('admin_payments');
       main.innerHTML = `
-        <h2>Payment Settled</h2><p class="adm-sub">Kis client ka kitna paisa baqi hai, aur courier se kitna aaya.</p>
-        <div class="adm-card"><h3>Pending — clients ko dena hai</h3><div class="adm-table-wrap">
-          ${table(['Client', 'Bank Account', 'Invoices', {t:'Pending', num:1}, ''],
-            d.pending.map(p => `<tr><td><b>${esc(p.client)}</b><br><small>${esc(p.id)}</small></td><td>${esc(p.bank) || '<span class="pill-s bad">Bank detail nahi</span>'}</td>
-              <td>${p.invoices.map(i => esc(i.invoiceNo || i.id)).join(', ')}</td><td class="num"><b>${rs(p.amount)}</b></td>
-              <td><button class="btn btn-gold adm-mini" data-settle="${esc(p.id)}">Settle</button></td></tr>`),
-            'Kisi client ki payment pending nahi.')}
+        <h2>Payment Settled</h2><p class="adm-sub">Har client ki invoices aur us ka baqi paisa.</p>
+        <div class="adm-card"><div class="adm-table-wrap">
+          ${table(['Client', 'Bank Account', {t:'Invoices', num:1}, {t:'Unsettled', num:1}, {t:'Pending', num:1}, ''],
+            d.clients.map(p => `<tr><td><b>${esc(p.client)}</b><br><small>${esc(p.id)}</small></td><td>${esc(p.bank) || '<span class="pill-s bad">Bank detail nahi</span>'}</td>
+              <td class="num">${p.totalInvoices}</td><td class="num">${p.unsettledInvoices ? `<span class="pill-s warn">${p.unsettledInvoices}</span>` : '0'}</td>
+              <td class="num"><b>${rs(p.amount)}</b></td>
+              <td>${p.amount > 0 ? `<button class="btn btn-gold adm-mini" data-settle="${esc(p.id)}">Settle</button>` : ''}</td></tr>`),
+            'Abhi koi active client nahi.')}
         </div></div>
         <div class="adm-card" id="settleBox" style="display:none"></div>
-        <div class="adm-card"><h3>Courier se payment aayi (CPR)</h3>
-          <div class="adm-form">
-            <div><label>Date</label><input class="input" type="date" id="cpDate" value="${today()}"></div>
-            <div><label>Courier</label>${courierSelect('cpCourier')}</div>
-            <div><label>Client (optional)</label>${clientSelect('cpClient', d.clients, '— Sab / koi nahi —')}</div>
-            <div><label>Amount (Rs)</label><input class="input" type="number" min="0" step="any" id="cpAmount"></div>
-            <div><label>CPR / Reference</label><input class="input" id="cpRef"></div>
-            <div><button class="btn btn-navy" id="cpAdd">Add</button></div>
-          </div>
-        </div>
         <div class="adm-card"><h3>Settlement History</h3><div class="adm-table-wrap">
           ${table(['Date', 'Client', 'Method', 'Reference', 'Invoices', {t:'Amount', num:1}],
             d.settlements.map(s => `<tr><td>${esc(s.Date)}</td><td>${esc(s.Client)}</td><td>${esc(s.Method)}</td><td>${esc(s.Reference)}</td><td>${esc(s.Invoices)}</td><td class="num">${rs(s.Amount)}</td></tr>`),
             'Abhi koi settlement nahi.')}
-        </div></div>
-        <div class="adm-card"><h3>Courier Payments History</h3><div class="adm-table-wrap">
-          ${table(['Date', 'Courier', 'Client', 'CPR / Reference', {t:'Amount', num:1}],
-            d.courierPayments.map(c => `<tr><td>${esc(c.Date)}</td><td>${esc(c.Courier)}</td><td>${esc(c.Client) || '—'}</td><td>${esc(c['CPR / Reference'])}</td><td class="num">${rs(c.Amount)}</td></tr>`),
-            'Abhi koi courier payment record nahi.')}
         </div></div>`;
-      main.querySelectorAll('[data-settle]').forEach(b => b.onclick = () => showSettle(d.pending.find(p => p.id === b.dataset.settle)));
-      document.getElementById('cpAdd').onclick = async e => {
-        busy(e.target, true);
-        const r = await admCall('admin_courier_payment_add', {date:val('cpDate'), courier:val('cpCourier'), clientId:val('cpClient'), amount:val('cpAmount'), reference:val('cpRef')}, 'Courier payment add ho gayi.');
-        busy(e.target, false); if(r) admGo('payments');
-      };
+      main.querySelectorAll('[data-settle]').forEach(b => b.onclick = () => showSettle(d.clients.find(p => p.id === b.dataset.settle)));
     },
 
     /* ---------- Clients ---------- */
@@ -1459,13 +1456,12 @@
           <button class="btn btn-light adm-mini" data-filter="Inactive">Inactive</button>
         </div>
         <div class="adm-card"><div class="adm-table-wrap">
-          ${table(['Client', 'Contact', 'Orders/Day', 'Bank Account', 'Courier API', {t:'Pending', num:1}, 'Status', ''],
+          ${table(['Client', 'Contact', 'Orders/Day', 'Bank Account', {t:'Pending', num:1}, 'Status', ''],
             list.map(c => `<tr data-status="${esc(c.status)}">
               <td><b>${esc(c.brand || '—')}</b><br>${esc(c.name)}<br><small>${esc(c.id)} · ${esc(c.created)}</small></td>
               <td>${esc(c.email)}<br>${esc(c.phone)}<br>${esc(c.city)}</td>
               <td>${esc(c.ordersPerDay) || '—'}</td>
               <td>${c.accountNumber ? `${esc(c.bankName)}<br>${esc(c.accountTitle)}<br><small>${esc(c.accountNumber)}</small>` : '<span class="pill-s bad">Nahi</span>'}</td>
-              <td>${c.couriers.length ? c.couriers.map(a => `${esc(a.courier)}: ${statusPill(a.status)}`).join('<br>') : '—'}</td>
               <td class="num">${rs(c.pending)}</td>
               <td>${statusPill(c.status)}</td>
               <td style="white-space:nowrap">
@@ -1505,34 +1501,34 @@
     async invoices(main){
       const d = await admLoad('admin_invoices');
       main.innerHTML = `
-        <h2>Invoice Distribute</h2><p class="adm-sub">Courier ki PDF invoice upload karein — wo seedha us client ke portal me chali jayegi.</p>
-        <div class="adm-card"><h3>Nayi Invoice Upload</h3>
-          ${d.clients.length ? '' : '<div class="adm-note">Pehle Clients me kisi client ko Approve karein.</div>'}
+        <h2>Invoice Distribute</h2><p class="adm-sub">Courier ki invoice upload karein, phir Dashboard par "Generate Invoice" dabayein — har client ka hisaab alag ho kar us ke portal me chala jayega.</p>
+        <div class="adm-card"><h3>Courier Invoice Upload</h3>
           <div class="adm-form">
-            <div><label>Client</label>${clientSelect('invClient', d.clients)}</div>
             <div><label>Courier</label>${courierSelect('invCourier')}</div>
-            <div><label>Invoice / CPR No</label><input class="input" id="invNo"></div>
-            <div><label>Invoice Date</label><input class="input" type="date" id="invDate" value="${today()}"></div>
-            <div><label>Client ko dena hai (Rs)</label><input class="input" type="number" min="0" step="any" id="invAmount"></div>
-            <div><label>PDF File</label><input class="input" type="file" accept="application/pdf,.pdf" id="invFile"></div>
-            <div><button class="btn btn-gold" id="invUpload">Upload & Send</button></div>
+            <div style="grid-column:span 2"><label>Invoice File (PDF / Excel / CSV)</label><input class="input" type="file" accept=".pdf,.xlsx,.xls,.csv" id="invFile"></div>
+            <div><button class="btn btn-gold" id="invUpload">Upload</button></div>
           </div>
         </div>
-        <div class="adm-card"><h3>Sab Invoices</h3><div class="adm-table-wrap">
+        <div class="adm-card"><h3>Uploaded Courier Invoices</h3><div class="adm-table-wrap">
+          ${table(['File', 'Courier', 'Uploaded', 'Status', ''],
+            d.uploads.map(u => `<tr><td>${esc(u['File Name'])}<br><small>${esc(u.ID)}</small></td><td>${esc(u.Courier)}</td><td>${esc(u['Uploaded At'])}</td><td>${statusPill(u.Status)}</td>
+              <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(u.File) ? `<a class="adm-link" href="${esc(u.File)}" target="_blank" rel="noopener">Open</a>` : '—'}</td></tr>`),
+            'Abhi koi courier invoice upload nahi hui.')}
+        </div></div>
+        <div class="adm-card"><h3>Client Invoices (generated)</h3><div class="adm-table-wrap">
           ${table(['Invoice', 'Client', 'Courier', 'Date', {t:'Amount', num:1}, 'Status', 'PDF'],
             d.invoices.map(i => `<tr><td>${esc(i['Invoice No'] || '—')}<br><small>${esc(i.ID)}</small></td><td>${esc(i.Client)}</td><td>${esc(i.Courier)}</td><td>${esc(i['Invoice Date'])}</td><td class="num">${rs(i.Amount)}</td><td>${statusPill(i.Status)}</td>
               <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(i.File) ? `<a class="adm-link" href="${esc(i.File)}" target="_blank" rel="noopener">Open</a>` : '—'}</td></tr>`),
-            'Abhi koi invoice upload nahi hui.')}
+            'Abhi koi client invoice nahi bani.')}
         </div></div>`;
       document.getElementById('invUpload').onclick = async e => {
         const file = document.getElementById('invFile').files[0];
-        if(!val('invClient')){ toast('Client chunein.'); return; }
-        if(!file){ toast('PDF file chunein.'); return; }
+        if(!file){ toast('Invoice file chunein.'); return; }
         if(file.size > 10*1024*1024){ toast(ADMIN_ERRORS.file_too_big); return; }
         busy(e.target, true, 'Uploading…');
         const fileBase64 = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.onerror = no; fr.readAsDataURL(file); });
-        const r = await admCall('admin_invoice_upload', {clientId:val('invClient'), courier:val('invCourier'), invoiceNo:val('invNo'), invoiceDate:val('invDate'), amount:val('invAmount'), fileBase64}, 'Invoice client ke portal me bhej di gayi.');
-        busy(e.target, false, 'Upload & Send'); if(r) admGo('invoices');
+        const r = await admCall('admin_invoice_upload', {courier:val('invCourier'), fileName:file.name, fileBase64}, 'Invoice upload ho gayi. Dashboard par Generate Invoice dabayein.');
+        busy(e.target, false, 'Upload'); if(r) admGo('invoices');
       };
     },
 
@@ -1570,37 +1566,70 @@
       });
     },
 
+    /* ---------- Client Setting ---------- */
+    async settings(main){
+      const d = await admLoad('admin_client_settings');
+      main.innerHTML = `
+        <h2>Client Setting</h2><p class="adm-sub">Har client ke parcel par kitne charges kaatne hain. Invoice banate waqt yahi lagenge.</p>
+        <div class="adm-note">Har parcel: <b>GST</b> = Courier Charges × GST % · <b>Govt Tax</b> = (COD − Courier Charges − GST) × Tax % · Client ko milega = COD − Charges − GST − Tax</div>
+        <div class="adm-card"><div class="adm-table-wrap">
+          ${table(['Client', {t:'Courier Charges (Rs / parcel)', num:1}, {t:'GST %', num:1}, {t:'Govt Tax %', num:1}, 'Misaal: COD Rs 1,000', ''],
+            d.clients.map(c => `<tr data-id="${esc(c.id)}"><td><b>${esc(c.client)}</b><br><small>${esc(c.id)}</small></td>
+              <td class="num"><input class="input adm-num" type="number" min="0" step="any" data-k="charges" value="${esc(c.charges)}"></td>
+              <td class="num"><input class="input adm-num" type="number" min="0" max="100" step="any" data-k="gst" value="${esc(c.gst)}"></td>
+              <td class="num"><input class="input adm-num" type="number" min="0" max="100" step="any" data-k="tax" value="${esc(c.tax)}"></td>
+              <td class="adm-eg"></td>
+              <td><button class="btn btn-navy adm-mini" data-save>Save</button></td></tr>`),
+            'Abhi koi active client nahi. Clients me client Approve karein.')}
+        </div></div>`;
+      // live preview of the same formula the backend uses (parcelAmounts in Code.gs)
+      const preview = tr => {
+        const g = k => Number(tr.querySelector(`[data-k="${k}"]`).value) || 0;
+        const c = g('charges'), gst = c * g('gst') / 100, rem = 1000 - c - gst, tax = Math.max(0, rem) * g('tax') / 100;
+        tr.querySelector('.adm-eg').innerHTML = `<small>Charges ${rs(c)} · GST ${rs(gst.toFixed(2))} · Tax ${rs(tax.toFixed(2))}<br><b>Client ko ${rs((rem - tax).toFixed(2))}</b></small>`;
+      };
+      main.querySelectorAll('tr[data-id]').forEach(tr => {
+        preview(tr);
+        tr.querySelectorAll('input').forEach(i => i.oninput = () => preview(tr));
+        tr.querySelector('[data-save]').onclick = async e => {
+          const g = k => tr.querySelector(`[data-k="${k}"]`).value;
+          busy(e.target, true);
+          await admCall('admin_client_settings_save', {clientId:tr.dataset.id, charges:g('charges'), gst:g('gst'), tax:g('tax')}, 'Setting save ho gayi.');
+          busy(e.target, false);
+        };
+      });
+    },
+
     /* ---------- Courier API ---------- */
     async api(main){
       const d = await admLoad('admin_api');
       main.innerHTML = `
-        <h2>Courier API</h2><p class="adm-sub">Har client ke PostEx / CityLine account ki API token yahan lagayen — TCL System us account se jud jayega.</p>
+        <h2>Courier API</h2><p class="adm-sub">TCL ke PostEx aur CityLine account ki API token yahan lagayen — TCL System courier account se jud jayega.</p>
         <div class="adm-note">PostEx: merchant portal se API token len (ya PostEx representative se). CityLine ki API documentation abhi nahi mili — token save ho jayega, connection CityLine ke docs milne par banega.</div>
-        <div class="adm-card"><h3>Token Lagayen</h3>
+        ${d.accounts.map(a => `<div class="adm-card" data-courier="${esc(a.courier)}">
+          <h3>${esc(a.courier)} ${statusPill(a.status)}</h3>
+          <p class="adm-sub" style="margin-bottom:12px">${a.token ? 'Token: ' + esc(a.token) + ' · ' : ''}${a.lastChecked ? 'Last checked: ' + esc(a.lastChecked) : 'Abhi token nahi laga'}</p>
           <div class="adm-form">
-            <div><label>Client</label>${clientSelect('apiClient', d.clients)}</div>
-            <div><label>Courier</label>${courierSelect('apiCourier')}</div>
-            <div style="grid-column:span 2"><label>API Token</label><input class="input" id="apiToken" autocomplete="off" placeholder="Token paste karein"></div>
-            <div><button class="btn btn-gold" id="apiSave">Save & Test</button></div>
-          </div>
-        </div>
-        <div class="adm-card"><div class="adm-table-wrap">
-          ${table(['Client', 'Courier', 'Token', 'Status', 'Last Checked', ''],
-            d.accounts.map(a => `<tr><td>${esc(a.client)}<br><small>${esc(a.clientId)}</small></td><td>${esc(a.courier)}</td><td>${esc(a.token)}</td><td>${statusPill(a.status)}</td><td>${esc(a.lastChecked) || '—'}</td>
-              <td><button class="btn btn-light adm-mini" data-test="${esc(a.clientId)}" data-courier="${esc(a.courier)}">Test</button></td></tr>`),
-            'Abhi koi courier account nahi juda.')}
-        </div></div>`;
-      document.getElementById('apiSave').onclick = async e => {
-        if(!val('apiClient')){ toast('Client chunein.'); return; }
-        busy(e.target, true, 'Testing…');
-        const r = await admCall('admin_api_save', {clientId:val('apiClient'), courier:val('apiCourier'), apiToken:val('apiToken')});
-        busy(e.target, false, 'Save & Test');
-        if(r){ toast('Status: ' + r.status); admGo('api'); }
-      };
-      main.querySelectorAll('[data-test]').forEach(b => b.onclick = async () => {
-        busy(b, true, '…');
-        const r = await admCall('admin_api_test', {clientId:b.dataset.test, courier:b.dataset.courier});
-        if(r){ toast('Status: ' + r.status); admGo('api'); } else busy(b, false, 'Test');
+            <div style="grid-column:span 2"><label>${a.token ? 'Naya API Token (badalna ho to)' : 'API Token'}</label><input class="input" data-token autocomplete="off" placeholder="Token paste karein"></div>
+            <div><button class="btn btn-gold" data-save>Save & Test</button></div>
+            ${a.token ? '<div><button class="btn btn-light" data-test>Test</button></div>' : ''}
+          </div></div>`).join('')}`;
+      main.querySelectorAll('[data-courier]').forEach(card => {
+        const courier = card.dataset.courier;
+        card.querySelector('[data-save]').onclick = async e => {
+          const apiToken = card.querySelector('[data-token]').value.trim();
+          if(!apiToken){ toast('Token paste karein.'); return; }
+          busy(e.target, true, 'Testing…');
+          const r = await admCall('admin_api_save', {courier, apiToken});
+          busy(e.target, false, 'Save & Test');
+          if(r){ toast(courier + ': ' + r.status); admGo('api'); }
+        };
+        const t = card.querySelector('[data-test]');
+        if(t) t.onclick = async () => {
+          busy(t, true, '…');
+          const r = await admCall('admin_api_test', {courier});
+          if(r){ toast(courier + ': ' + r.status); admGo('api'); } else busy(t, false, 'Test');
+        };
       });
     }
   };
