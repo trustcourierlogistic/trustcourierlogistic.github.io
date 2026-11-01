@@ -424,7 +424,7 @@
   /* footer logo: normally the plain logo image; when the footer scrolls into view an SVG copy takes over,
      the plane flies off, the TCL truck drives the C (erasing it), everything fades, then the image comes back */
   .foot-logo{position:relative;width:200px;background:#fff;border-radius:12px;padding:6px 10px;margin-bottom:14px;transition:background-color .5s}
-  .foot-logo img{width:100%;display:block;transition:opacity .5s}
+  .foot-logo img{width:100%;aspect-ratio:2/1;display:block;transition:opacity .5s}   /* logo.jpg is 760×380; reserves the space before it loads */
   .foot-logo svg{position:absolute;inset:6px 10px;width:calc(100% - 20px);height:calc(100% - 12px);opacity:0;pointer-events:none;overflow:visible}
   .foot-logo.play img{opacity:0;transition:none}
   .foot-logo.play svg{opacity:1}
@@ -432,6 +432,12 @@
   .foot-logo.out svg{opacity:0;transition:opacity .5s}
   .fl-plane{transform-box:fill-box;transform-origin:center;transition:transform 1.4s cubic-bezier(.5,0,.8,.4),opacity 1.2s .2s}
   .foot-logo.fly .fl-plane{transform:translate(30px,-320px) rotate(8deg);opacity:0}
+  .fl-box{transform-box:fill-box;transform-origin:50% 100%;transform:scale(0);transition:transform .55s cubic-bezier(.3,1.6,.5,1)}
+  .foot-logo.box .fl-box{transform:scale(1)}
+  .fl-pin{transform-box:fill-box;transform-origin:50% 100%;opacity:0;transform:translateY(-90px);transition:transform .6s cubic-bezier(.3,1.4,.5,1),opacity .2s}
+  .foot-logo.pin .fl-pin{opacity:1;transform:none}
+  .fl-puff{transform-box:fill-box;transform-origin:center;animation:flPuff .7s ease-out forwards}
+  @keyframes flPuff{from{opacity:.75;transform:scale(.4)}to{opacity:0;transform:scale(1.9) translateY(-4px)}}
   @media (prefers-reduced-motion:reduce){ .foot-logo svg{display:none} }
   .w-foot h5{color:var(--gold-2);font-size:15px;margin-bottom:14px}
   .w-foot a{display:block;padding:5px 0}
@@ -731,7 +737,8 @@
         <!-- SVG copy used only while animating: T = plane, C = road, L = truck -->
         <svg viewBox="0 0 520 260" aria-hidden="true">
           <defs>
-            <path id="flRoad" d="M330 40 A82 82 0 1 0 330 172 L500 172"/>
+            <!-- the C's arc eases into the straight road (same tangent at the join) so the truck has no kink to jump -->
+            <path id="flRoad" d="M330 40 A82 82 0 1 0 330 172 C345 161 360 170 380 170 L520 170"/>
             <mask id="flRoadMask" maskUnits="userSpaceOnUse" x="0" y="0" width="520" height="260">
               <use href="#flRoad" id="flMaskPath" fill="none" stroke="#fff" stroke-width="44"/>
             </mask>
@@ -748,7 +755,19 @@
             <path d="M95 26 C105 26 108 48 108 70 L108 160 C108 176 100 192 95 198 C90 192 82 176 82 160 L82 70 C82 48 85 26 95 26 Z" fill="#0d2b6b"/>
             <ellipse cx="95" cy="46" rx="6" ry="9" fill="#cfe3ff"/>
           </g>
-          <g id="flTruck"><g transform="scale(1.4) translate(-29 -19)">
+          <!-- C ke beech: parcel box pops up, then a location pin drops onto it -->
+          <g class="fl-box">
+            <rect x="259" y="92" width="44" height="34" rx="3" fill="#c8862a" stroke="#8a5a14" stroke-width="2"/>
+            <rect x="277" y="92" width="8" height="34" fill="#f2c14e"/>
+            <path d="M259 101 H303" stroke="#8a5a14" stroke-width="1.5"/>
+          </g>
+          <g class="fl-pin">
+            <path d="M281 90 C281 90 266 74 266 64 A15 15 0 1 1 296 64 C296 74 281 90 281 90 Z" fill="#e0524a"/>
+            <circle cx="281" cy="64" r="6" fill="#fff"/>
+          </g>
+          <g id="flPuffs"></g>
+          <!-- wheels sit on the lower half of the road band, not on its centre line -->
+          <g id="flTruck"><g transform="scale(1.25) translate(-29 -27)">
             <rect x="1.5" y="1.5" width="38" height="24" rx="3" fill="#fff" stroke="#d4a017" stroke-width="3"/>
             <text x="20.5" y="18" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-weight="900" font-size="11" fill="#0d2b6b">TCL</text>
             <path d="M40 8 H49 L57 16 V26 H40 Z" fill="#d4a017"/>
@@ -1161,8 +1180,18 @@
     // footer logo: plays every time the footer comes into view, then settles back to the plain logo image
     const flogo = document.getElementById('footLogo');
     const road = document.getElementById('flRoad'), mask = document.getElementById('flMaskPath'), truck = document.getElementById('flTruck');
+    const puffs = document.getElementById('flPuffs');
+    // little exhaust cloud just behind the truck
+    const puff = s => {
+      const p = road.getPointAtLength(Math.max(0, s - 34));
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', p.x); c.setAttribute('cy', p.y + 2); c.setAttribute('r', 5);
+      c.setAttribute('fill', '#b8c0cc'); c.setAttribute('class', 'fl-puff');
+      puffs.appendChild(c);
+      setTimeout(() => c.remove(), 750);
+    };
     const roadLen = road.getTotalLength();
-    let playing = false;
+    let playing = false, tiltNow = 0;
     const placeTruck = (s, facing) => {
       const p = road.getPointAtLength(s), q = road.getPointAtLength(Math.min(roadLen, s + 2));
       const dx = q.x - p.x, dy = q.y - p.y;
@@ -1170,8 +1199,9 @@
       let a = Math.atan2(dy, dx) * 180 / Math.PI;
       if(left) a = a - 180;
       a = ((a + 540) % 360) - 180;
-      const tilt = Math.max(-25, Math.min(25, a));
-      truck.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${tilt}) scale(${left ? -1 : 1} 1)`);
+      if(left !== facing) tiltNow = 0;                                  // turning round: start level again
+      tiltNow += (Math.max(-25, Math.min(25, a)) - tiltNow) * 0.3;      // ease the lean instead of snapping
+      truck.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${tiltNow.toFixed(2)}) scale(${left ? -1 : 1} 1)`);
       return left;
     };
     const playLogo = () => {
@@ -1179,20 +1209,26 @@
       playing = true;
       mask.style.strokeDasharray = roadLen + ' ' + roadLen;
       mask.style.strokeDashoffset = 0;
+      tiltNow = 0;
       let facing = placeTruck(0, true);
-      flogo.classList.remove('out', 'fly');
+      truck.style.opacity = 1;
+      flogo.classList.remove('out', 'fly', 'box', 'pin');
       flogo.classList.add('play');
       setTimeout(() => flogo.classList.add('fly'), 250);
-      const DRIVE = 3200, t0 = performance.now() + 500;
+      const DRIVE = 3600, t0 = performance.now() + 500;
+      let lastPuff = 0;
       const frame = now => {
         const k = Math.max(0, Math.min(1, (now - t0) / DRIVE));
         const s = k * roadLen;
         facing = placeTruck(s, facing);
         mask.style.strokeDashoffset = -s;                              // road disappears behind the truck
+        if(k > 0 && now - lastPuff > 170){ puff(s); lastPuff = now; }
+        if(k > 0.3) flogo.classList.add('box');                        // truck at the bottom of the C: parcel pops up
+        if(k > 0.5) flogo.classList.add('pin');                        // ...and the delivery pin drops on it
+        truck.style.opacity = k > 0.88 ? Math.max(0, (1 - k) / 0.12) : 1;   // fades out at the road's end
         if(k < 1) return requestAnimationFrame(frame);
-        truck.setAttribute('transform', 'translate(-200 -200)');
-        flogo.classList.add('out');                                    // text + white background fade
-        setTimeout(() => { flogo.classList.remove('play', 'fly', 'out'); playing = false; }, 1100);
+        flogo.classList.add('out');                                    // text, parcel, pin + white background fade
+        setTimeout(() => { flogo.classList.remove('play', 'fly', 'out', 'box', 'pin'); playing = false; }, 1100);
       };
       requestAnimationFrame(frame);
     };
