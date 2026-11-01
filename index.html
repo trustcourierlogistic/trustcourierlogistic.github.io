@@ -493,6 +493,22 @@
   .adm-link{color:var(--blue);font-weight:600}
   .adm-mini{padding:6px 10px!important;font-size:12px!important}
   .adm-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .co-form{max-width:760px}
+  .co-title{color:#3b2a7a;font-size:22px;margin-bottom:18px}
+  .co-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 32px}
+  .co-wide{grid-column:1/-1}
+  .co-field{margin-bottom:16px}
+  .co-field label{display:block;font-weight:600;font-size:14px;color:#3d4660;margin-bottom:8px}
+  .co-field label small{font-weight:500;color:var(--muted);font-size:11px}
+  .co-req{color:#e0524a}
+  .co-field .input{background:#fff}
+  .co-field .input[readonly]{background:#f6f7fb;color:var(--muted)}
+  .co-hint{display:block;color:var(--muted);font-size:11px;margin-top:5px}
+  .co-btns{display:flex;justify-content:space-between;gap:16px;margin-top:20px}
+  .co-btns .btn{flex:1;max-width:180px;color:#fff;border-radius:6px}
+  .co-save{background:#2bc48a}.co-print{background:#7b68d9}.co-close{background:#000}
+  .co-btns .btn:disabled{opacity:.5}
+  @media (max-width:640px){ .co-grid{grid-template-columns:1fr} .co-btns{flex-wrap:wrap} .co-btns .btn{max-width:none} }
   .cd-info{margin:14px 0 18px}
   .cd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
   .cd-grid small{display:block;color:var(--muted);font-size:12px;font-weight:600}
@@ -1284,6 +1300,7 @@
         <div><h2>${page}</h2><div class="crumb">Dashboard › ${parent} › <b>${page}</b></div></div>
         <button class="btn btn-light" onclick="go('dashboard')">← Back to Dashboard</button>
       </div>` + (pages[page] ? pages[page]() : genericPage(page, parent));
+    if(page === 'Create Order') initCreateOrder();
     window.scrollTo(0,0);
   }
 
@@ -1311,25 +1328,35 @@
 
   /* ---------- specific pages ---------- */
   const pages = {
-    'Create Order': () => `<form class="card" onsubmit="event.preventDefault();toast('Order booked! Tracking #TCL2344175020829')">
-      <div class="form-grid">
-        <div class="form-section">Customer Information</div>
-        <div class="field"><label>Customer Name *</label><input class="input" required placeholder="e.g. Ali Raza"></div>
-        <div class="field"><label>Phone Number *</label><input class="input" required placeholder="03XX-XXXXXXX"></div>
-        <div class="field"><label>Destination City *</label><select class="input">${cities.map(c=>`<option>${c}</option>`).join('')}</select></div>
-        <div class="field span-3"><label>Delivery Address *</label><input class="input" required placeholder="House #, Street, Area"></div>
-        <div class="form-section">Order Details</div>
-        <div class="field"><label>Order Reference #</label><input class="input" placeholder="#3001"></div>
-        <div class="field"><label>COD Amount (PKR) *</label><input class="input" type="number" required placeholder="2199"></div>
-        <div class="field"><label>Order Type</label><select class="input"><option>Normal</option><option>Reverse</option><option>Replacement</option><option>Overnight</option></select></div>
-        <div class="field"><label>No. of Items</label><input class="input" type="number" value="1"></div>
-        <div class="field"><label>Weight (kg)</label><input class="input" type="number" step="0.1" value="0.5"></div>
-        <div class="field"><label>Pickup Address</label><select class="input"><option>Main Warehouse – Lahore</option><option>Shop – Karachi</option></select></div>
-        <div class="field span-3"><label>Order Detail / Remarks</label><input class="input" placeholder="e.g. 1x Black Hoodie (L). Call before delivery."></div>
+    'Create Order': () => {
+      const f = (label, input, req, opt) => `<div class="co-field"><label>${label}${req ? ' <span class="co-req">*</span>' : ''}${opt ? ' <small>(optional)</small>' : ''}</label>${input}</div>`;
+      return `<form class="card co-form" id="coForm" novalidate>
+      <h3 class="co-title">Create Order</h3>
+      <div class="co-grid">
+        ${f('Courier Company', '<select class="input" id="coCourier"><option>PostEx</option><option>CityLine</option></select>', 1)}
+        ${f('Order Reference Number', '<input class="input" id="coRef" placeholder="Order ref Number" maxlength="60">', 1)}
+        ${f('Order Amount', '<input class="input" id="coAmount" type="number" min="0" step="any" placeholder="0">', 1)}
+        ${f('Order Date', '<input class="input" id="coDate" readonly tabindex="-1">', 1)}
+        ${f('Customer Name', '<input class="input" id="coName" placeholder="Customer Name" maxlength="120">', 1)}
+        ${f('Customer Contact', '<input class="input" id="coPhone" placeholder="03xxxxxxxxx" inputmode="numeric" maxlength="13">', 1)}
+        ${f('Delivery City', '<input class="input" id="coCity" list="coCityList" placeholder="Search" autocomplete="off"><datalist id="coCityList"></datalist><small class="co-hint" id="coCityHint"></small>', 1)}
+        ${f('Delivery Address', '<input class="input" id="coAddr" placeholder="Customer Address" maxlength="300">', 1)}
+        ${f('Items', '<input class="input" id="coItems" type="number" min="1" step="1" value="1">', 1)}
+        ${f('Booking Weight <small>(kg)</small>', '<input class="input" id="coWeight" type="number" min="0" step="0.01" placeholder="Booking weight in Kg">')}
+        ${f('Pickup City', '<input class="input" id="coPickCity" list="coPickCityList" placeholder="Search" autocomplete="off"><datalist id="coPickCityList"></datalist>', 1)}
+        ${f('Pickup Address', '<input class="input" id="coPickAddr" list="coPickAddrList" placeholder="Search" autocomplete="off" maxlength="300"><datalist id="coPickAddrList"></datalist>', 1)}
+        ${f('Return City', '<input class="input" id="coRetCity" list="coRetCityList" placeholder="Search" autocomplete="off"><datalist id="coRetCityList"></datalist>')}
+        ${f('Return Address', '<input class="input" id="coRetAddr" list="coRetAddrList" placeholder="Search" autocomplete="off" maxlength="300"><datalist id="coRetAddrList"></datalist>')}
+        <div class="co-wide">${f('Order Detail', '<input class="input" id="coDetail" maxlength="300">', 0, 1)}</div>
+        <div class="co-wide">${f('Notes', '<input class="input" id="coNotes" maxlength="300">', 0, 1)}</div>
       </div>
-      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px">
-        <button type="reset" class="btn btn-light">Reset</button><button class="btn btn-gold">Book Order</button>
-      </div></form>`,
+      <div class="login-msg hidden" id="coMsg"></div>
+      <div class="co-btns">
+        <button type="submit" class="btn co-save" data-print="0">Save</button>
+        <button type="submit" class="btn co-print" data-print="1">Save &amp; Print</button>
+        <button type="button" class="btn co-close" onclick="go('dashboard')">Close</button>
+      </div></form>`;
+    },
     'Cancel Order': () => `<div class="card"><p style="color:var(--muted);margin-bottom:16px">Sirf un-picked (booked) orders cancel ho sakte hain.</p>${orderTable(orders.slice(0,5),'<button class="btn btn-light" style="padding:6px 12px;color:var(--red)" onclick="toast(\'Order cancelled\')">Cancel</button>')}</div>`,
     'Airway Bills': () => `<div class="card">${filters()}${orderTable(orders.slice(0,8),'<input type="checkbox">')}<div style="text-align:right;margin-top:16px"><button class="btn btn-gold" onclick="toast('Printing airway bills…')">Print Selected AWB</button></div></div>`,
     'Generate Load Sheet': () => `<div class="card"><p style="color:var(--muted);margin-bottom:16px">Rider ko handover karne wale orders select karein.</p>${orderTable(orders.slice(0,6),'<input type="checkbox" checked>')}<div style="text-align:right;margin-top:16px"><button class="btn btn-gold" onclick="toast('Load sheet #LS-1044 generated')">Generate Load Sheet</button></div></div>`,
@@ -1749,6 +1776,84 @@
       const r = await admCall('admin_settle', {clientId:p.id, date:val('stDate'), amount:val('stAmount'), method:val('stMethod'), reference:val('stRef'), invoiceIds}, 'Payment settle ho gayi.');
       busy(e.target, false); if(r) admGo('payments');
     };
+  }
+
+  /* ---------- client portal: Create Order ---------- */
+  const ORDER_ERRORS = {
+    missing: 'Star (*) wale saare khane bharein.', bad_phone: 'Customer Contact 03xxxxxxxxx (11 hindse) likhein.',
+    bad_city: 'Delivery City list me se chunein.', dup_ref: 'Yeh Order Reference Number pehle istemal ho chuka hai.',
+    bad_items: 'Items 1 ya zyada likhein.', bad_weight: 'Weight sahi likhein (kg).', bad_amount: 'Order Amount sahi likhein.',
+    bad_courier: 'Courier Company chunein.'
+  };
+  const fillList = (id, list) => { document.getElementById(id).innerHTML = list.map(v => `<option value="${esc(v)}">`).join(''); };
+  let coCities = [], coPrev = {pickupCities:[], pickupAddresses:[], returnCities:[], returnAddresses:[]};
+  async function loadCourierCities(){
+    const courier = val('coCourier'), hint = document.getElementById('coCityHint');
+    hint.textContent = 'Cities load ho rahi hain…';
+    const r = await authApi('client_courier_cities', {courier});
+    if(!document.getElementById('coForm') || val('coCourier') !== courier) return;    // user moved on
+    coCities = r.ok ? r.cities : [];
+    fillList('coCityList', coCities);
+    const both = Array.from(new Set(coCities.concat(coPrev.pickupCities, coPrev.returnCities)));
+    fillList('coPickCityList', Array.from(new Set(coPrev.pickupCities.concat(both))));
+    fillList('coRetCityList', Array.from(new Set(coPrev.returnCities.concat(both))));
+    if(coCities.length && val('coCity') && !coCities.includes(val('coCity'))) document.getElementById('coCity').value = '';
+    hint.textContent = coCities.length ? `${courier} ${coCities.length} cities me deliver karta hai` : `${courier} ki cities abhi set nahi — TCL se rabta karein`;
+  }
+  async function initCreateOrder(){
+    const form = document.getElementById('coForm');
+    const r = await authApi('client_order_form');
+    if(!r.ok) return;
+    document.getElementById('coDate').value = r.today;                  // server's today; the field is read-only
+    coPrev = r;
+    fillList('coPickAddrList', r.pickupAddresses);
+    fillList('coRetAddrList', r.returnAddresses);
+    if(r.pickupCities[0]) document.getElementById('coPickCity').value = r.pickupCities[0];
+    if(r.pickupAddresses[0]) document.getElementById('coPickAddr').value = r.pickupAddresses[0];
+    document.getElementById('coCourier').onchange = loadCourierCities;
+    loadCourierCities();
+    let printAfter = false;
+    form.querySelectorAll('button[type=submit]').forEach(b => b.onclick = () => { printAfter = b.dataset.print === '1'; });
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const msg = document.getElementById('coMsg');
+      const show = t => { msg.textContent = t; msg.classList.toggle('hidden', !t); };
+      const order = {courier:val('coCourier'), orderRef:val('coRef'), amount:val('coAmount'), customerName:val('coName'), customerPhone:val('coPhone'),
+        deliveryCity:val('coCity'), deliveryAddress:val('coAddr'), items:val('coItems'), weight:val('coWeight'),
+        pickupCity:val('coPickCity'), pickupAddress:val('coPickAddr'), returnCity:val('coRetCity'), returnAddress:val('coRetAddr'),
+        orderDetail:val('coDetail'), notes:val('coNotes')};
+      if(['orderRef','amount','customerName','customerPhone','deliveryCity','deliveryAddress','pickupCity','pickupAddress'].some(k => order[k] === '')) return show(ORDER_ERRORS.missing);
+      if(!/^03\d{9}$/.test(order.customerPhone.replace(/[\s-]/g, ''))) return show(ORDER_ERRORS.bad_phone);
+      if(coCities.length && !coCities.includes(order.deliveryCity)) return show(ORDER_ERRORS.bad_city);
+      show('');
+      const btns = form.querySelectorAll('button');
+      btns.forEach(b => b.disabled = true);
+      try{
+        const res = await authApi('client_create_order', order);
+        if(!res.ok) return show(ORDER_ERRORS[res.error] || 'Order save nahi ho saka, dobara try karein.');
+        toast('Order save ho gaya (Unbooked). TCL courier par book karega.');
+        if(printAfter) printOrderSlip(Object.assign({id:res.id, date:res.date}, order));
+        ['coRef','coAmount','coName','coPhone','coCity','coAddr','coWeight','coDetail','coNotes'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('coItems').value = 1;
+        loadClientDashboard();
+      }catch(err){ show('Internet connection check karein.'); }
+      finally{ btns.forEach(b => b.disabled = false); }
+    };
+  }
+  function printOrderSlip(o){
+    const w = window.open('', '_blank', 'width=720,height=900');
+    if(!w){ toast('Print ke liye pop-up allow karein.'); return; }
+    const row = (k, v) => `<tr><th>${esc(k)}</th><td>${esc(v) || '—'}</td></tr>`;
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Order ${esc(o.orderRef)}</title>
+      <style>body{font-family:Segoe UI,Arial,sans-serif;padding:24px;color:#1b2540}h1{color:#0d2b6b;font-size:20px;margin:0 0 4px}p{margin:0 0 16px;color:#6b7590}
+      table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border:1px solid #e6e9f2;font-size:14px}th{width:38%;background:#f3f5fa}</style></head><body>
+      <h1>TRUST COURIER LOGISTIC</h1><p>Order slip — ${esc(o.id)} · Status: Unbooked</p><table>
+      ${row('Courier', o.courier)}${row('Order Ref', o.orderRef)}${row('Order Date', o.date)}${row('Order Amount (COD)', 'Rs ' + o.amount)}
+      ${row('Customer', o.customerName)}${row('Contact', o.customerPhone)}${row('Delivery City', o.deliveryCity)}${row('Delivery Address', o.deliveryAddress)}
+      ${row('Items', o.items)}${row('Weight (kg)', o.weight)}${row('Pickup', o.pickupCity + ' — ' + o.pickupAddress)}
+      ${row('Return', [o.returnCity, o.returnAddress].filter(Boolean).join(' — '))}${row('Order Detail', o.orderDetail)}${row('Notes', o.notes)}
+      </table></body></html>`);
+    w.document.close(); w.focus(); w.print();
   }
 
   /* ---------- client portal: own details, totals and orders from the client's ledger sheet ---------- */
