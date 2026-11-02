@@ -521,6 +521,15 @@
   .cd-bar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:#eef0f6}
   .cd-bar span,.cd-legend i{background:#c9cfdd}
   .cd-bar .ok,.cd-legend .ok{background:var(--green)} .cd-bar .bad,.cd-legend .bad{background:var(--red)} .cd-bar .mid,.cd-legend .mid{background:var(--gold)}
+  .rt-bar{height:10px;margin-bottom:4px}
+  .dist-form{grid-template-columns:1fr 1fr!important}
+  .dist-form textarea{font-family:Consolas,monospace;font-size:13px;resize:vertical}
+  details.adm-card summary{cursor:pointer}
+  @media (max-width:640px){ .dist-form{grid-template-columns:1fr!important} .cpr-top{flex-direction:column} }
+  .cpr-top{display:flex;gap:24px;margin-bottom:12px}
+  .cpr-top table{flex:1}
+  .cpr-top td:first-child{color:#6b7590;width:45%;background:#f6f7fb}
+  .cpr-total td{font-weight:800;background:#f3f5fa}
   .cd-legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;font-size:14px}
   .cd-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
   .awb-pdf{border:2px solid #0d2b6b;margin:0 0 14px;padding:14px;font-family:Segoe UI,Arial,sans-serif;color:#1b2540;page-break-inside:avoid}
@@ -913,6 +922,7 @@
             <div class="mega-col">
               <h5>Payments</h5>
               <a href="#" data-go="Cash Payment Receipts (CPR)">Cash Payment Receipts (CPR)</a>
+              <a href="#" data-go="Finance Report">Finance Report</a>
               <h5>Packaging</h5>
               <a href="#" data-go="New Packaging Request">New Request</a>
               <a href="#" data-go="Packaging Logs">Packaging Logs</a>
@@ -921,15 +931,14 @@
         </div>
 
         <div class="menu-item">
-          <button class="menu-link" onclick="toggleMenu(this)">Manage Users <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg></button>
+          <button class="menu-link" onclick="toggleMenu(this)">Delivery Ratio <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg></button>
           <div class="mega">
-            <div class="mega-intro"><h4>Manage Users</h4><p>Add your team members and control what each one can access.</p></div>
+            <div class="mega-intro"><h4>Delivery Ratio</h4><p>Dekhein kaun sa courier, shehar aur product sab se behtar deliver hota hai.</p></div>
             <div class="mega-col">
-              <h5>Action</h5>
-              <a href="#" data-go="Create User">Create User</a>
-              <a href="#" data-go="User Permissions">User Permissions</a>
-              <a href="#" data-go="User Logs">User Logs</a>
-              <a href="#" data-go="Reset User Password">Reset User Password</a>
+              <h5>Delivery Check</h5>
+              <a href="#" data-go="Courier Delivery Check">Courier Delivery Check</a>
+              <a href="#" data-go="Cities Delivery Check">Cities Delivery Check</a>
+              <a href="#" data-go="Product Delivery Check">Product Delivery Check</a>
             </div>
           </div>
         </div>
@@ -947,6 +956,7 @@
             <div class="mega-col">
               <h5>Integration</h5>
               <a href="#" data-go="Shopify Integration">Shopify Integration</a>
+              <a href="#" data-go="Shopify Orders">Shopify Orders</a>
             </div>
           </div>
         </div>
@@ -1016,6 +1026,8 @@
       <button data-tab="invoices">🧾 Invoice Distribute</button>
       <button data-tab="expenses">📉 Expense</button>
       <button data-tab="settings">⚙️ Client Setting</button>
+      <button data-tab="distribution">📦 Manual Distribution</button>
+      <button data-tab="finance">📒 Finance</button>
       <button data-tab="api">🔌 Courier API</button>
     </nav>
     <main class="adm-main" id="admMain"></main>
@@ -1150,9 +1162,17 @@
       btn.disabled = false; btn.textContent = 'LOGIN';
     }
   }
-  function forgotPassword(){
+  // a random new password is emailed to the account (the reply is the same for unknown emails)
+  async function forgotPassword(){
     const email = document.getElementById('loginUser').value.trim();
-    window.open(waLink('Assalam o Alaikum Trust Courier, mera merchant portal ka password reset kar dein.' + (email ? '\nEmail: ' + email : '')),'_blank','noopener');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ loginMsg('Pehle upar apna login Email likhein, phir Forgot password dabayein.'); return; }
+    if(!LOGIN_API){ loginMsg('Merchant login abhi setup ho raha hai.'); return; }
+    loginMsg('Bhej rahe hain…', true);
+    try{
+      const r = await loginApi({action:'forgot', email});
+      if(r.ok) loginMsg('Agar yeh email TCL me registered aur active hai to naya password us email par bhej diya gaya hai. Inbox (aur Spam) check karein.', true);
+      else loginMsg(r.error === 'busy' || r.error === 'mail_failed' ? 'Abhi email nahi ja saki — thori der baad try karein ya WhatsApp 0305-8391111 karein.' : 'Email sahi likhein.');
+    }catch(err){ loginMsg('Internet connection check karein.'); }
   }
   function logout(){
     clearSession();
@@ -1332,7 +1352,8 @@
     'Create Order':'Cash on Delivery','Cancel Order':'Cash on Delivery','Order Logs':'Cash on Delivery','Airway Bills':'Cash on Delivery','Generate Load Sheet':'Cash on Delivery',
     'Again Airway Bill':'Cash on Delivery','Un-Dispatched Orders':'Cash on Delivery',
     'Load Sheet Logs':'Cash on Delivery','Cash Payment Receipts (CPR)':'Cash on Delivery','New Packaging Request':'Cash on Delivery','Packaging Logs':'Cash on Delivery',
-    'Create User':'Manage Users','User Permissions':'Manage Users','User Logs':'Manage Users','Reset User Password':'Manage Users'
+    'Finance Report':'Cash on Delivery','Shopify Orders':'Setting',
+    'Courier Delivery Check':'Delivery Ratio','Cities Delivery Check':'Delivery Ratio','Product Delivery Check':'Delivery Ratio'
   };
   function go(page){
     closeAll();
@@ -1402,10 +1423,6 @@
       <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="pgLoad">Generate Load Sheet</button></div></div>`,
     'Load Sheet Logs': () => `<div class="card"><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
     'Cash Payment Receipts (CPR)': () => `<div class="card"><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
-    'Create User': () => SOON('Team members (users) add karne ka feature jald aa raha hai.'),
-    'User Permissions': () => SOON('Users ki permissions ka feature jald aa raha hai.'),
-    'User Logs': () => SOON('Abhi koi user log nahi.'),
-    'Reset User Password': () => SOON('Team users ka feature aane ke baad yahan password reset hoga. Apna password badalne ke liye Setting → Change Password istemal karein.'),
     'New Packaging Request': () => SOON('Packaging request ka feature jald aa raha hai. Tab tak WhatsApp par rabta karein.'),
     'Packaging Logs': () => `<div class="card"><p class="adm-empty">Abhi koi packaging request nahi.</p></div>`,
     'Business Profile': () => `<form class="card co-form" id="pgForm" novalidate><h3 class="co-title">Business Profile</h3><div class="co-grid">
@@ -1425,7 +1442,37 @@
       <div class="co-field"><label>New Password <span class="co-req">*</span></label><input class="input" type="password" id="cpNew" autocomplete="new-password" placeholder="Kam az kam 8 characters"></div>
       <div class="co-field"><label>Confirm Password <span class="co-req">*</span></label><input class="input" type="password" id="cpConfirm" autocomplete="new-password"></div>
       <div class="login-msg hidden" id="pgMsg"></div><button class="btn btn-gold">Update Password</button></form>`,
-    'Shopify Integration': () => SOON('Shopify se khud-ba-khud order ab nahi aate. Naya tareeqa jald: aap ke Shopify store ke orders yahan list honge, aap jo orders chunein ge sirf woh book honge, aur tracking number ke sath Shopify me order Fulfilled ho jayega.')
+    'Shopify Integration': () => `<form class="card co-form" id="spForm" novalidate><h3 class="co-title">Shopify Integration</h3>
+      <p class="pg-note" id="spState">Loading…</p>
+      <p class="pg-note">Store jodne ke baad <b>Shopify Orders</b> page par aap ke store ke open orders aayenge. Jo orders aap chunein ge sirf woh courier par book honge, aur Shopify me tracking number ke sath <b>Fulfilled</b> ho jayenge. Khud-ba-khud koi order book nahi hota.</p>
+      <div class="co-field"><label>Store address <span class="co-req">*</span></label><input class="input" id="spStore" placeholder="mystore.myshopify.com"></div>
+      <div class="co-field"><label>Admin API access token <small>(shpat_… — agar purani custom app hai)</small></label><input class="input" id="spToken" autocomplete="off" placeholder="shpat_xxxxxxxx"></div>
+      <p class="pg-note" style="margin-top:-6px">— ya Shopify Dev Dashboard app ke —</p>
+      <div class="co-grid"><div class="co-field"><label>Client ID</label><input class="input" id="spCid" autocomplete="off"></div>
+        <div class="co-field"><label>Client Secret</label><input class="input" id="spSecret" type="password" autocomplete="off"></div></div>
+      <ol class="sp-steps">
+        <li>Shopify admin → <b>Settings → Apps → Develop apps</b> (ya <b>Dev Dashboard</b>) me nayi app banayein, naam "TCL".</li>
+        <li>Admin API scopes: <code>read_orders</code>, <code>write_orders</code>, <code>read_merchant_managed_fulfillment_orders</code>, <code>write_merchant_managed_fulfillment_orders</code>.</li>
+        <li>App install karein, phir token (ya Client ID + Secret) upar paste kar ke <b>Connect</b> dabayein.</li>
+      </ol>
+      <div class="login-msg hidden" id="pgMsg"></div>
+      <div class="co-btns" style="justify-content:flex-start"><button class="btn co-save">Connect</button><button class="btn co-close hidden" type="button" id="spOff">Disconnect</button></div></form>`,
+    'Shopify Orders': () => `<div class="card"><div class="ol-filter">
+        <div class="co-field"><label>Courier</label><select class="input" id="soCourier"><option>PostEx</option><option>CityLine</option></select></div>
+        <div class="co-field"><label>&nbsp;</label><button class="btn btn-navy" id="soLoad" type="button">⟳ Orders laayen</button></div>
+      </div><p class="pg-note">Shopify ke open, unfulfilled orders. City courier ki list se milni chahiye; weight khali ho to 1 kg. Ek dafa me ${15} orders tak.</p>
+      <div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
+      <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="soBook">Book Selected</button></div></div>`,
+    'Finance Report': () => `<div class="card"><div class="ol-filter">
+        <div class="co-field"><label>Period</label><select class="input" id="frDays"><option value="7">Last 7 days</option><option value="15">Last 15 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="0">All time</option><option value="c">Custom</option></select></div>
+        <div class="co-field"><label>Start Date</label><input class="input" type="date" id="frFrom" disabled></div>
+        <div class="co-field"><label>End Date</label><input class="input" type="date" id="frTo" disabled></div>
+        <div class="co-field"><label>&nbsp;</label><button class="btn btn-navy" id="frGo" type="button">Show</button></div>
+        <div class="co-field"><label>Download</label><div class="ol-dl"><button class="btn btn-light" id="frXls" type="button">Excel</button></div></div>
+      </div><div id="frStats" class="adm-stats"></div><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
+    'Courier Delivery Check': () => RATIO_PAGE(false),
+    'Cities Delivery Check': () => RATIO_PAGE(true, 'Shehar dhoondein'),
+    'Product Delivery Check': () => RATIO_PAGE(true, 'Product dhoondein')
   };
   const SOON = text => `<div class="card"><div class="empty"><h3>Jald aa raha hai</h3><p>${text}</p></div></div>`;
 
@@ -1442,7 +1489,13 @@
     'Cash Payment Receipts (CPR)': () => loadCprPage(),
     'Business Profile': () => initProfilePage(),
     'Bank Details': () => initBankPage(),
-    'Change Password': () => initPasswordPage()
+    'Change Password': () => initPasswordPage(),
+    'Shopify Integration': () => initShopifyPage(),
+    'Shopify Orders': () => initShopifyOrders(),
+    'Finance Report': () => initFinanceReport(),
+    'Courier Delivery Check': () => initRatioPage('courier'),
+    'Cities Delivery Check': () => initRatioPage('city'),
+    'Product Delivery Check': () => initRatioPage('product')
   };
 
   function genericPage(page){
@@ -1520,8 +1573,8 @@
         <div class="cd-top"><div><h2>Dashboard</h2><p class="adm-sub">Poore business ka khulasa — TCL System sheet se live.</p></div>
           <button class="btn btn-light" id="admRefresh">⟳ Refresh</button></div>
         <div class="adm-card adm-gen">
-          <div><h3>Generate Invoice</h3><p class="adm-sub" style="margin:0">${d.waitingUploads ? `<b>${d.waitingUploads}</b> courier invoice upload hui hain — click karein, har client ki invoice ban kar us ke portal me chali jayegi.` : 'Pehle Invoice Distribute me courier ki invoice upload karein.'}</p></div>
-          <button class="btn btn-gold" id="genInv" ${d.waitingUploads ? '' : 'disabled'}>⚡ Generate Invoice</button>
+          <div><h3>Generate Invoice</h3><p class="adm-sub" style="margin:0">Courier ki payment ke delivered aur return tracking numbers Manual Distribution me daalein — har client ki invoice (CPR) alag ban kar us ke portal me chali jayegi.</p></div>
+          <button class="btn btn-gold" id="genInv">⚡ Manual Distribution</button>
         </div>
         <div class="adm-stats">
           ${stat('Total Clients', s.totalClients, '', s.pendingClients ? s.pendingClients + ' approval ke intezar me' : 'Active clients')}
@@ -1543,11 +1596,7 @@
         try{ await ADMIN_VIEWS.dashboard(main, true); toast('Dashboard update ho gaya.'); }
         catch(err){ toast('Refresh nahi ho saka.'); busy(document.getElementById('admRefresh'), false, '⟳ Refresh'); }
       };
-      document.getElementById('genInv').onclick = async e => {
-        busy(e.target, true, 'Generating…');
-        const r = await admCall('admin_generate_invoices', {}, 'Sab clients ki invoices ban gayi.');
-        busy(e.target, false, '⚡ Generate Invoice'); if(r) admGo('dashboard');
-      };
+      document.getElementById('genInv').onclick = () => admGo('distribution');
     },
 
     /* ---------- Payment Settled ---------- */
@@ -1650,9 +1699,13 @@
         <div class="adm-card"><h3>Client Invoices (generated)</h3><div class="adm-table-wrap">
           ${table(['Invoice', 'Client', 'Courier', 'Date', {t:'Amount', num:1}, 'Status', 'PDF'],
             d.invoices.map(i => `<tr><td>${esc(i['Invoice No'] || '—')}<br><small>${esc(i.ID)}</small></td><td>${esc(i.Client)}</td><td>${esc(i.Courier)}</td><td>${esc(i['Invoice Date'])}</td><td class="num">${rs(i.Amount)}</td><td>${statusPill(i.Status)}</td>
-              <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(i.File) ? `<a class="adm-link" href="${esc(i.File)}" target="_blank" rel="noopener">Open</a>` : '—'}</td></tr>`),
-            'Abhi koi client invoice nahi bani.')}
+              <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(i.File) ? `<a class="adm-link" href="${esc(i.File)}" target="_blank" rel="noopener">Open</a>` : `<button class="btn btn-light adm-mini" data-cpr="${esc(i.ID)}">PDF</button>`}</td></tr>`),
+            'Abhi koi client invoice nahi bani. Manual Distribution se banayein.')}
         </div></div>`;
+      main.querySelectorAll('[data-cpr]').forEach(b => b.onclick = async () => {
+        const r = await admCall('admin_invoice_detail', {id: b.dataset.cpr});
+        if(r) downloadCpr(r, b);
+      });
       document.getElementById('invUpload').onclick = async e => {
         const file = document.getElementById('invFile').files[0];
         if(!file){ toast('Invoice file chunein.'); return; }
@@ -1736,6 +1789,85 @@
           busy(e.target, false);
         };
       });
+    },
+
+    /* ---------- Manual Distribution: tracking numbers → per-client invoices ---------- */
+    async distribution(main){
+      main.innerHTML = `
+        <h2>Manual Distribution</h2><p class="adm-sub">Courier ki payment ke tracking numbers paste karein (har line me ek, ya comma se). System har number ka client dhoond kar us ka hisaab alag karega.</p>
+        <div class="adm-note">Delivered: COD − shipping charges − GST − Govt Tax · Return: sirf −(shipping charges + GST). Rates Client Setting se. Jo number pehle invoice/settle ho chuka, dobara nahi ginta.</div>
+        <div class="adm-card"><div class="adm-form dist-form">
+          <div><label>Delivered Tracking Numbers</label><textarea class="input" id="dsDel" rows="8" placeholder="Har line me ek tracking number"></textarea></div>
+          <div><label>Return Tracking Numbers</label><textarea class="input" id="dsRet" rows="8" placeholder="Har line me ek tracking number"></textarea></div>
+        </div><div style="display:flex;gap:10px;margin-top:12px"><button class="btn btn-navy" id="dsPrev">Check / Preview</button><button class="btn btn-gold" id="dsGen" disabled>⚡ Generate Invoice</button></div></div>
+        <div id="dsOut"></div>`;
+      const data = () => ({delivered: document.getElementById('dsDel').value, returned: document.getElementById('dsRet').value});
+      const gen = document.getElementById('dsGen'), out = document.getElementById('dsOut');
+      ['dsDel','dsRet'].forEach(id => document.getElementById(id).oninput = () => { gen.disabled = true; });
+      const errs = {missing: 'Kam az kam ek tracking number daalein.', tracking_both: 'Yeh number delivered aur return dono me hai: ', too_many: 'Ek dafa me 2000 numbers tak.', nothing_to_generate: 'Koi naya parcel nahi — sab pehle invoice ho chuke ya mile nahi.'};
+      const note = (list, text) => list.length ? `<div class="adm-note">${text} (${list.length}): <code>${esc(list.slice(0, 40).join(', '))}${list.length > 40 ? ' …' : ''}</code></div>` : '';
+      document.getElementById('dsPrev').onclick = async e => {
+        const btn = e.currentTarget; busy(btn, true, 'Checking…');
+        const r = await authApi('admin_distribution_preview', data());
+        busy(btn, false, 'Check / Preview');
+        if(!r.ok){ toast((errs[r.error] || r.message || 'Check nahi ho saka.') + (r.error === 'tracking_both' ? r.message : '')); return; }
+        gen.disabled = !r.clients.length;
+        const sum = k => r.clients.reduce((t, c) => t + c[k], 0);
+        out.innerHTML = note(r.unknown, '⚠️ Yeh numbers kisi client ke nahi mile') + note(r.already, 'Pehle invoice/settle ho chuke, chhod diye')
+          + `<div class="adm-card"><h3>Har client ka hisaab</h3><div class="adm-table-wrap">${table(['Client', {t:'Delivered', num:1}, {t:'Return', num:1}, {t:'COD', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Govt Tax', num:1}, {t:'Client ko dena', num:1}],
+            r.clients.map(c => `<tr><td><b>${esc(c.client)}</b><br><small>${esc(c.id)}</small></td><td class="num">${c.delivered}</td><td class="num">${c.returned}</td><td class="num">${rs(c.cod)}</td><td class="num">${rs(c.charges)}</td><td class="num">${rs(c.gst)}</td><td class="num">${rs(c.tax)}</td><td class="num"><b>${rs(c.net)}</b></td></tr>`)
+            .concat(r.clients.length > 1 ? [`<tr class="cpr-total"><td>Overall</td><td class="num">${sum('delivered')}</td><td class="num">${sum('returned')}</td><td class="num">${rs(sum('cod'))}</td><td class="num">${rs(sum('charges'))}</td><td class="num">${rs(sum('gst'))}</td><td class="num">${rs(sum('tax'))}</td><td class="num"><b>${rs(sum('net'))}</b></td></tr>`] : []),
+            'Koi naya parcel nahi mila.')}</div></div>`
+          + r.clients.map(c => `<details class="adm-card"><summary><b>${esc(c.client)}</b> — ${c.lines.length} parcels, ${rs(c.net)}</summary><div class="adm-table-wrap">${table(['Tracking', 'Order Ref', 'City', 'Status', {t:'COD', num:1}, {t:'Weight', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Tax', num:1}, {t:'Net', num:1}],
+            c.lines.map(l => `<tr><td>${esc(l.tracking)}</td><td>${esc(l.ref)}</td><td>${esc(l.city)}</td><td>${statusPill(l.status)}</td><td class="num">${rs(l.cod)}</td><td class="num">${l.weight ? esc(l.weight) + ' kg' : '—'}</td><td class="num">${rs(l.charges)}</td><td class="num">${rs(l.gst)}</td><td class="num">${rs(l.tax)}</td><td class="num"><b>${rs(l.net)}</b></td></tr>`), '')}</div></details>`).join('');
+      };
+      gen.onclick = async () => {
+        if(gen.dataset.sure !== '1'){ gen.dataset.sure = '1'; gen.textContent = 'Pakka? Invoices banayein'; return; }
+        busy(gen, true, 'Ban rahi hain…');
+        const r = await authApi('admin_distribution_generate', data());
+        gen.dataset.sure = ''; busy(gen, true, '⚡ Generate Invoice');
+        if(!r.ok){ toast(errs[r.error] || r.message || 'Invoice nahi ban saki.'); return; }
+        toast(`${r.invoices.length} client invoices ban gayi — client portal (CPR) me nazar aayengi.`);
+        out.innerHTML = `<div class="adm-card"><h3>Invoices ban gayi ✓</h3><div class="adm-table-wrap">${table(['Invoice', 'Client', {t:'Parcels', num:1}, {t:'Amount', num:1}, ''],
+          r.invoices.map(i => `<tr><td><b>${esc(i.invoiceNo)}</b></td><td>${esc(i.client)}</td><td class="num">${i.parcels}</td><td class="num">${rs(i.amount)}</td><td><button class="btn btn-light adm-mini" data-cpr="${esc(i.id)}">PDF</button></td></tr>`), '')}</div>
+          <p class="adm-sub" style="margin-top:10px">Payment dene ke baad Payment Settled me client "Settle" karein.</p></div>` + note(r.unknown, '⚠️ Nahi mile');
+        out.querySelectorAll('[data-cpr]').forEach(b => b.onclick = async () => { const d = await admCall('admin_invoice_detail', {id: b.dataset.cpr}); if(d) downloadCpr(d, b); });
+        document.getElementById('dsDel').value = ''; document.getElementById('dsRet').value = '';
+      };
+    },
+
+    /* ---------- Finance: money across all clients for a period ---------- */
+    async finance(main, q){
+      q = q || {days: 30};
+      const d = await authApi('admin_finance', q);
+      if(!d.ok) throw new Error(d.error);
+      const t = d.totals;
+      const stat = (label, value, cls, note) => `<div class="adm-stat ${cls||''}"><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
+      main.innerHTML = `
+        <h2>Finance</h2><p class="adm-sub">Delivered aur return parcels ka hisaab (order date ke hisaab se).</p>
+        <div class="adm-card"><div class="adm-form">
+          <div><label>Period</label><select class="input" id="fnDays">${[['7','Last 7 days'],['15','Last 15 days'],['30','Last 30 days'],['90','Last 90 days'],['0','All time'],['c','Custom']].map(([v, l]) => `<option value="${v}" ${String(q.from ? 'c' : q.days) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+          <div><label>Start Date</label><input class="input" type="date" id="fnFrom" value="${esc(q.from || '')}"></div>
+          <div><label>End Date</label><input class="input" type="date" id="fnTo" value="${esc(q.to || '')}"></div>
+          <div><button class="btn btn-navy" id="fnGo">Show</button></div></div></div>
+        <div class="adm-stats">
+          ${stat('Payment Received (COD)', rs(t.cod), 'green', t.delivered + ' delivered parcels')}
+          ${stat('Shipping Charges', rs(t.charges), 'gold', (t.delivered + t.returned) + ' parcels')}
+          ${stat('GST Tax', rs(t.gst), 'gold')}
+          ${stat('Govt Tax', rs(t.tax), 'gold')}
+          ${stat('Clients ka hissa', rs(t.net), 'red', t.returned + ' returns shamil')}
+          ${stat('Settled', rs(t.settled), 'green')}
+          ${stat('Pending', rs(t.pending), 'red')}
+        </div>
+        <div class="adm-card"><h3>Client-wise</h3><div class="adm-table-wrap">
+          ${table(['Client', {t:'Delivered', num:1}, {t:'Return', num:1}, {t:'COD', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Govt Tax', num:1}, {t:'Net', num:1}, {t:'Pending', num:1}],
+            d.clients.map(c => `<tr><td><b>${esc(c.client)}</b><br><small>${esc(c.id)}</small></td><td class="num">${c.delivered}</td><td class="num">${c.returned}</td><td class="num">${rs(c.cod)}</td><td class="num">${rs(c.charges)}</td><td class="num">${rs(c.gst)}</td><td class="num">${rs(c.tax)}</td><td class="num"><b>${rs(c.net)}</b></td><td class="num">${rs(c.pending)}</td></tr>`),
+            'Abhi koi active client nahi.')}
+        </div></div>`;
+      document.getElementById('fnGo').onclick = () => {
+        const v = val('fnDays');
+        ADMIN_VIEWS.finance(main, v === 'c' ? {from: val('fnFrom'), to: val('fnTo')} : {days: Number(v)}).catch(() => toast('Report load nahi ho saki.'));
+      };
     },
 
     /* ---------- Courier API ---------- */
@@ -2079,14 +2211,220 @@
     }catch(err){ toast('PDF nahi ban saki — internet check karein.'); }
     finally{ busy(btn, false, label); }
   }
+  /* ---------- Delivery Ratio: courier / city / product ---------- */
+  const MAIN_CITIES = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar', 'Quetta', 'Hyderabad', 'Gujranwala',
+    'Sialkot', 'Sargodha', 'Bahawalpur', 'Sukkur', 'Larkana', 'Abbottabad', 'Mardan', 'Attock', 'Gujrat', 'Sahiwal', 'Sheikhupura', 'Rahim Yar Khan',
+    'Jhang', 'Dera Ghazi Khan', 'Kasur', 'Okara', 'Mirpur Khas', 'Nawabshah', 'Chiniot', 'Kamoke', 'Mandi Bahauddin', 'Jhelum', 'Sadiqabad',
+    'Khanewal', 'Hafizabad', 'Kohat', 'Muzaffargarh', 'Khanpur', 'Gojra', 'Bahawalnagar', 'Muridke', 'Pakpattan', 'Chakwal', 'Wah Cantt',
+    'Swat', 'Mansehra', 'Muzaffarabad', 'Mirpur', 'Gilgit', 'Gwadar', 'Taxila', 'Vehari', 'Burewala', 'Kamalia', 'Haripur', 'Nowshera', 'Charsadda'];
+  const RATIO_PAGE = (perCourier, search) => `<div class="card"><div class="ol-filter">
+      ${perCourier ? `<div class="co-field"><label>Courier</label><select class="input" id="rtCourier"><option value="">All couriers</option><option>PostEx</option><option>CityLine</option></select></div>` : ''}
+      <div class="co-field"><label>Period</label><select class="input" id="rtDays"><option value="7">Last 7 days</option><option value="15">Last 15 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="0" selected>All time</option></select></div>
+      ${search ? `<div class="co-field"><label>Search</label><input class="input" id="rtSearch" placeholder="${search}"></div>` : ''}
+    </div><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`;
+  async function initRatioPage(kind){
+    const box = document.getElementById('pgList');
+    let data = null;
+    const pct = (n, t) => t ? Math.round(n / t * 1000) / 10 : 0;
+    const render = () => {
+      if(!document.getElementById('pgList') || !data) return;
+      const courier = document.getElementById('rtCourier') ? val('rtCourier') : '';
+      const q = document.getElementById('rtSearch') ? val('rtSearch').toLowerCase() : '';
+      // the same city/product from two couriers is added up when "All couriers" is chosen
+      const merged = {};
+      data.rows.filter(r => r.kind === kind && (!courier || r.courier === courier)).forEach(r => {
+        const k = r.name.toLowerCase(), m = merged[k] = merged[k] || {name: r.name, sent: 0, delivered: 0, returned: 0};
+        m.sent += r.sent; m.delivered += r.delivered; m.returned += r.returned;
+      });
+      if(kind === 'city') MAIN_CITIES.forEach(c => { if(!merged[c.toLowerCase()]) merged[c.toLowerCase()] = {name: c, sent: 0, delivered: 0, returned: 0}; });
+      if(kind === 'courier') ['PostEx','CityLine'].forEach(c => { if(!merged[c.toLowerCase()]) merged[c.toLowerCase()] = {name: c, sent: 0, delivered: 0, returned: 0}; });
+      const list = Object.values(merged).filter(r => !q || r.name.toLowerCase().includes(q)).sort((a, b) => b.sent - a.sent || a.name.localeCompare(b.name));
+      const head = {courier: 'Courier', city: 'City', product: 'Product'}[kind];
+      box.innerHTML = table([head, {t:'Parcels Sent', num:1}, {t:'Delivered', num:1}, {t:'Returned', num:1}, {t:'In Process', num:1}, 'Delivery Ratio'],
+        list.map(r => { const ip = r.sent - r.delivered - r.returned, dp = pct(r.delivered, r.sent), rp = pct(r.returned, r.sent);
+          return `<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.sent}</td><td class="num">${r.delivered}</td><td class="num">${r.returned}</td><td class="num">${ip}</td>
+            <td style="min-width:180px">${r.sent ? `<div class="cd-bar rt-bar"><span class="ok" style="width:${dp}%"></span><span class="bad" style="width:${rp}%"></span></div><small>${dp}% delivered · ${rp}% return</small>` : '<small>Abhi koi parcel nahi</small>'}</td></tr>`; }),
+        'Is period me koi booked order nahi.');
+    };
+    const load = async () => {
+      box.innerHTML = '<p class="adm-empty">Loading…</p>';
+      const r = await authApi('client_delivery_ratio', {days: Number(val('rtDays'))});
+      if(!document.getElementById('pgList')) return;
+      if(!r.ok){ box.innerHTML = '<p class="adm-empty">Data load nahi ho saka.</p>'; return; }
+      data = r; render();
+    };
+    document.getElementById('rtDays').onchange = load;
+    if(document.getElementById('rtCourier')) document.getElementById('rtCourier').onchange = render;
+    if(document.getElementById('rtSearch')) document.getElementById('rtSearch').oninput = render;
+    load();
+  }
+
+  /* ---------- Finance Report: what was received and deducted, by period ---------- */
+  async function initFinanceReport(){
+    const days = document.getElementById('frDays'), from = document.getElementById('frFrom'), to = document.getElementById('frTo');
+    let last = null;
+    days.onchange = () => { const c = days.value === 'c'; from.disabled = to.disabled = !c; if(!c) load(); };
+    const load = async () => {
+      const box = document.getElementById('pgList');
+      box.innerHTML = '<p class="adm-empty">Loading…</p>';
+      const q = days.value === 'c' ? {from: from.value, to: to.value} : {days: Number(days.value)};
+      const r = await authApi('client_finance', q);
+      if(!document.getElementById('pgList')) return;
+      if(!r.ok){ box.innerHTML = '<p class="adm-empty">Report load nahi ho saki.</p>'; return; }
+      last = r; const t = r.totals;
+      const stat = (label, value, cls, note) => `<div class="adm-stat ${cls||''}"><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
+      document.getElementById('frStats').innerHTML = stat('Received Amount (COD)', rs(t.cod), 'green', `${t.delivered} delivered parcels`) + stat('Shipping Charges', rs(t.charges), 'red', `${t.delivered + t.returned} parcels`)
+        + stat('GST Tax', rs(t.gst), 'red') + stat('Govt Tax', rs(t.tax), 'red') + stat('Net Amount', rs(t.net), 'gold', `${t.returned} returned parcels shamil`)
+        + stat('Settled', rs(t.settled), 'green', 'Aap ko mil chuka') + stat('Pending', rs(t.pending), 'red', 'Abhi milna hai');
+      box.innerHTML = table(['Date', 'Tracking', 'Order Ref', 'City', 'Status', {t:'COD', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Govt Tax', num:1}, {t:'Net', num:1}, 'Payment'],
+        r.orders.map(o => `<tr><td>${esc(o.date)}</td><td>${esc(o.tracking)}</td><td>${esc(o.ref)}</td><td>${esc(o.city)}</td><td>${statusPill(o.status)}</td><td class="num">${rs(o.cod)}</td>
+          <td class="num">${rs(o.charges)}</td><td class="num">${rs(o.gst)}</td><td class="num">${rs(o.tax)}</td><td class="num"><b>${rs(o.net)}</b></td><td>${statusPill(o.payment)}</td></tr>`),
+        'Is period me koi delivered ya returned parcel nahi.');
+    };
+    document.getElementById('frGo').onclick = load;
+    document.getElementById('frXls').onclick = async e => {
+      if(!last || !last.orders.length){ toast('Is period me koi parcel nahi.'); return; }
+      const btn = e.currentTarget; busy(btn, true, '…');
+      try{
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+        const cols = [['Date','date'],['Tracking','tracking'],['Order Ref','ref'],['Customer','customer'],['City','city'],['Status','status'],['Weight (kg)','weight'],
+          ['COD','cod'],['Shipping','charges'],['GST','gst'],['Govt Tax','tax'],['Net','net'],['Payment','payment'],['Settled Date','settledDate']];
+        const ws = XLSX.utils.aoa_to_sheet([cols.map(c => c[0])].concat(last.orders.map(o => cols.map(c => o[c[1]] ?? ''))));
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Finance');
+        XLSX.writeFile(wb, `TCL-Finance-${last.from || 'all'}-to-${last.to || 'today'}.xlsx`);
+      }catch(err){ toast('Excel nahi ban saki — internet check karein.'); }
+      finally{ busy(btn, false, 'Excel'); }
+    };
+    load();
+  }
+
+  /* ---------- Shopify: connect the store, then pick orders to book ---------- */
+  const SHOPIFY_ERRORS = {
+    bad_store: 'Store address sahi likhein (mystore.myshopify.com).', missing: 'Admin API token ya Client ID + Secret dono likhein.',
+    shopify_not_connected: 'Pehle Setting → Shopify Integration me store jodein.', too_many: 'Ek dafa me 15 orders tak chunein.'
+  };
+  async function initShopifyPage(){
+    const r = await authApi('client_shopify');
+    const state = document.getElementById('spState');
+    if(!state || !r.ok) return;
+    state.innerHTML = r.connected ? `✅ Jud gaya: <b>${esc(r.store)}</b> — orders ke liye <a href="#" class="adm-link" data-go="Shopify Orders">Shopify Orders</a> kholein.` : 'Abhi koi store nahi juda.';
+    document.getElementById('spStore').value = r.store || '';
+    document.getElementById('spOff').classList.toggle('hidden', !r.connected);
+    const form = document.getElementById('spForm'), msg = document.getElementById('pgMsg');
+    const show = (t, ok) => { msg.textContent = t; msg.classList.toggle('ok', !!ok); msg.classList.toggle('hidden', !t); };
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const btn = form.querySelector('.co-save'); btn.disabled = true; show('');
+      try{
+        const res = await authApi('client_shopify_save', {store:val('spStore'), apiToken:val('spToken'), clientId:val('spCid'), secret:val('spSecret')});
+        if(!res.ok) return show(SHOPIFY_ERRORS[res.error] || res.message || 'Store nahi jud saka.');
+        ['spToken','spCid','spSecret'].forEach(id => document.getElementById(id).value = '');
+        show(`Store jud gaya: ${res.shop || res.store}`, true); initShopifyPage();
+      }catch(err){ show('Internet connection check karein.'); }
+      finally{ btn.disabled = false; }
+    };
+    document.getElementById('spOff').onclick = async e => {
+      const b = e.currentTarget;
+      if(b.dataset.sure !== '1'){ b.dataset.sure = '1'; b.textContent = 'Pakka?'; return; }
+      const res = await authApi('client_shopify_save', {disconnect:true});
+      if(res.ok){ toast('Shopify store hata diya.'); go('Shopify Integration'); }
+    };
+  }
+  async function initShopifyOrders(){
+    const box = document.getElementById('pgList');
+    let orders = [], cities = [];
+    const loadCities = async () => {
+      const r = await authApi('client_courier_cities', {courier: val('soCourier')});
+      cities = r.ok ? r.cities : [];
+      const dl = document.getElementById('soCities'); if(dl) dl.innerHTML = cities.map(c => `<option value="${esc(c)}">`).join('');
+    };
+    // Shopify spells cities freely ("karachi ", "Khi"); a case-insensitive match is used when there is one
+    const matchCity = c => cities.find(x => x.toLowerCase() === String(c || '').trim().toLowerCase()) || c;
+    const render = () => {
+      box.innerHTML = orders.length ? `<datalist id="soCities">${cities.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+        <table class="adm-table"><thead><tr><th><input type="checkbox" id="pgAll"></th><th>Order</th><th>Customer</th><th>City</th><th>Address</th><th>Product</th><th class="num">COD</th><th>Weight (kg)</th><th>Status</th></tr></thead><tbody>
+        ${orders.map(o => `<tr data-id="${esc(o.id)}"><td>${o.booked ? '' : `<input type="checkbox" class="pgSel" value="${esc(o.id)}">`}</td><td><b>${esc(o.name)}</b><br><small>${esc(o.date)}</small></td>
+          <td>${esc(o.customer)}<br><small>${esc(o.phone) || '<span style="color:var(--red)">phone nahi</span>'}</small></td>
+          <td><input class="input so-city" list="soCities" value="${esc(matchCity(o.city))}" style="min-width:120px"></td><td>${esc(o.address)}</td><td>${esc(o.detail) || '—'}</td>
+          <td class="num">${rs(o.amount)}${o.paid === 'paid' ? '<br><small>Paid</small>' : ''}</td>
+          <td><input class="input so-w" type="number" min="0" step="0.01" value="${esc(o.weight)}" placeholder="1" style="width:80px"></td>
+          <td class="so-st">${o.booked ? statusPill('Booked') + `<br><small>${esc(o.booked)}</small>` : statusPill('New')}</td></tr>`).join('')}</tbody></table>`
+        : '<p class="adm-empty">Shopify me koi open, unfulfilled order nahi.</p>';
+      const all = document.getElementById('pgAll');
+      if(all) all.onchange = () => box.querySelectorAll('.pgSel').forEach(c => c.checked = all.checked);
+    };
+    const load = async () => {
+      box.innerHTML = '<p class="adm-empty">Shopify se orders aa rahe hain…</p>';
+      const [r] = await Promise.all([authApi('client_shopify_orders'), loadCities()]);
+      if(!document.getElementById('pgList')) return;
+      if(!r.ok){ box.innerHTML = `<p class="adm-empty">${esc(SHOPIFY_ERRORS[r.error] || r.message || 'Orders nahi aa sake.')}</p>`; return; }
+      orders = r.orders; render();
+    };
+    document.getElementById('soLoad').onclick = load;
+    document.getElementById('soCourier').onchange = async () => { await loadCities(); };
+    document.getElementById('soBook').onclick = async e => {
+      const btn = e.currentTarget;
+      const picks = [...box.querySelectorAll('.pgSel:checked')].map(c => { const tr = c.closest('tr');
+        return {id: c.value, courier: val('soCourier'), city: tr.querySelector('.so-city').value.trim(), weight: tr.querySelector('.so-w').value}; });
+      if(!picks.length){ toast('Pehle orders select karein.'); return; }
+      if(picks.length > 15){ toast(SHOPIFY_ERRORS.too_many); return; }
+      const bad = picks.find(p => cities.length && !cities.includes(p.city));
+      if(bad){ toast(`${orders.find(o => o.id === bad.id).name}: city list me se chunein.`); return; }
+      busy(btn, true, `Book ho rahe hain (${picks.length})…`);
+      try{
+        const r = await authApi('client_shopify_book', {orders: picks});
+        if(!r.ok){ toast(SHOPIFY_ERRORS[r.error] || r.message || 'Book nahi ho sake.'); return; }
+        let okN = 0;
+        r.results.forEach(x => {
+          const tr = box.querySelector(`tr[data-id="${x.id}"]`); if(!tr) return;
+          const cell = tr.querySelector('.so-st');
+          if(x.ok){
+            okN++; tr.querySelector('td').innerHTML = '';
+            cell.innerHTML = statusPill(x.status) + `<br><small>${esc(x.tracking)}</small>` + (x.tracking ? (x.fulfilled ? '<br><small>Shopify: Fulfilled ✓</small>' : `<br><small style="color:var(--red)">Shopify fulfil nahi hua: ${esc(x.fulfilError)}</small>`) : '');
+            const o = orders.find(o => o.id === x.id); if(o) o.booked = x.tracking || x.status;
+          } else cell.innerHTML = `<span class="pill-s bad">Book nahi hua</span><br><small>${esc(x.message || ORDER_ERRORS[x.error] || x.error)}</small>`;
+        });
+        toast(`${okN} / ${r.results.length} orders book ho gaye.`);
+        loadClientDashboard();
+      }catch(err){ toast('Internet connection check karein.'); }
+      finally{ busy(btn, false, 'Book Selected'); }
+    };
+    load();
+  }
+
+  /* ---------- CPR (client invoice) PDF — same layout for the client and the admin ---------- */
+  async function downloadCpr(d, btn){
+    const label = btn ? btn.textContent : '';
+    busy(btn, true, '…');
+    try{
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+      const i = d.invoice, c = d.client, t = d.totals;
+      const kv = (k, v) => `<tr><td>${esc(k)}</td><td><b>${v}</b></td></tr>`;
+      const wrap = pdfWrap(1000, `<div class="ls-pdf cpr-pdf"><div class="ls-hd"><b>TRUST COURIER LOGISTIC — CASH PAYMENT RECEIPT</b><span>${esc(i.invoiceNo)} · ${esc(i.date)}</span></div>
+        <div class="cpr-top"><table>${kv('Merchant', esc(c.brand || c.name))}${kv('Merchant ID', esc(c.id))}${kv('Phone', esc(c.phone))}${kv('Bank', esc([c.bankName, c.accountTitle, c.accountNumber].filter(Boolean).join(' · ')) || '—')}</table>
+          <table>${kv('Delivered parcels', t.delivered)}${kv('Returned parcels', t.returned)}${kv('COD collected', rs(t.cod))}${kv('Shipping charges', rs(t.charges))}${kv('GST', rs(t.gst))}${kv('Govt Tax', rs(t.tax))}${kv('Net payable', rs(t.net))}${kv('Status', esc(i.status))}</table></div>
+        <table><thead><tr><th>#</th><th>Tracking</th><th>Order Ref</th><th>Customer</th><th>Destination</th><th>Status</th><th>COD</th><th>Shipping</th><th>GST</th><th>Govt Tax</th><th>Net</th></tr></thead><tbody>
+        ${d.lines.map((l, n) => `<tr><td>${n + 1}</td><td>${esc(l.tracking)}</td><td>${esc(l.ref)}</td><td>${esc(l.customer)}</td><td>${esc(l.city)}</td><td>${esc(l.status)}</td>
+          <td>${rs(/^returned/i.test(l.status) ? 0 : l.cod)}</td><td>${rs(l.charges)}</td><td>${rs(l.gst)}</td><td>${rs(l.tax)}</td><td><b>${rs(l.net)}</b></td></tr>`).join('')}
+        <tr class="cpr-total"><td colspan="6">Total</td><td>${rs(t.cod)}</td><td>${rs(t.charges)}</td><td>${rs(t.gst)}</td><td>${rs(t.tax)}</td><td>${rs(t.net)}</td></tr></tbody></table>
+        <p style="margin-top:14px;color:#6b7590">Returned parcel par sirf shipping + GST katta hai. Head office Attock · 0305-8391111 · trustcourierlogistic.com</p></div>`);
+      await html2pdf().set({margin:6, filename:`${i.invoiceNo || 'CPR'}.pdf`, html2canvas:{scale:2}, jsPDF:{unit:'mm', format:'a4', orientation:'landscape'}, pagebreak:{mode:['css','legacy'], avoid:'tr'}}).from(wrap).save();
+      wrap.remove();
+    }catch(err){ toast('PDF nahi ban saki — internet check karein.'); }
+    finally{ busy(btn, false, label); }
+  }
   async function loadCprPage(){
     const box = document.getElementById('pgList');
     const r = await authApi('client_invoices');
     if(!document.getElementById('pgList')) return;
     box.innerHTML = r.ok ? table(['CPR / Invoice', 'Courier', 'Date', {t:'Amount', num:1}, 'Status', 'PDF'],
       r.invoices.map(i => `<tr><td><b>${esc(i.invoiceNo || i.id)}</b></td><td>${esc(i.courier)}</td><td>${esc(i.date)}</td><td class="num">${rs(i.amount)}</td><td>${statusPill(i.status)}</td>
-        <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(i.file) ? `<a class="adm-link" href="${esc(i.file)}" target="_blank" rel="noopener">Download</a>` : '—'}</td></tr>`),
+        <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(i.file) ? `<a class="adm-link" href="${esc(i.file)}" target="_blank" rel="noopener">Download</a>` : `<button class="btn btn-light adm-mini" data-cpr="${esc(i.id)}">Download</button>`}</td></tr>`),
       'Abhi koi CPR nahi aayi. Weekly payment hone par yahan aayegi.') : '<p class="adm-empty">CPR load nahi ho sakin.</p>';
+    box.querySelectorAll('[data-cpr]').forEach(b => b.onclick = async () => {
+      const d = await authApi('client_invoice_detail', {id: b.dataset.cpr});
+      if(d.ok) downloadCpr(d, b); else toast('CPR nahi mil saki.');
+    });
   }
 
   /* ---------- client portal: settings pages ---------- */
