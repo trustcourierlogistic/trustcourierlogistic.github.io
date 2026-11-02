@@ -32,6 +32,8 @@
   "logo": "https://trustcourierlogistic.com/logo.jpg",
   "slogan": "Your Destination, Our Responsibility",
   "email": "trustcourierlogistic@gmail.com",
+  "telephone": "+92-305-8391111",
+  "address": { "@type": "PostalAddress", "addressLocality": "Attock", "addressCountry": "PK" },
   "areaServed": { "@type": "Country", "name": "Pakistan" },
   "description": "Cash on Delivery courier service for online businesses in Pakistan with Shopify order booking, live tracking and weekly COD payments.",
   "knowsAbout": ["Cash on Delivery", "Ecommerce logistics", "Parcel delivery", "Shopify order fulfilment"]
@@ -494,9 +496,33 @@
   .adm-mini{padding:6px 10px!important;font-size:12px!important}
   .adm-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
   .pg-note{color:var(--muted);margin-bottom:14px}
-  .ol-filter{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
+  .ol-filter{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:end}
   .ol-filter .btn{width:100%}
-  @media (max-width:640px){ .ol-filter{grid-template-columns:1fr 1fr} }
+  .ol-dl{display:flex;gap:8px}
+  @media (max-width:800px){ .ol-filter{grid-template-columns:1fr 1fr} }
+  .ls-pdf{padding:10px;font-family:Segoe UI,Arial,sans-serif;color:#1b2540;font-size:12px}
+  .ls-hd{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #d4a017;padding-bottom:6px;margin-bottom:10px}
+  .ls-hd b{color:#0d2b6b;font-size:16px}
+  .ls-pdf p{margin:0 0 10px}
+  .ls-pdf table{width:100%;border-collapse:collapse}
+  .ls-pdf th,.ls-pdf td{border:1px solid #d9dde8;padding:5px 6px;text-align:left;vertical-align:top}
+  .ls-pdf th{background:#0d2b6b;color:#fff}
+  .ls-sign{display:flex;gap:40px;margin-top:50px}
+  .ls-sign div{flex:1;border-top:1px solid #1b2540;padding-top:6px;text-align:center}
+  .cd-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .cd-top .welcome{margin:0}
+  .cd-tools{display:flex;gap:10px}
+  .cd-tools .input{width:auto;background:#fff}
+  .cd-link{cursor:pointer;transition:transform .15s}
+  .cd-link:hover{transform:translateY(-2px)}
+  .cd-ratio{margin-top:18px}
+  .cd-ratio .co-title{font-size:18px;margin-bottom:12px}
+  .cd-ratio .co-title small{font-size:13px;color:var(--muted);font-weight:500}
+  .cd-bar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:#eef0f6}
+  .cd-bar span,.cd-legend i{background:#c9cfdd}
+  .cd-bar .ok,.cd-legend .ok{background:var(--green)} .cd-bar .bad,.cd-legend .bad{background:var(--red)} .cd-bar .mid,.cd-legend .mid{background:var(--gold)}
+  .cd-legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;font-size:14px}
+  .cd-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
   .awb-pdf{border:2px solid #0d2b6b;margin:0 0 14px;padding:14px;font-family:Segoe UI,Arial,sans-serif;color:#1b2540;page-break-inside:avoid}
   .awb-hd{display:flex;justify-content:space-between;border-bottom:2px solid #d4a017;padding-bottom:6px;margin-bottom:8px;font-size:13px}
   .awb-hd b{color:#0d2b6b;font-size:17px}
@@ -520,7 +546,7 @@
   .co-field .input[readonly]{background:#f6f7fb;color:var(--muted)}
   .co-hint{display:block;color:var(--muted);font-size:11px;margin-top:5px}
   .co-btns{display:flex;justify-content:space-between;gap:16px;margin-top:20px}
-  .co-btns .btn{flex:1;max-width:180px;color:#fff;border-radius:6px}
+  .co-btns .btn{flex:1;max-width:230px;color:#fff;border-radius:6px}
   .co-save{background:#2bc48a}.co-print{background:#7b68d9}.co-close{background:#000}
   .co-btns .btn:disabled{opacity:.5}
   @media (max-width:640px){ .co-grid{grid-template-columns:1fr} .co-btns{flex-wrap:wrap} .co-btns .btn{max-width:none} }
@@ -528,14 +554,12 @@
   .cd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
   .cd-grid small{display:block;color:var(--muted);font-size:12px;font-weight:600}
   .cd-grid b{color:var(--navy);word-break:break-word}
-  #app .adm-stats{grid-template-columns:repeat(3,1fr)}
+  #app .adm-stats{grid-template-columns:repeat(4,1fr)}
   @media (max-width:800px){ #app .adm-stats{grid-template-columns:1fr 1fr} }
   .adm-gen{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-left:5px solid var(--gold)}
   .adm-gen h3{margin-bottom:4px}
   .adm-gen .btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
   .adm-num{width:110px;padding:8px 10px!important;text-align:right}
-  .adm-tok{width:170px;padding:7px 10px!important;font-size:12px!important;display:block}
-  .adm-tok+.adm-tok{margin-top:6px}
   .adm-note{background:#fff8e6;border:1px dashed var(--gold);color:#7a5a06;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px}
   @media (max-width:1100px){ .adm-stats{grid-template-columns:repeat(2,1fr)} }
   @media (max-width:800px){
@@ -878,6 +902,8 @@
               <a href="#" data-go="Cancel Order">Cancel Order</a>
               <a href="#" data-go="Order Logs">Order Logs</a>
               <a href="#" data-go="Airway Bills">Airway Bills</a>
+              <a href="#" data-go="Again Airway Bill">Again Airway Bill</a>
+              <a href="#" data-go="Un-Dispatched Orders">Un-Dispatched Orders</a>
             </div>
             <div class="mega-col">
               <h5>Load Sheet</h5>
@@ -955,9 +981,16 @@
   <main>
     <!-- ============ DASHBOARD ============ -->
     <section id="page-dashboard">
-      <p class="welcome">Welcome, <b class="mName"></b>!</p>
+      <div class="cd-top">
+        <p class="welcome">Welcome, <b class="mName"></b>!</p>
+        <div class="cd-tools">
+          <select class="input" id="cdDays" aria-label="Period"><option value="7">Last 7 days</option><option value="15">Last 15 days</option><option value="30" selected>Last 30 days</option><option value="0">All time</option></select>
+          <button class="btn btn-light" id="cdRefresh" type="button">⟳ Refresh</button>
+        </div>
+      </div>
       <div class="card cd-info" id="cdInfo"><p class="adm-empty">Loading…</p></div>
       <div class="adm-stats" id="cdStats"></div>
+      <div class="card cd-ratio" id="cdRatio"></div>
     </section>
 
     <!-- ============ SUB PAGE (filled by JS) ============ -->
@@ -994,10 +1027,10 @@
 <script>
   /* ---------- business contact details (update with real info) ---------- */
   const CONTACT = {
-    phone: '+92 3XX XXXXXXX',           // TODO: real phone number
-    whatsapp: '923000000000',           // TODO: WhatsApp number, country code, no + or spaces
+    phone: '0305-8391111',
+    whatsapp: '923058391111',           // country code, no + or spaces
     email: 'trustcourierlogistic@gmail.com',
-    address: 'Lahore, Pakistan'
+    address: 'Attock, Pakistan'
   };
   const waLink = text => `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(text)}`;
   document.querySelectorAll('.js-phone').forEach(el=>el.textContent=CONTACT.phone);
@@ -1297,6 +1330,7 @@
   /* ---------- router ---------- */
   const section = {
     'Create Order':'Cash on Delivery','Cancel Order':'Cash on Delivery','Order Logs':'Cash on Delivery','Airway Bills':'Cash on Delivery','Generate Load Sheet':'Cash on Delivery',
+    'Again Airway Bill':'Cash on Delivery','Un-Dispatched Orders':'Cash on Delivery',
     'Load Sheet Logs':'Cash on Delivery','Cash Payment Receipts (CPR)':'Cash on Delivery','New Packaging Request':'Cash on Delivery','Packaging Logs':'Cash on Delivery',
     'Create User':'Manage Users','User Permissions':'Manage Users','User Logs':'Manage Users','Reset User Password':'Manage Users'
   };
@@ -1333,7 +1367,7 @@
         ${f('Delivery City', '<input class="input" id="coCity" list="coCityList" placeholder="Search" autocomplete="off"><datalist id="coCityList"></datalist><small class="co-hint" id="coCityHint"></small>', 1)}
         ${f('Delivery Address', '<input class="input" id="coAddr" placeholder="Customer Address" maxlength="300">', 1)}
         ${f('Items', '<input class="input" id="coItems" type="number" min="1" step="1" value="1">', 1)}
-        ${f('Booking Weight <small>(kg)</small>', '<input class="input" id="coWeight" type="number" min="0" step="0.01" placeholder="Booking weight in Kg">')}
+        ${f('Booking Weight <small>(kg)</small>', '<input class="input" id="coWeight" type="number" min="0" step="0.01" placeholder="1 kg (default)">')}
         ${f('Pickup City', '<input class="input" id="coPickCity" list="coPickCityList" placeholder="Search" autocomplete="off"><datalist id="coPickCityList"></datalist>', 1)}
         ${f('Pickup Address', '<input class="input" id="coPickAddr" list="coPickAddrList" placeholder="Search" autocomplete="off" maxlength="300"><datalist id="coPickAddrList"></datalist>', 1)}
         ${f('Return City', '<input class="input" id="coRetCity" list="coRetCityList" placeholder="Search" autocomplete="off"><datalist id="coRetCityList"></datalist>')}
@@ -1343,8 +1377,8 @@
       </div>
       <div class="login-msg hidden" id="coMsg"></div>
       <div class="co-btns">
-        <button type="submit" class="btn co-save" data-print="0">Save</button>
-        <button type="submit" class="btn co-print" data-print="1">Save &amp; Print</button>
+        <button type="submit" class="btn co-save" data-print="0">Save &amp; Book</button>
+        <button type="submit" class="btn co-print" data-print="1">Save, Book &amp; Print AWB</button>
         <button type="button" class="btn co-close" onclick="go('dashboard')">Close</button>
       </div></form>`;
     },
@@ -1352,13 +1386,21 @@
     'Order Logs': () => `<div class="card"><div class="ol-filter">
         <div class="co-field"><label>Start Date</label><input class="input" type="date" id="olFrom"></div>
         <div class="co-field"><label>End Date</label><input class="input" type="date" id="olTo"></div>
-        <div class="co-field"><label>Status</label><select class="input" id="olStatus"><option value="">All</option><option>Unbooked</option><option>Booked</option><option>Delivered</option><option>Returned</option><option>Cancelled</option></select></div>
+        <div class="co-field"><label>Status</label><select class="input" id="olStatus"><option value="">All</option>${ORDER_STATUSES.map(s => `<option>${s}</option>`).join('')}</select></div>
         <div class="co-field"><label>&nbsp;</label><button class="btn btn-navy" id="olGo" type="button">Search</button></div>
+        <div class="co-field"><label>Download</label><div class="ol-dl"><button class="btn btn-light" id="olPdf" type="button">PDF</button><button class="btn btn-light" id="olXls" type="button">Excel</button></div></div>
       </div><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
-    'Airway Bills': () => `<div class="card"><p class="pg-note">Orders select kar ke airway bill ki PDF download karein.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
+    'Airway Bills': () => `<div class="card"><p class="pg-note">Booked orders jin ki load sheet abhi nahi bani. Load sheet banne ke baad order yahan se hat jata hai — dobara print ke liye <a href="#" class="adm-link" data-go="Again Airway Bill">Again Airway Bill</a>.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
       <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="pgPrint">Download AWB PDF</button></div></div>`,
-    'Generate Load Sheet': () => `<div class="card"><p class="pg-note">Load sheet un orders ki banti hai jo courier par book ho chuke hon (tracking number wale).</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
-    'Load Sheet Logs': () => `<div class="card"><p class="adm-empty">Abhi koi load sheet nahi bani.</p></div>`,
+    'Again Airway Bill': () => `<div class="card"><p class="pg-note">Har booked order yahan hai (load sheet wale bhi). Jis ki slip gum ho gayi ho, select kar ke dobara AWB nikalein.</p>
+      <div class="ol-filter"><div class="co-field"><label>Search</label><input class="input" id="pgSearch" placeholder="Tracking / Order Ref / Customer"></div></div>
+      <div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
+      <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="pgPrint">Download AWB PDF</button></div></div>`,
+    'Un-Dispatched Orders': () => `<div class="card"><p class="pg-note">Yeh orders courier par book hain lekin abhi courier ne pick nahi kiye. Slip gum ho gayi ho to select kar ke dobara print karein.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
+      <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="pgPrint">Download AWB PDF</button></div></div>`,
+    'Generate Load Sheet': () => `<div class="card"><p class="pg-note">Booked orders select karein jo courier ko de rahe hain — load sheet ban jayegi aur yeh orders Airway Bills list se hat jayenge. Ek load sheet me ek hi courier ke orders.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
+      <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="pgLoad">Generate Load Sheet</button></div></div>`,
+    'Load Sheet Logs': () => `<div class="card"><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
     'Cash Payment Receipts (CPR)': () => `<div class="card"><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
     'Create User': () => SOON('Team members (users) add karne ka feature jald aa raha hai.'),
     'User Permissions': () => SOON('Users ki permissions ka feature jald aa raha hai.'),
@@ -1383,19 +1425,7 @@
       <div class="co-field"><label>New Password <span class="co-req">*</span></label><input class="input" type="password" id="cpNew" autocomplete="new-password" placeholder="Kam az kam 8 characters"></div>
       <div class="co-field"><label>Confirm Password <span class="co-req">*</span></label><input class="input" type="password" id="cpConfirm" autocomplete="new-password"></div>
       <div class="login-msg hidden" id="pgMsg"></div><button class="btn btn-gold">Update Password</button></form>`,
-    'Shopify Integration': () => `<div class="card co-form"><h3 class="co-title">Shopify Integration</h3>
-      <p class="pg-note">Apna Shopify store TCL se jodne ke baad har naya Shopify order khud aap ke TCL portal me <b>Unbooked</b> aa jayega. Aap courier chun kar book karenge.</p>
-      <div class="co-field"><label>Aap ka TCL Shopify Link (kisi ko share na karein)</label>
-        <div class="sp-link"><input class="input" id="spUrl" readonly value="Loading…"><button class="btn btn-navy" id="spCopy" type="button">Copy</button></div></div>
-      <ol class="sp-steps">
-        <li>Shopify admin kholein → <b>Settings</b> → <b>Notifications</b>.</li>
-        <li>Neeche <b>Webhooks</b> section me <b>Create webhook</b> dabayein.</li>
-        <li><b>Event:</b> <i>Order creation</i> · <b>Format:</b> <i>JSON</i>.</li>
-        <li><b>URL</b> me upar wala TCL Shopify Link paste karein. <b>Webhook API version:</b> latest.</li>
-        <li><b>Save</b> dabayein. Phir Shopify me ek test order lagayein — woh kuch second me Cancel Order / Airway Bills list me "Unbooked" nazar aayega.</li>
-        <li>Order me customer ka phone, address aur shehar sahi hona chahiye; pickup address aap ka pichla pickup address lag jata hai.</li>
-      </ol>
-      <p class="pg-note">Link leak ho jaye to <a href="#" class="adm-link" id="spRegen">naya link banayein</a> — purana link band ho jayega aur Shopify me naya link dobara lagana hoga.</p></div>`
+    'Shopify Integration': () => SOON('Shopify se khud-ba-khud order ab nahi aate. Naya tareeqa jald: aap ke Shopify store ke orders yahan list honge, aap jo orders chunein ge sirf woh book honge, aur tracking number ke sath Shopify me order Fulfilled ho jayega.')
   };
   const SOON = text => `<div class="card"><div class="empty"><h3>Jald aa raha hai</h3><p>${text}</p></div></div>`;
 
@@ -1405,12 +1435,14 @@
     'Cancel Order': () => loadOrdersPage('cancel'),
     'Order Logs': () => initOrderLogs(),
     'Airway Bills': () => loadOrdersPage('awb'),
+    'Again Airway Bill': () => loadOrdersPage('again'),
+    'Un-Dispatched Orders': () => loadOrdersPage('undispatched'),
     'Generate Load Sheet': () => loadOrdersPage('loadsheet'),
+    'Load Sheet Logs': () => loadLoadSheetLogs(),
     'Cash Payment Receipts (CPR)': () => loadCprPage(),
     'Business Profile': () => initProfilePage(),
     'Bank Details': () => initBankPage(),
-    'Change Password': () => initPasswordPage(),
-    'Shopify Integration': () => initShopifyPage()
+    'Change Password': () => initPasswordPage()
   };
 
   function genericPage(page){
@@ -1478,16 +1510,15 @@
 
   const ADMIN_VIEWS = {
     /* ---------- Dashboard ---------- */
-    async dashboard(main){
-      const d = await admLoad('admin_dashboard'), s = d.stats;
+    async dashboard(main, refresh){
+      const r = await authApi('admin_dashboard', refresh ? {refresh:true} : {});
+      if(!r.ok) throw new Error(r.error);
+      const d = r, s = d.stats;
       const stat = (label, value, cls, note) => `<div class="adm-stat ${cls||''}"><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
       const signed = v => v == null ? '—' : `<span class="${v < 0 ? 'neg' : 'pos'}">${rs(v)}</span>`;
       main.innerHTML = `
-        <h2>Dashboard</h2><p class="adm-sub">Poore business ka khulasa — TCL System sheet se live.</p>
-        <div class="adm-card adm-gen">
-          <div><h3>Orders Sync</h3><p class="adm-sub" style="margin:0">Har client ke PostEx account se pichle 30 din ke orders us ki sheet me laayen. (Client ke portal kholne par bhi khud update hota hai.)</p></div>
-          <button class="btn btn-navy" id="syncOrd">🔄 Sync Orders</button>
-        </div>
+        <div class="cd-top"><div><h2>Dashboard</h2><p class="adm-sub">Poore business ka khulasa — TCL System sheet se live.</p></div>
+          <button class="btn btn-light" id="admRefresh">⟳ Refresh</button></div>
         <div class="adm-card adm-gen">
           <div><h3>Generate Invoice</h3><p class="adm-sub" style="margin:0">${d.waitingUploads ? `<b>${d.waitingUploads}</b> courier invoice upload hui hain — click karein, har client ki invoice ban kar us ke portal me chali jayegi.` : 'Pehle Invoice Distribute me courier ki invoice upload karein.'}</p></div>
           <button class="btn btn-gold" id="genInv" ${d.waitingUploads ? '' : 'disabled'}>⚡ Generate Invoice</button>
@@ -1495,11 +1526,10 @@
         <div class="adm-stats">
           ${stat('Total Clients', s.totalClients, '', s.pendingClients ? s.pendingClients + ' approval ke intezar me' : 'Active clients')}
           ${stat('Expense', rs(s.expense), 'red')}
-          ${stat('Courier Payment Received', s.courierReceived == null ? '—' : rs(s.courierReceived), 'green', 'Generate Invoice se aayega')}
-          ${stat('Payment Settled', rs(s.settled), 'gold', 'Clients ko diya gaya')}
-          ${stat('Unsettled Payment', rs(s.unsettled), 'red', 'Clients ko abhi dena hai')}
-          ${stat('Courier Unsettled Payment', s.courierUnsettled == null ? '—' : rs(s.courierUnsettled), '', 'Courier API connect hone par')}
-          ${stat('Remaining Amount', signed(s.remaining), 'gold', 'Received − Settled − Expense')}
+          ${stat('Courier Payment Received', rs(s.courierReceived), 'green', 'Upload ki gayi courier invoices')}
+          ${stat('Payment Settled', rs(s.settled), 'gold', 'Ab tak clients ko diya gaya')}
+          ${stat('Unsettled Payment', rs(s.unsettled), 'red', 'Sab clients ka baqi paisa')}
+          ${stat('Remaining Amount', signed(s.remaining), 'gold', 'Received − Expense − Settled')}
           ${stat('Profit / Loss', signed(s.profitLoss), 'green', 'Formula aap batayenge')}
         </div>
         <div class="adm-card"><h3>Recent Invoices</h3><div class="adm-table-wrap">
@@ -1507,14 +1537,11 @@
             d.recentInvoices.map(i => `<tr><td>${esc(i['Invoice No'] || i.ID)}</td><td>${esc(i.Client)}</td><td>${esc(i.Courier)}</td><td>${esc(i['Invoice Date'])}</td><td class="num">${rs(i.Amount)}</td><td>${statusPill(i.Status)}</td></tr>`),
             'Abhi koi client invoice nahi bani.')}
         </div></div>`;
-      document.getElementById('syncOrd').onclick = async e => {
-        busy(e.target, true, 'Syncing…');
-        const r = await admCall('admin_sync_orders');
-        busy(e.target, false, '🔄 Sync Orders');
-        if(!r) return;
-        const added = r.results.reduce((t, x) => t + (x.added || 0), 0), updated = r.results.reduce((t, x) => t + (x.updated || 0), 0);
-        const failed = r.results.filter(x => x.error), noToken = r.results.filter(x => x.skipped === 'no_token');
-        toast(`${added} naye orders, ${updated} update` + (failed.length ? ` · ${failed.length} client ka token ghalat` : '') + (noToken.length ? ` · ${noToken.length} client ka token nahi laga` : ''));
+      // Refresh also pulls the latest PostEx statuses/weights into every client's orders
+      document.getElementById('admRefresh').onclick = async e => {
+        busy(e.currentTarget, true, 'Refreshing…');
+        try{ await ADMIN_VIEWS.dashboard(main, true); toast('Dashboard update ho gaya.'); }
+        catch(err){ toast('Refresh nahi ho saka.'); busy(document.getElementById('admRefresh'), false, '⟳ Refresh'); }
       };
       document.getElementById('genInv').onclick = async e => {
         busy(e.target, true, 'Generating…');
@@ -1609,13 +1636,14 @@
         <div class="adm-card"><h3>Courier Invoice Upload</h3>
           <div class="adm-form">
             <div><label>Courier</label>${courierSelect('invCourier')}</div>
+            <div><label>Amount Received (Rs)</label><input class="input" type="number" min="0" step="any" id="invAmount" placeholder="Courier ne kitna diya"></div>
             <div style="grid-column:span 2"><label>Invoice File (PDF / Excel / CSV)</label><input class="input" type="file" accept=".pdf,.xlsx,.xls,.csv" id="invFile"></div>
             <div><button class="btn btn-gold" id="invUpload">Upload</button></div>
           </div>
         </div>
         <div class="adm-card"><h3>Uploaded Courier Invoices</h3><div class="adm-table-wrap">
-          ${table(['File', 'Courier', 'Uploaded', 'Status', ''],
-            d.uploads.map(u => `<tr><td>${esc(u['File Name'])}<br><small>${esc(u.ID)}</small></td><td>${esc(u.Courier)}</td><td>${esc(u['Uploaded At'])}</td><td>${statusPill(u.Status)}</td>
+          ${table(['File', 'Courier', 'Uploaded', {t:'Amount', num:1}, 'Status', ''],
+            d.uploads.map(u => `<tr><td>${esc(u['File Name'])}<br><small>${esc(u.ID)}</small></td><td>${esc(u.Courier)}</td><td>${esc(u['Uploaded At'])}</td><td class="num">${rs(u.Amount)}</td><td>${statusPill(u.Status)}</td>
               <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(u.File) ? `<a class="adm-link" href="${esc(u.File)}" target="_blank" rel="noopener">Open</a>` : '—'}</td></tr>`),
             'Abhi koi courier invoice upload nahi hui.')}
         </div></div>
@@ -1628,10 +1656,11 @@
       document.getElementById('invUpload').onclick = async e => {
         const file = document.getElementById('invFile').files[0];
         if(!file){ toast('Invoice file chunein.'); return; }
+        if(val('invAmount') === '' || Number(val('invAmount')) < 0){ toast('Courier se mila amount likhein.'); return; }
         if(file.size > 10*1024*1024){ toast(ADMIN_ERRORS.file_too_big); return; }
         busy(e.target, true, 'Uploading…');
         const fileBase64 = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.onerror = no; fr.readAsDataURL(file); });
-        const r = await admCall('admin_invoice_upload', {courier:val('invCourier'), fileName:file.name, fileBase64}, 'Invoice upload ho gayi. Dashboard par Generate Invoice dabayein.');
+        const r = await admCall('admin_invoice_upload', {courier:val('invCourier'), amount:val('invAmount'), fileName:file.name, fileBase64},'Invoice upload ho gayi. Dashboard par Generate Invoice dabayein.');
         busy(e.target, false, 'Upload'); if(r) admGo('invoices');
       };
     },
@@ -1674,17 +1703,15 @@
     async settings(main){
       const d = await admLoad('admin_client_settings');
       main.innerHTML = `
-        <h2>Client Setting</h2><p class="adm-sub">Har client ke parcel par kitne charges kaatne hain, aur us ke courier account ka token. Orders aur invoice isi se bante hain.</p>
+        <h2>Client Setting</h2><p class="adm-sub">Har client ke parcel par kitne charges kaatne hain. Courier booking TCL ke apne account se hoti hai (Courier API).</p>
         <div class="adm-note">Har parcel: <b>Charges</b> = 1st kg rate + (vazan − 1 kg) × rate × Extra KG % (jitna vazan utna hisaab; 1 kg tak sirf 1st kg rate) · <b>GST</b> = Charges × GST % · <b>Govt Tax</b> = (COD − Charges − GST) × Tax % · Client ko milega = COD − Charges − GST − Tax. Returned parcel par COD 0 gina jata hai.</div>
         <div class="adm-card"><div class="adm-table-wrap">
-          ${table(['Client', {t:'1st KG Charges (Rs)', num:1}, {t:'Extra KG %', num:1}, {t:'GST %', num:1}, {t:'Govt Tax %', num:1}, 'Courier Tokens', 'Misaal: COD Rs 1,000', ''],
-            d.clients.map(c => `<tr data-id="${esc(c.id)}"><td><b>${esc(c.client)}</b><br><small>${esc(c.id)}${c.sheet ? ' · Sheet: ' + esc(c.sheet) : ''}${c.lastSync ? '<br>Sync: ' + esc(c.lastSync) : ''}</small></td>
+          ${table(['Client', {t:'1st KG Charges (Rs)', num:1}, {t:'Extra KG %', num:1}, {t:'GST %', num:1}, {t:'Govt Tax %', num:1}, 'Misaal: COD Rs 1,000', ''],
+            d.clients.map(c => `<tr data-id="${esc(c.id)}"><td><b>${esc(c.client)}</b><br><small>${esc(c.id)}${c.sheet ? ' · Sheet: ' + esc(c.sheet) : ''}</small></td>
               <td class="num"><input class="input adm-num" type="number" min="0" step="any" data-k="charges" value="${esc(c.charges)}"></td>
               <td class="num"><input class="input adm-num" type="number" min="0" max="100" step="any" data-k="extraPct" value="${esc(c.extraPct)}"></td>
               <td class="num"><input class="input adm-num" type="number" min="0" max="100" step="any" data-k="gst" value="${esc(c.gst)}"></td>
               <td class="num"><input class="input adm-num" type="number" min="0" max="100" step="any" data-k="tax" value="${esc(c.tax)}"></td>
-              <td><input class="input adm-tok" data-k="postexToken" autocomplete="off" placeholder="${c.postex ? 'PostEx ' + esc(c.postex) : 'PostEx token'}">
-                <input class="input adm-tok" data-k="citylineToken" autocomplete="off" placeholder="${c.cityline ? 'CityLine ' + esc(c.cityline) : 'CityLine token'}"></td>
               <td class="adm-eg"></td>
               <td><button class="btn btn-navy adm-mini" data-save>Save</button></td></tr>`),
             'Abhi koi active client nahi. Clients me client Approve karein.')}
@@ -1705,10 +1732,8 @@
         tr.querySelector('[data-save]').onclick = async e => {
           const g = k => tr.querySelector(`[data-k="${k}"]`).value;
           busy(e.target, true);
-          const r = await admCall('admin_client_settings_save', {clientId:tr.dataset.id, charges:g('charges'), extraPct:g('extraPct'), gst:g('gst'), tax:g('tax'),
-            postexToken:g('postexToken').trim(), citylineToken:g('citylineToken').trim()}, 'Setting save ho gayi.');
+          const r = await admCall('admin_client_settings_save', {clientId:tr.dataset.id, charges:g('charges'), extraPct:g('extraPct'), gst:g('gst'), tax:g('tax')}, 'Setting save ho gayi.');
           busy(e.target, false);
-          if(r && (g('postexToken') || g('citylineToken'))) admGo('settings');
         };
       });
     },
@@ -1791,7 +1816,7 @@
     missing: 'Star (*) wale saare khane bharein.', bad_phone: 'Customer Contact 03xxxxxxxxx (11 hindse) likhein.',
     bad_city: 'Delivery City list me se chunein.', dup_ref: 'Yeh Order Reference Number pehle istemal ho chuka hai.',
     bad_items: 'Items 1 ya zyada likhein.', bad_weight: 'Weight sahi likhein (kg).', bad_amount: 'Order Amount sahi likhein.',
-    bad_courier: 'Courier Company chunein.'
+    bad_courier: 'Courier Company chunein.', no_client: 'Account nahi mila — dobara login karein.'
   };
   const fillList = (id, list) => { document.getElementById(id).innerHTML = list.map(v => `<option value="${esc(v)}">`).join(''); };
   let coCities = [], coPrev = {pickupCities:[], pickupAddresses:[], returnCities:[], returnAddresses:[]};
@@ -1850,17 +1875,19 @@
       btns.forEach(b => b.disabled = true);
       try{
         const res = await authApi('client_create_order', order);
-        if(!res.ok) return show(ORDER_ERRORS[res.error] || 'Order save nahi ho saka, dobara try karein.');
+        // a failed courier booking saves nothing, so the form keeps its values for a retry
+        if(!res.ok) return show(res.error === 'postex_book' || res.error === 'postex_token'
+          ? `Order ${order.courier} par book nahi hua (save bhi nahi hua): ${res.message || 'courier ne jawab nahi diya'}`
+          : ORDER_ERRORS[res.error] || res.message || 'Order save nahi ho saka, dobara try karein.');
         if(res.tracking){
           toast(`Order book ho gaya ✓ Tracking: ${res.tracking}`);
-          msg.textContent = `${order.orderRef} PostEx par book ho gaya — Tracking: ${res.tracking}`; msg.classList.add('ok'); msg.classList.remove('hidden');
-        } else if(res.bookError){
-          msg.classList.remove('ok');
-          show(`Order save ho gaya lekin PostEx par book nahi hua: ${res.bookError}. Order Logs se dobara "Book" karein.`);
+          msg.textContent = `${order.orderRef} ${order.courier} par book ho gaya — Tracking: ${res.tracking}`; msg.classList.add('ok'); msg.classList.remove('hidden');
         } else {
           toast('Order save ho gaya (Unbooked). CityLine API judne par book hoga.');
         }
-        if(printAfter) printOrderSlip(Object.assign({id:res.id, date:res.date}, order));
+        if(printAfter && res.tracking) downloadAirwayBills([{id:res.id, courier:order.courier, ref:order.orderRef, tracking:res.tracking, date:res.date, amount:Number(order.amount),
+          customer:order.customerName, phone:order.customerPhone, city:order.deliveryCity, address:order.deliveryAddress, items:order.items || 1,
+          weight:order.weight || 1, pickupCity:order.pickupCity, pickupAddress:order.pickupAddress, detail:order.orderDetail}]);
         ['coRef','coAmount','coName','coPhone','coCity','coAddr','coWeight','coDetail','coNotes'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('coItems').value = 1;
         loadClientDashboard();
@@ -1868,22 +1895,29 @@
       finally{ btns.forEach(b => b.disabled = false); }
     };
   }
-  /* ---------- client portal: order lists (Cancel Order / Airway Bills / Load Sheet) ---------- */
+  /* ---------- client portal: order lists ----------
+   * cancel: Unbooked · awb: booked, not yet on a load sheet · again: every booked order (reprint)
+   * undispatched: booked but not picked up · loadsheet: booked, not on a load sheet, still on the way */
+  const isFinalSt = s => /^(delivered|returned)\b/i.test(String(s || '').trim());
+  const ORDER_LISTS = {
+    cancel: {filter: o => o.status === 'Unbooked', empty: 'Koi Unbooked order nahi jo cancel ho sake.'},
+    awb: {filter: o => o.tracking && !o.loadSheet && !isFinalSt(o.status), select: 1, empty: 'Sab booked orders ki load sheet ban chuki hai. Purani slip ke liye Again Airway Bill dekhein.'},
+    again: {filter: o => o.tracking, select: 1, empty: 'Abhi koi booked order nahi.'},
+    undispatched: {filter: o => /^booked$/i.test(String(o.status).trim()), select: 1, empty: 'Koi un-dispatched order nahi — sab orders courier ne utha liye.'},
+    loadsheet: {filter: o => o.tracking && !o.loadSheet && !isFinalSt(o.status), select: 1, empty: 'Koi booked order load sheet ke liye baqi nahi.'}
+  };
+  const orderAddr = o => `${esc(o.address)}<br><small><b>${esc(o.city)}</b></small>`;
   async function loadOrdersPage(kind){
-    const box = document.getElementById('pgList');
+    const box = document.getElementById('pgList'), cfg = ORDER_LISTS[kind];
     const r = await authApi('client_orders');
     if(!document.getElementById('pgList')) return;                    // user left the page
     if(!r.ok){ box.innerHTML = '<p class="adm-empty">Orders load nahi ho sake.</p>'; return; }
-    let list = r.orders.filter(o => o.status !== 'Cancelled');
-    if(kind === 'cancel') list = list.filter(o => o.status === 'Unbooked');
-    if(kind === 'loadsheet') list = list.filter(o => o.tracking);
-    const empty = {cancel:'Koi Unbooked order nahi jo cancel ho sake.', awb:'Abhi koi order nahi. Create Order se order banayein.', loadsheet:'Abhi koi booked order (tracking number wala) nahi.'}[kind];
-    const pick = kind === 'awb' ? `<th><input type="checkbox" id="pgAll"></th>` : '';
-    box.innerHTML = list.length ? `<table class="adm-table"><thead><tr>${pick}<th>Order Ref</th><th>Tracking</th><th>Courier</th><th>Customer</th><th>City</th><th class="num">COD</th><th>Date</th><th>Status</th>${kind === 'cancel' ? '<th></th>' : ''}</tr></thead><tbody>
-      ${list.map(o => `<tr>${kind === 'awb' ? `<td><input type="checkbox" class="pgSel" value="${esc(o.id)}"></td>` : ''}<td><b>${esc(o.ref)}</b></td><td>${esc(o.tracking) || '—'}</td><td>${esc(o.courier) || '—'}</td>
-        <td>${esc(o.customer)}<br><small>${esc(o.phone)}</small></td><td>${esc(o.city)}</td><td class="num">${rs(o.amount)}</td><td>${esc(o.date)}</td><td>${statusPill(o.status)}</td>
+    const list = r.orders.filter(o => o.status !== 'Cancelled' && cfg.filter(o));
+    box.innerHTML = list.length ? `<table class="adm-table"><thead><tr>${cfg.select ? `<th><input type="checkbox" id="pgAll"></th>` : ''}<th>Order Ref</th><th>Tracking</th><th>Courier</th><th>Customer</th><th>Address</th><th>Product</th><th class="num">COD</th><th>Date</th><th>Status</th>${kind === 'cancel' ? '<th></th>' : ''}</tr></thead><tbody>
+      ${list.map(o => `<tr data-q="${esc((o.ref + ' ' + o.tracking + ' ' + o.customer + ' ' + o.phone).toLowerCase())}">${cfg.select ? `<td><input type="checkbox" class="pgSel" value="${esc(o.id)}"></td>` : ''}<td><b>${esc(o.ref)}</b>${o.loadSheet ? `<br><small>${esc(o.loadSheet)}</small>` : ''}</td><td>${esc(o.tracking) || '—'}</td><td>${esc(o.courier) || '—'}</td>
+        <td>${esc(o.customer)}<br><small>${esc(o.phone)}</small></td><td>${orderAddr(o)}</td><td>${esc(o.detail) || '—'}</td><td class="num">${rs(o.amount)}</td><td>${esc(o.date)}</td><td>${statusPill(o.status)}</td>
         ${kind === 'cancel' ? `<td><button class="btn btn-light adm-mini" style="color:var(--red)" data-cancel="${esc(o.id)}">Cancel</button></td>` : ''}</tr>`).join('')}
-      </tbody></table>` : `<p class="adm-empty">${empty}</p>`;
+      </tbody></table>` : `<p class="adm-empty">${cfg.empty}</p>`;
     box.querySelectorAll('[data-cancel]').forEach(b => b.onclick = async () => {
       if(b.dataset.sure !== '1'){ b.dataset.sure = '1'; b.textContent = 'Pakka?'; return; }
       b.disabled = true;
@@ -1891,17 +1925,54 @@
       if(res.ok){ toast('Order cancel ho gaya.'); loadOrdersPage('cancel'); loadClientDashboard(); }
       else { toast(res.error === 'not_cancellable' ? 'Yeh order ab cancel nahi ho sakta.' : 'Cancel nahi ho saka.'); b.disabled = false; }
     });
+    const shown = tr => tr.style.display !== 'none';
     const all = document.getElementById('pgAll');
-    if(all) all.onchange = () => box.querySelectorAll('.pgSel').forEach(c => c.checked = all.checked);
+    if(all) all.onchange = () => box.querySelectorAll('tbody tr').forEach(tr => { if(shown(tr)) tr.querySelector('.pgSel').checked = all.checked; });
+    const search = document.getElementById('pgSearch');
+    if(search) search.oninput = () => {
+      const q = search.value.trim().toLowerCase();
+      box.querySelectorAll('tbody tr').forEach(tr => tr.style.display = !q || tr.dataset.q.includes(q) ? '' : 'none');
+    };
+    const chosen = () => {
+      const ids = [...box.querySelectorAll('.pgSel:checked')].filter(c => shown(c.closest('tr'))).map(c => c.value);
+      if(!ids.length) toast('Pehle orders select karein.');
+      return list.filter(o => ids.includes(o.id));
+    };
     const print = document.getElementById('pgPrint');
-    if(print) print.onclick = () => {
-      const ids = [...box.querySelectorAll('.pgSel:checked')].map(c => c.value);
-      if(!ids.length){ toast('Pehle orders select karein.'); return; }
-      downloadAirwayBills(list.filter(o => ids.includes(o.id)), print);
+    if(print) print.onclick = () => { const sel = chosen(); if(sel.length) downloadAirwayBills(sel, print); };
+    const load = document.getElementById('pgLoad');
+    if(load) load.onclick = async () => {
+      const sel = chosen(); if(!sel.length) return;
+      if(new Set(sel.map(o => o.courier)).size > 1){ toast('Ek load sheet me ek hi courier ke orders chunein.'); return; }
+      busy(load, true, 'Ban rahi hai…');
+      const res = await authApi('client_create_load_sheet', {ids: sel.map(o => o.id)});
+      busy(load, false, 'Generate Load Sheet');
+      if(!res.ok){ toast(({not_loadable:'Kuch orders ki load sheet pehle hi ban chuki hai — page refresh karein.', mixed_courier:'Ek load sheet me ek hi courier ke orders chunein.'})[res.error] || 'Load sheet nahi ban saki.'); return; }
+      toast(`Load sheet ${res.id} ban gayi (${res.orders} orders).`);
+      await downloadLoadSheet({id: res.id, date: res.date, courier: sel[0].courier}, sel, load);
+      loadOrdersPage('loadsheet');
     };
   }
 
-  /* ---------- Order Logs: every order between two dates, with Book for Unbooked ones ---------- */
+  /* ---------- Load Sheet Logs: every load sheet with a reprint ---------- */
+  async function loadLoadSheetLogs(){
+    const box = document.getElementById('pgList');
+    const [ls, ord] = await Promise.all([authApi('client_load_sheets'), authApi('client_orders')]);
+    if(!document.getElementById('pgList')) return;
+    if(!ls.ok || !ord.ok){ box.innerHTML = '<p class="adm-empty">Load sheets load nahi ho sakin.</p>'; return; }
+    box.innerHTML = table(['Load Sheet', 'Date', 'Courier', {t:'Orders', num:1}, {t:'COD Total', num:1}, ''],
+      ls.loadSheets.map(l => `<tr><td><b>${esc(l.id)}</b></td><td>${esc(l.date)}</td><td>${esc(l.courier)}</td><td class="num">${l.orders}</td><td class="num">${rs(l.cod)}</td>
+        <td><button class="btn btn-light adm-mini" data-ls="${esc(l.id)}">Download</button></td></tr>`),
+      'Abhi koi load sheet nahi bani. Generate Load Sheet se banayein.');
+    box.querySelectorAll('[data-ls]').forEach(b => b.onclick = () => {
+      const l = ls.loadSheets.find(x => x.id === b.dataset.ls);
+      downloadLoadSheet(l, ord.orders.filter(o => o.loadSheet === l.id), b);
+    });
+  }
+
+  /* ---------- Order Logs: details only (no booking from here), with PDF / Excel download ---------- */
+  const ORDER_STATUSES = ['Unbooked', 'Booked', 'Picked By PostEx', 'En-Route to PostEx warehouse', 'PostEx WareHouse', 'Out For Delivery', 'Attempted',
+    'Delivery Under Review', 'Delivered', 'Out For Return', 'Returned', 'Un-Assigned By Me', 'Expired', 'Cancelled'];
   async function initOrderLogs(){
     const iso = d => new Date(d - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
     document.getElementById('olTo').value = iso(new Date());
@@ -1909,43 +1980,68 @@
     const r = await authApi('client_orders');
     if(!document.getElementById('olGo')) return;
     const all = r.ok ? r.orders : [];
+    let list = [];
     const render = () => {
-      const from = val('olFrom'), to = val('olTo'), st = val('olStatus');
-      const list = all.filter(o => (!from || o.date >= from) && (!to || o.date <= to) && (!st || o.status === st));
+      const from = val('olFrom'), to = val('olTo'), st = val('olStatus').toLowerCase();
+      list = all.filter(o => (!from || o.date >= from) && (!to || o.date <= to) && (!st || String(o.status).trim().toLowerCase() === st));
       const box = document.getElementById('pgList');
       box.innerHTML = list.length ? `<p class="pg-note">${list.length} orders · COD kul: <b>${rs(list.reduce((t, o) => t + (o.status === 'Cancelled' ? 0 : o.amount), 0))}</b></p>
-        <table class="adm-table"><thead><tr><th>Date</th><th>Order Ref</th><th>Tracking</th><th>Courier</th><th>Customer</th><th>City</th><th class="num">COD</th><th>Status</th><th></th></tr></thead><tbody>
-        ${list.map(o => `<tr><td>${esc(o.date)}</td><td><b>${esc(o.ref)}</b></td><td>${esc(o.tracking) || '—'}</td>
-          <td>${o.status === 'Unbooked' && !o.courier ? `<select class="input adm-mini" data-courier-for="${esc(o.id)}"><option value="">Courier?</option><option>PostEx</option><option>CityLine</option></select>` : esc(o.courier) || '—'}</td>
-          <td>${esc(o.customer)}<br><small>${esc(o.phone)}</small></td><td>${esc(o.city)}</td><td class="num">${rs(o.amount)}</td><td>${statusPill(o.status)}</td>
-          <td>${o.status === 'Unbooked' ? `<button class="btn btn-gold adm-mini" data-book="${esc(o.id)}">Book</button>` : ''}</td></tr>`).join('')}</tbody></table>`
-        : '<p class="adm-empty">Is date range me koi order nahi.</p>';
-      box.querySelectorAll('[data-book]').forEach(b => b.onclick = async () => {
-        const sel = box.querySelector(`[data-courier-for="${b.dataset.book}"]`);
-        if(sel && !sel.value){ toast('Pehle courier chunein.'); return; }
-        busy(b, true, '…');
-        const res = await authApi('client_book_order', {id:b.dataset.book, courier: sel ? sel.value : ''});
-        if(res.ok){ toast(`Book ho gaya ✓ Tracking: ${res.tracking}`); const o = all.find(x => x.id === b.dataset.book); Object.assign(o, {status:res.status, tracking:res.tracking, courier: sel ? sel.value : o.courier}); render(); loadClientDashboard(); }
-        else { toast(res.message || ({not_bookable:'Yeh order book nahi ho sakta.', courier_pending:'Is courier ki booking abhi nahi judi.'})[res.error] || 'Book nahi ho saka.'); busy(b, false, 'Book'); }
-      });
+        <table class="adm-table"><thead><tr><th>Date</th><th>Order Ref</th><th>Tracking</th><th>Courier</th><th>Customer</th><th>Address</th><th>Product</th><th class="num">Items</th><th class="num">Weight</th><th class="num">COD</th><th>Status</th></tr></thead><tbody>
+        ${list.map(o => `<tr><td>${esc(o.date)}</td><td><b>${esc(o.ref)}</b></td><td>${esc(o.tracking) || '—'}</td><td>${esc(o.courier) || '—'}</td>
+          <td>${esc(o.customer)}<br><small>${esc(o.phone)}</small></td><td>${orderAddr(o)}</td><td>${esc(o.detail) || '—'}</td><td class="num">${esc(o.items)}</td>
+          <td class="num">${o.weight ? esc(o.weight) + ' kg' : '—'}</td><td class="num">${rs(o.amount)}</td><td>${statusPill(o.status)}</td></tr>`).join('')}</tbody></table>`
+        : '<p class="adm-empty">Is date range / status me koi order nahi.</p>';
+    };
+    const cols = [['Date','date'],['Order Ref','ref'],['Tracking','tracking'],['Courier','courier'],['Customer','customer'],['Phone','phone'],['City','city'],
+      ['Address','address'],['Product','detail'],['Items','items'],['Weight (kg)','weight'],['COD','amount'],['Status','status'],['Load Sheet','loadSheet']];
+    const fileName = ext => `TCL-Orders-${val('olFrom') || 'all'}-to-${val('olTo') || 'today'}.${ext}`;
+    document.getElementById('olXls').onclick = async e => {
+      if(!list.length){ toast('Is filter me koi order nahi.'); return; }
+      const btn = e.currentTarget;
+      busy(btn, true, '…');
+      try{
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+        const ws = XLSX.utils.aoa_to_sheet([cols.map(c => c[0])].concat(list.map(o => cols.map(c => c[1] === 'amount' ? Number(o.amount) || 0 : String(o[c[1]] ?? '')))));
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Orders');
+        XLSX.writeFile(wb, fileName('xlsx'));
+      }catch(err){ toast('Excel nahi ban saki — internet check karein.'); }
+      finally{ busy(btn, false, 'Excel'); }
+    };
+    document.getElementById('olPdf').onclick = async e => {
+      if(!list.length){ toast('Is filter me koi order nahi.'); return; }
+      const btn = e.currentTarget;
+      busy(btn, true, '…');
+      try{
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+        const pc = cols.filter(c => !['phone','loadSheet'].includes(c[1]));
+        const wrap = pdfWrap(1080, `<div class="ls-pdf"><div class="ls-hd"><b>TRUST COURIER LOGISTIC — ORDER LOGS</b><span>${esc(val('olFrom'))} → ${esc(val('olTo'))} · ${list.length} orders${val('olStatus') ? ' · ' + esc(val('olStatus')) : ''}</span></div>
+          <table><thead><tr>${pc.map(c => `<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${list.map(o => `<tr>${pc.map(c => `<td>${c[1] === 'amount' ? rs(o.amount) : esc(o[c[1]])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+        await html2pdf().set({margin:6, filename:fileName('pdf'), html2canvas:{scale:2}, jsPDF:{unit:'mm', format:'a4', orientation:'landscape'}, pagebreak:{mode:['css','legacy'], avoid:'tr'}}).from(wrap).save();
+        wrap.remove();
+      }catch(err){ toast('PDF nahi ban saki — internet check karein.'); }
+      finally{ busy(btn, false, 'PDF'); }
     };
     document.getElementById('olGo').onclick = render;
     render();
   }
 
-  /* ---------- Airway bill PDF (html2pdf + JsBarcode, loaded only when needed) ---------- */
+  /* ---------- Airway bill + load sheet PDFs (html2pdf + JsBarcode, loaded only when needed) ---------- */
   const loadScript = src => new Promise((ok, no) => {
     if(document.querySelector(`script[src="${src}"]`)) return ok();
     const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s);
   });
+  const pdfWrap = (width, html) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `position:fixed;left:-10000px;top:0;width:${width}px;background:#fff`;
+    wrap.innerHTML = html; document.body.appendChild(wrap); return wrap;
+  };
   async function downloadAirwayBills(list, btn){
+    const label = btn ? btn.textContent : '';
     busy(btn, true, 'PDF ban rahi hai…');
     try{
       await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
       await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js');
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:760px;background:#fff';
-      wrap.innerHTML = list.map(o => `<div class="awb-pdf">
+      const wrap = pdfWrap(760, list.map(o => `<div class="awb-pdf">
         <div class="awb-hd"><b>TRUST COURIER LOGISTIC</b><span>${esc(o.courier) || '—'} · COD</span></div>
         <div class="awb-code"><svg class="awb-bar" data-code="${esc(o.tracking || o.ref)}"></svg></div>
         <table>
@@ -1954,17 +2050,34 @@
           <tr><td>Consignee</td><td colspan="3"><b>${esc(o.customer)}</b> · ${esc(o.phone)}</td></tr>
           <tr><td>Deliver to</td><td colspan="3">${esc(o.address)}, <b>${esc(o.city)}</b></td></tr>
           <tr><td>Shipper</td><td colspan="3">${esc(o.pickupAddress)}, ${esc(o.pickupCity)}</td></tr>
-          <tr><td>Detail</td><td colspan="3">${esc(o.detail) || '—'}</td></tr>
+          <tr><td>Product</td><td colspan="3">${esc(o.detail) || '—'}</td></tr>
           <tr><td>COD Amount</td><td colspan="3" class="awb-cod">Rs ${esc(o.amount)}</td></tr>
-        </table></div>`).join('');
-      document.body.appendChild(wrap);
+        </table></div>`).join(''));
       wrap.querySelectorAll('.awb-bar').forEach(svg => JsBarcode(svg, svg.dataset.code, {format:'CODE128', height:50, width:2, fontSize:14, margin:4}));
       const name = list.length === 1 ? `AWB-${(list[0].tracking || list[0].ref).replace(/[^\w-]/g, '')}.pdf` : `AWB-${list.length}-orders.pdf`;
       await html2pdf().set({margin:8, filename:name, html2canvas:{scale:2}, jsPDF:{unit:'mm', format:'a4'}, pagebreak:{mode:['css'], avoid:'.awb-pdf'}}).from(wrap).save();
       wrap.remove();
       toast('Airway bill PDF download ho gayi.');
     }catch(err){ toast('PDF nahi ban saki — internet check karein.'); }
-    finally{ busy(btn, false, 'Download AWB PDF'); }
+    finally{ busy(btn, false, label); }
+  }
+  // the sheet the courier rider signs at pickup: one line per parcel, totals, and signature boxes
+  async function downloadLoadSheet(ls, list, btn){
+    const label = btn ? btn.textContent : '';
+    busy(btn, true, 'PDF ban rahi hai…');
+    try{
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+      const shipper = (document.querySelector('.mName') || {}).textContent || '';
+      const wrap = pdfWrap(760, `<div class="ls-pdf"><div class="ls-hd"><b>TRUST COURIER LOGISTIC — LOAD SHEET</b><span>${esc(ls.id)}</span></div>
+        <p>Shipper: <b>${esc(shipper)}</b> · Courier: <b>${esc(ls.courier)}</b> · Date: <b>${esc(ls.date)}</b> · Parcels: <b>${list.length}</b> · COD kul: <b>${rs(list.reduce((t, o) => t + Number(o.amount || 0), 0))}</b></p>
+        <table><thead><tr><th>#</th><th>Tracking</th><th>Order Ref</th><th>Customer</th><th>City</th><th>Weight</th><th>COD</th></tr></thead><tbody>
+        ${list.map((o, i) => `<tr><td>${i + 1}</td><td><b>${esc(o.tracking)}</b></td><td>${esc(o.ref)}</td><td>${esc(o.customer)}</td><td>${esc(o.city)}</td><td>${o.weight ? esc(o.weight) + ' kg' : '—'}</td><td>${rs(o.amount)}</td></tr>`).join('')}
+        </tbody></table>
+        <div class="ls-sign"><div>Rider Name &amp; Signature</div><div>Shipper Signature</div></div></div>`);
+      await html2pdf().set({margin:8, filename:`LoadSheet-${ls.id}.pdf`, html2canvas:{scale:2}, jsPDF:{unit:'mm', format:'a4'}, pagebreak:{mode:['css','legacy'], avoid:'tr'}}).from(wrap).save();
+      wrap.remove();
+    }catch(err){ toast('PDF nahi ban saki — internet check karein.'); }
+    finally{ busy(btn, false, label); }
   }
   async function loadCprPage(){
     const box = document.getElementById('pgList');
@@ -2021,53 +2134,39 @@
       confirmPassword:document.getElementById('cpConfirm').value}), 'Password badal gaya. Agli dafa naya password istemal karein.',
       () => ['cpOld','cpNew','cpConfirm'].forEach(id => document.getElementById(id).value = ''));
   }
-  async function initShopifyPage(regenerate){
-    const r = await authApi('client_shopify', regenerate ? {regenerate:true} : {});
-    const url = document.getElementById('spUrl');
-    if(!url || !r.ok) return;
-    url.value = LOGIN_API + '?shopify=' + r.key;
-    document.getElementById('spCopy').onclick = async () => {
-      try{ await navigator.clipboard.writeText(url.value); toast('Link copy ho gaya.'); }catch(e){ url.select(); toast('Link select ho gaya — Ctrl+C dabayein.'); }
-    };
-    const regen = document.getElementById('spRegen');
-    regen.onclick = e => {
-      e.preventDefault();
-      if(regen.dataset.sure !== '1'){ regen.dataset.sure = '1'; regen.textContent = 'pakka? dobara dabayein'; return; }
-      initShopifyPage(true).then(() => toast('Naya link ban gaya — Shopify me bhi badal dein.'));
-    };
-  }
-
-  function printOrderSlip(o){
-    const w = window.open('', '_blank', 'width=720,height=900');
-    if(!w){ toast('Print ke liye pop-up allow karein.'); return; }
-    const row = (k, v) => `<tr><th>${esc(k)}</th><td>${esc(v) || '—'}</td></tr>`;
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Order ${esc(o.orderRef)}</title>
-      <style>body{font-family:Segoe UI,Arial,sans-serif;padding:24px;color:#1b2540}h1{color:#0d2b6b;font-size:20px;margin:0 0 4px}p{margin:0 0 16px;color:#6b7590}
-      table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border:1px solid #e6e9f2;font-size:14px}th{width:38%;background:#f3f5fa}</style></head><body>
-      <h1>TRUST COURIER LOGISTIC</h1><p>Order slip — ${esc(o.id)} · Status: Unbooked</p><table>
-      ${row('Courier', o.courier)}${row('Order Ref', o.orderRef)}${row('Order Date', o.date)}${row('Order Amount (COD)', 'Rs ' + o.amount)}
-      ${row('Customer', o.customerName)}${row('Contact', o.customerPhone)}${row('Delivery City', o.deliveryCity)}${row('Delivery Address', o.deliveryAddress)}
-      ${row('Items', o.items)}${row('Weight (kg)', o.weight)}${row('Pickup', o.pickupCity + ' — ' + o.pickupAddress)}
-      ${row('Return', [o.returnCity, o.returnAddress].filter(Boolean).join(' — '))}${row('Order Detail', o.orderDetail)}${row('Notes', o.notes)}
-      </table></body></html>`);
-    w.document.close(); w.focus(); w.print();
-  }
-
   /* ---------- client portal: own details, totals and orders from the client's ledger sheet ---------- */
-  async function loadClientDashboard(){
-    const info = document.getElementById('cdInfo'), stats = document.getElementById('cdStats');
+  // refresh=true also asks PostEx for the latest statuses and weights (the backend allows that once a minute)
+  async function loadClientDashboard(refresh){
+    const info = document.getElementById('cdInfo'), stats = document.getElementById('cdStats'), ratio = document.getElementById('cdRatio');
+    const btn = document.getElementById('cdRefresh');
+    busy(btn, true, refresh ? 'Refreshing…' : '⟳ Refresh');
     try{
-      const r = await authApi('client_dashboard');
+      const days = Number(document.getElementById('cdDays').value);
+      const r = await authApi('client_dashboard', {days, refresh: refresh === true});
       if(!r.ok){ info.innerHTML = '<p class="adm-empty">Data load nahi ho saka.</p>'; return; }
-      const c = r.client, s = r.summary;
+      const c = r.client, s = r.summary, o = r.overall;
       const row = (k, v) => `<div><small>${esc(k)}</small><b>${esc(v) || '—'}</b></div>`;
       info.innerHTML = `<div class="cd-grid">${row('Client', c.brand || c.name)}${row('Client ID', c.id)}${row('Phone', c.phone)}${row('Email', c.email)}
         ${row('Bank', c.bankName)}${row('Account Title', c.accountTitle)}${row('Account / IBAN', c.accountNumber)}</div>`;
-      const stat = (label, value, cls, note) => `<div class="adm-stat ${cls||''}"><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
-      stats.innerHTML = stat('Total Orders', s.total) + stat('Delivered', s.delivered, 'green') + stat('Returned', s.returned, 'red')
-        + stat('In Transit', s.inTransit, 'gold', 'Raste me orders') + stat('Payment Pending', rs(s.pending), 'red', 'TCL se milna baqi') + stat('Payment Settled', rs(s.settled), 'green', 'Aap ko mil chuka');
+      const stat = (label, value, cls, note, go) => `<div class="adm-stat ${cls||''}${go ? ' cd-link' : ''}"${go ? ` data-go="${go}" role="button" tabindex="0"` : ''}><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
+      const period = days ? `Pichle ${days} din` : 'Shuru se ab tak';
+      stats.innerHTML = stat('Total Orders', s.total, '', period) + stat('Delivered', s.delivered, 'green', period) + stat('Returned', s.returned, 'red', period)
+        + stat('In Transit', s.inTransit, 'gold', 'Raste me orders') + stat('Un-Dispatched', o.undispatched, 'red', 'Book hain, courier ne nahi uthaye — click karein', 'Un-Dispatched Orders')
+        + stat('Payment Pending', rs(s.pending), 'red', 'TCL se milna baqi') + stat('Payment Settled', rs(s.settled), 'green', 'Aap ko mil chuka');
+      // whole-account delivery ratio: delivered / returned / still in process
+      const inProcess = o.total - o.delivered - o.returned;
+      const pct = n => o.total ? Math.round(n / o.total * 1000) / 10 : 0;
+      ratio.innerHTML = `<h3 class="co-title">Overall Delivery Ratio <small>(poore account ke ${o.total} orders)</small></h3>
+        <div class="cd-bar">${[['ok', o.delivered], ['bad', o.returned], ['mid', inProcess]].map(([k, n]) => n ? `<span class="${k}" style="width:${pct(n)}%"></span>` : '').join('')}</div>
+        <div class="cd-legend"><div><i class="ok"></i>Delivered <b>${o.delivered}</b> · ${pct(o.delivered)}%</div><div><i class="bad"></i>Returned <b>${o.returned}</b> · ${pct(o.returned)}%</div>
+          <div><i class="mid"></i>In Process <b>${inProcess}</b> · ${pct(inProcess)}%</div></div>
+        ${r.lastSync ? `<p class="pg-note" style="margin:10px 0 0">Courier se last update: ${esc(r.lastSync)}</p>` : ''}`;
+      if(refresh === true) toast('Dashboard update ho gaya.');
     }catch(err){ info.innerHTML = '<p class="adm-empty">Internet check karein.</p>'; }
+    finally{ busy(btn, false, '⟳ Refresh'); }
   }
+  document.getElementById('cdRefresh').onclick = () => loadClientDashboard(true);
+  document.getElementById('cdDays').onchange = () => loadClientDashboard();
 </script>
 </body>
 </html>
