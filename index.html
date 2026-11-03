@@ -522,6 +522,9 @@
   .cd-bar span,.cd-legend i{background:#c9cfdd}
   .cd-bar .ok,.cd-legend .ok{background:var(--green)} .cd-bar .bad,.cd-legend .bad{background:var(--red)} .cd-bar .mid,.cd-legend .mid{background:var(--gold)}
   .rt-bar{height:10px;margin-bottom:4px}
+  .fn-head{color:var(--navy);font-size:20px;margin:22px 0 2px}
+  #admin .fn-4{grid-template-columns:repeat(4,1fr)}
+  @media (max-width:800px){ #admin .fn-4{grid-template-columns:1fr 1fr} }
   .dist-form{grid-template-columns:1fr 1fr!important}
   .dist-form textarea{font-family:Consolas,monospace;font-size:13px;resize:vertical}
   details.adm-card summary{cursor:pointer}
@@ -1530,6 +1533,40 @@
   const courierSelect = id => `<select class="input" id="${id}"><option>PostEx</option><option>CityLine</option></select>`;
   const val = id => document.getElementById(id).value.trim();
 
+  // the courier's payment: amount received plus what it deducted (Finance → Company)
+  const FIG_FIELDS = [['amount','Amount Received (Rs)','Courier ne kitna diya'],['courierCharges','Courier Charges (Rs)',''],['shippingCharges','Shipping Charges (Rs)',''],['gst','GST (Rs)',''],['govtTax','Govt Tax (Rs)','']];
+  const figFields = p => `<div><label>Payment Date</label><input class="input" type="date" id="${p}date" value="${today()}"></div>
+    <div><label>Reference / Invoice No</label><input class="input" id="${p}reference" maxlength="120"></div>`
+    + FIG_FIELDS.map(([k, l, ph]) => `<div><label>${l}</label><input class="input" type="number" min="0" step="any" id="${p}${k}" placeholder="${ph || '0'}"></div>`).join('');
+  const figValues = p => Object.fromEntries(['date','reference'].concat(FIG_FIELDS.map(f => f[0])).map(k => [k, val(p + k)]));
+  // Excel/CSV courier statements: add up the columns whose headings look like these figures, for the admin to check
+  async function readCourierSheet(file, p){
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    const wb = XLSX.read(await file.arrayBuffer(), {type:'array'});
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true, defval:''});
+    const hi = rows.findIndex(r => r.filter(c => typeof c === 'string' && c.trim()).length >= 3);
+    if(hi < 0) return [];
+    const heads = rows[hi].map(h => String(h).toLowerCase().trim());
+    const match = {
+      amount: /net\s*(amount|payable|paid)|amount\s*(received|paid|transfer)|payable|credit/,
+      courierCharges: /(courier|delivery|service|booking)\s*(charge|fee)|^charges?$|transaction\s*fee/,
+      shippingCharges: /shipping/,
+      gst: /gst|sales\s*tax|transaction\s*tax/,
+      govtTax: /income\s*tax|wht|with\s*holding|withholding|govt|government/
+    };
+    const found = [];
+    Object.keys(match).forEach(k => {
+      const col = heads.findIndex(h => match[k].test(h) && (k === 'gst' || k === 'govtTax' || !/tax|gst/.test(h)));
+      if(col < 0) return;
+      // "Total" rows would double the sum, so they are skipped
+      const total = rows.slice(hi + 1).filter(r => !r.some(c => /^\s*(grand\s*)?total/i.test(String(c))))
+        .reduce((t, r) => t + (Number(String(r[col]).replace(/[^0-9.\-]/g, '')) || 0), 0);
+      document.getElementById(p + k).value = Math.round(total * 100) / 100;
+      found.push(heads[col]);
+    });
+    return found;
+  }
+
   let admTab = 'dashboard';
   function openAdmin(user){
     document.getElementById('admUser').textContent = user.email;
@@ -1688,14 +1725,16 @@
         <div class="adm-card"><h3>Courier Invoice Upload</h3>
           <div class="adm-form">
             <div><label>Courier</label>${courierSelect('invCourier')}</div>
-            <div><label>Amount Received (Rs)</label><input class="input" type="number" min="0" step="any" id="invAmount" placeholder="Courier ne kitna diya"></div>
             <div style="grid-column:span 2"><label>Invoice File (PDF / Excel / CSV)</label><input class="input" type="file" accept=".pdf,.xlsx,.xls,.csv" id="invFile"></div>
+            ${figFields('inv_')}
             <div><button class="btn btn-gold" id="invUpload">Upload</button></div>
           </div>
+          <p class="adm-sub" id="invAuto" style="margin:10px 0 0">Excel/CSV file chunein to upar ke khane file se khud bhar jayenge (check zaroor karein). PDF ho to khud likhein.</p>
         </div>
         <div class="adm-card"><h3>Uploaded Courier Invoices</h3><div class="adm-table-wrap">
-          ${table(['File', 'Courier', 'Uploaded', {t:'Amount', num:1}, 'Status', ''],
-            d.uploads.map(u => `<tr><td>${esc(u['File Name'])}<br><small>${esc(u.ID)}</small></td><td>${esc(u.Courier)}</td><td>${esc(u['Uploaded At'])}</td><td class="num">${rs(u.Amount)}</td><td>${statusPill(u.Status)}</td>
+          ${table(['File', 'Courier', 'Date', {t:'Received', num:1}, {t:'Courier Ch.', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Govt Tax', num:1}, 'Status', ''],
+            d.uploads.map(u => `<tr><td>${esc(u['File Name'])}<br><small>${esc(u.ID)}</small></td><td>${esc(u.Courier)}</td><td>${esc(u['Payment Date'] || u['Uploaded At'])}</td><td class="num">${rs(u.Amount)}</td>
+              <td class="num">${rs(u['Courier Charges'] || 0)}</td><td class="num">${rs(u['Shipping Charges'] || 0)}</td><td class="num">${rs(u.GST || 0)}</td><td class="num">${rs(u['Govt Tax'] || 0)}</td><td>${statusPill(u.Status)}</td>
               <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(u.File) ? `<a class="adm-link" href="${esc(u.File)}" target="_blank" rel="noopener">Open</a>` : '—'}</td></tr>`),
             'Abhi koi courier invoice upload nahi hui.')}
         </div></div>
@@ -1709,14 +1748,22 @@
         const r = await admCall('admin_invoice_detail', {id: b.dataset.cpr});
         if(r) downloadCpr(r, b);
       });
+      document.getElementById('invFile').onchange = async e => {
+        const file = e.target.files[0], note = document.getElementById('invAuto');
+        if(!file || !/\.(xlsx|xls|csv)$/i.test(file.name)) return;
+        try{
+          const found = await readCourierSheet(file, 'inv_');
+          note.textContent = found.length ? `File se bhare gaye (columns: ${found.join(', ')}) — ek dafa check kar lein.` : 'File me pehchane wale columns nahi mile — khane khud bharein.';
+        }catch(err){ note.textContent = 'File parh nahi saka — khane khud bharein.'; }
+      };
       document.getElementById('invUpload').onclick = async e => {
         const file = document.getElementById('invFile').files[0];
         if(!file){ toast('Invoice file chunein.'); return; }
-        if(val('invAmount') === '' || Number(val('invAmount')) < 0){ toast('Courier se mila amount likhein.'); return; }
+        if(val('inv_amount') === '' || Number(val('inv_amount')) < 0){ toast('Courier se mila amount likhein.'); return; }
         if(file.size > 10*1024*1024){ toast(ADMIN_ERRORS.file_too_big); return; }
         busy(e.target, true, 'Uploading…');
         const fileBase64 = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.onerror = no; fr.readAsDataURL(file); });
-        const r = await admCall('admin_invoice_upload', {courier:val('invCourier'), amount:val('invAmount'), fileName:file.name, fileBase64},'Invoice upload ho gayi. Dashboard par Generate Invoice dabayein.');
+        const r = await admCall('admin_invoice_upload', {courier:val('invCourier'), ...figValues('inv_'), fileName:file.name, fileBase64},'Invoice upload ho gayi. Dashboard par Generate Invoice dabayein.');
         busy(e.target, false, 'Upload'); if(r) admGo('invoices');
       };
     },
@@ -1823,7 +1870,11 @@
     /* ---------- Manual Distribution: tracking numbers → per-client invoices ---------- */
     async distribution(main){
       main.innerHTML = `
-        <h2>Manual Distribution</h2><p class="adm-sub">Courier ki payment ke tracking numbers paste karein (har line me ek, ya comma se). System har number ka client dhoond kar us ka hisaab alag karega.</p>
+        <h2>Manual Distribution</h2>
+        <div class="adm-card"><h3>Courier se payment</h3><p class="adm-sub">Kis courier se kitna paisa aaya aur us ne kya kaata — yeh Finance → Company me jata hai.</p>
+          <div class="adm-form"><div><label>Courier</label>${courierSelect('ce_courier')}</div>${figFields('ce_')}<div><button class="btn btn-gold" id="ceSave">Save</button></div></div>
+          <div id="ceList" class="adm-table-wrap" style="margin-top:14px"></div></div>
+        <p class="adm-sub">Courier ki payment ke tracking numbers paste karein (har line me ek, ya comma se). System har number ka client dhoond kar us ka hisaab alag karega.</p>
         <div class="adm-note">Delivered: COD − shipping charges − GST − Govt Tax · Return: sirf −(shipping charges + GST). Rates Client Setting se. Jo number pehle invoice/settle ho chuka, dobara nahi ginta.</div>
         <div class="adm-card"><div class="adm-form dist-form">
           <div><label>Delivered Tracking Numbers</label><textarea class="input" id="dsDel" rows="8" placeholder="Har line me ek tracking number"></textarea></div>
@@ -1856,6 +1907,26 @@
           const d = await admCall('admin_cityline_record', {ref: b.dataset.rec}, 'Payment "Courier Payment Received" me jud gayi.');
           if(d) b.outerHTML = '<span class="pill-s ok">Received me jud chuki</span>'; else busy(b, false, 'Payment Received me jodein');
         });
+      };
+      const loadEntries = async () => {
+        const r = await authApi('admin_invoices');
+        const box = document.getElementById('ceList'); if(!box || !r.ok) return;
+        box.innerHTML = table(['Date', 'Courier', 'Reference', {t:'Received', num:1}, {t:'Courier Ch.', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Govt Tax', num:1}, ''],
+          r.uploads.slice(0, 10).map(u => `<tr><td>${esc(u['Payment Date'] || u['Uploaded At'])}</td><td>${esc(u.Courier)}</td><td>${esc(u.Reference || u['File Name'])}</td><td class="num">${rs(u.Amount)}</td>
+            <td class="num">${rs(u['Courier Charges'] || 0)}</td><td class="num">${rs(u['Shipping Charges'] || 0)}</td><td class="num">${rs(u.GST || 0)}</td><td class="num">${rs(u['Govt Tax'] || 0)}</td>
+            <td>${u.Status === 'Manual' ? `<button class="btn btn-light adm-mini" data-cedel="${esc(u.ID)}">Delete</button>` : '<small>file</small>'}</td></tr>`), 'Abhi koi courier payment nahi likhi.');
+        box.querySelectorAll('[data-cedel]').forEach(b => b.onclick = async () => {
+          if(b.dataset.sure !== '1'){ b.dataset.sure = '1'; b.textContent = 'Pakka?'; return; }
+          if(await admCall('admin_courier_entry_delete', {id: b.dataset.cedel}, 'Entry hata di.')) loadEntries();
+        });
+      };
+      loadEntries();
+      document.getElementById('ceSave').onclick = async e => {
+        if(val('ce_amount') === ''){ toast('Amount Received likhein.'); return; }
+        const btn = e.currentTarget; busy(btn, true, '…');
+        const r = await admCall('admin_courier_entry_add', Object.assign({courier: val('ce_courier')}, figValues('ce_')), 'Courier payment save ho gayi.');
+        busy(btn, false, 'Save');
+        if(r){ FIG_FIELDS.forEach(f => document.getElementById('ce_' + f[0]).value = ''); document.getElementById('ce_reference').value = ''; loadEntries(); }
       };
       const data = () => ({delivered: document.getElementById('dsDel').value, returned: document.getElementById('dsRet').value});
       const gen = document.getElementById('dsGen'), out = document.getElementById('dsOut');
@@ -1892,34 +1963,34 @@
       };
     },
 
-    /* ---------- Finance: money across all clients for a period ---------- */
+    /* ---------- Finance: Company (courier side) and Client (what TCL charged and paid its clients) ---------- */
     async finance(main, q){
       q = q || {days: 30};
       const d = await authApi('admin_finance', q);
       if(!d.ok) throw new Error(d.error);
-      const t = d.totals;
+      const c = d.company, k = d.client;
       const stat = (label, value, cls, note) => `<div class="adm-stat ${cls||''}"><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
       main.innerHTML = `
-        <h2>Finance</h2><p class="adm-sub">Delivered aur return parcels ka hisaab (order date ke hisaab se).</p>
+        <h2>Finance</h2>
         <div class="adm-card"><div class="adm-form">
           <div><label>Period</label><select class="input" id="fnDays">${[['7','Last 7 days'],['15','Last 15 days'],['30','Last 30 days'],['90','Last 90 days'],['0','All time'],['c','Custom']].map(([v, l]) => `<option value="${v}" ${String(q.from ? 'c' : q.days) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
           <div><label>Start Date</label><input class="input" type="date" id="fnFrom" value="${esc(q.from || '')}"></div>
           <div><label>End Date</label><input class="input" type="date" id="fnTo" value="${esc(q.to || '')}"></div>
           <div><button class="btn btn-navy" id="fnGo">Show</button></div></div></div>
-        <div class="adm-stats">
-          ${stat('Payment Received (COD)', rs(t.cod), 'green', t.delivered + ' delivered parcels')}
-          ${stat('Shipping Charges', rs(t.charges), 'gold', (t.delivered + t.returned) + ' parcels')}
-          ${stat('GST Tax', rs(t.gst), 'gold')}
-          ${stat('Govt Tax', rs(t.tax), 'gold')}
-          ${stat('Clients ka hissa', rs(t.net), 'red', t.returned + ' returns shamil')}
-          ${stat('Settled', rs(t.settled), 'green')}
-          ${stat('Pending', rs(t.pending), 'red')}
+        <h3 class="fn-head">Company</h3><p class="adm-sub">Courier companies ne TCL ko kya diya aur kya kaata (Manual Distribution / Invoice Distribute se).</p>
+        <div class="adm-stats fn-4">
+          ${stat('Payment Received (COD)', rs(c.received), 'green', c.payments + ' courier payments')}
+          ${stat('Shipping Charges', rs(c.courierCharges + c.shippingCharges), 'gold', `Courier charges ${rs(c.courierCharges)} + shipping ${rs(c.shippingCharges)}`)}
+          ${stat('GST Tax', rs(c.gst), 'gold')}
+          ${stat('Govt Tax', rs(c.govtTax), 'gold')}
         </div>
-        <div class="adm-card"><h3>Client-wise</h3><div class="adm-table-wrap">
-          ${table(['Client', {t:'Delivered', num:1}, {t:'Return', num:1}, {t:'COD', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Govt Tax', num:1}, {t:'Net', num:1}, {t:'Pending', num:1}],
-            d.clients.map(c => `<tr><td><b>${esc(c.client)}</b><br><small>${esc(c.id)}</small></td><td class="num">${c.delivered}</td><td class="num">${c.returned}</td><td class="num">${rs(c.cod)}</td><td class="num">${rs(c.charges)}</td><td class="num">${rs(c.gst)}</td><td class="num">${rs(c.tax)}</td><td class="num"><b>${rs(c.net)}</b></td><td class="num">${rs(c.pending)}</td></tr>`),
-            'Abhi koi active client nahi.')}
-        </div></div>`;
+        <h3 class="fn-head">Client</h3><p class="adm-sub">TCL ne clients se kya kaata (${k.delivered} delivered, ${k.returned} return parcels) aur clients ko kitna bheja.</p>
+        <div class="adm-stats fn-4">
+          ${stat('Payment Send', rs(k.sent), 'green', 'Clients ko settle ki gayi')}
+          ${stat('Shipping Charges', rs(k.charges), 'gold')}
+          ${stat('GST Tax', rs(k.gst), 'gold')}
+          ${stat('Govt Tax', rs(k.tax), 'gold')}
+        </div>`;
       document.getElementById('fnGo').onclick = () => {
         const v = val('fnDays');
         ADMIN_VIEWS.finance(main, v === 'c' ? {from: val('fnFrom'), to: val('fnTo')} : {days: Number(v)}).catch(() => toast('Report load nahi ho saki.'));
