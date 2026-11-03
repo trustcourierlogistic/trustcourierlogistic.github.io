@@ -1026,6 +1026,7 @@
       <button data-tab="invoices">🧾 Invoice Distribute</button>
       <button data-tab="expenses">📉 Expense</button>
       <button data-tab="settings">⚙️ Client Setting</button>
+      <button data-tab="cityline">🚚 CityLine Booking</button>
       <button data-tab="distribution">📦 Manual Distribution</button>
       <button data-tab="finance">📒 Finance</button>
       <button data-tab="api">🔌 Courier API</button>
@@ -1403,7 +1404,7 @@
         <button type="button" class="btn co-close" onclick="go('dashboard')">Close</button>
       </div></form>`;
     },
-    'Cancel Order': () => `<div class="card"><p class="pg-note">Sirf <b>Unbooked</b> orders cancel ho sakte hain — courier par book hone ke baad TCL se rabta karein.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
+    'Cancel Order': () => `<div class="card"><p class="pg-note"><b>Unbooked</b> orders, aur CityLine ke woh orders jo courier ne abhi nahi uthaye, cancel ho sakte hain. PostEx par book order ke liye TCL se rabta karein.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
     'Order Logs': () => `<div class="card"><div class="ol-filter">
         <div class="co-field"><label>Start Date</label><input class="input" type="date" id="olFrom"></div>
         <div class="co-field"><label>End Date</label><input class="input" type="date" id="olTo"></div>
@@ -1515,7 +1516,9 @@
     format_pending: 'Courier invoice ka format abhi set nahi hua — sample invoice milte hi Generate chalu ho jayega.',
     nothing_to_generate: 'Pehle courier ki invoice upload karein.',
     postex_token: 'PostEx token ghalat hai ya laga nahi.', postex_error: 'PostEx se jawab nahi aaya, thori der baad try karein.',
-    bad_status: 'Status sahi nahi.', not_found: 'Record nahi mila.'
+    bad_status: 'Status sahi nahi.', not_found: 'Record nahi mila.',
+    bad_tracking: 'Tracking number sahi nahi ya CityLine par nahi mila.', dup_tracking: 'Yeh tracking number pehle kisi order par lag chuka hai.',
+    not_bookable: 'Yeh order ab Unbooked nahi.', cityline_token: 'CityLine API key ghalat hai ya Courier API me nahi lagi.', already_recorded: 'Yeh payment pehle hi jud chuki hai.'
   };
   const statusPill = s => {
     const cls = /^(Active|Settled|Connected|Delivered)$/i.test(s) ? 'ok' : /^(Pending|Unsettled|Not tested|Saved)/.test(s) ? 'warn' : /^(Inactive|Invalid|Error|Returned)/i.test(s) ? 'bad' : '';
@@ -1791,6 +1794,32 @@
       });
     },
 
+    /* ---------- CityLine Booking: CityLine has no booking API, so TCL books on its portal and types the tracking here ---------- */
+    async cityline(main){
+      const d = await admLoad('admin_cityline_pending');
+      main.innerHTML = `
+        <h2>CityLine Booking</h2><p class="adm-sub">Clients ke CityLine orders. CityLine portal par book karein, phir us ka tracking number yahan daal kar Save karein — order client ke portal me "Booked" ho jayega.</p>
+        <div class="adm-note">Tracking number CityLine API se check hota hai, aur CityLine wala weight lag jata hai. Us ke baad status khud update hota rahega.</div>
+        <div class="adm-card"><div class="adm-table-wrap">
+          ${table(['Client', 'Order', 'Customer', 'Deliver to', 'Product', {t:'COD', num:1}, 'Pickup', 'Tracking Number'],
+            d.orders.map(o => `<tr data-id="${esc(o.id)}"><td><b>${esc(o.client)}</b><br><small>${esc(o.clientId)} · ${esc(o.clientPhone)}</small></td>
+              <td><b>${esc(o.ref)}</b><br><small>${esc(o.date)} · ${esc(o.items)} item · ${o.weight ? esc(o.weight) + ' kg' : '1 kg'}</small></td>
+              <td>${esc(o.customer)}<br><small>${esc(o.phone)}</small></td><td>${esc(o.address)}<br><small><b>${esc(o.city)}</b></small></td>
+              <td>${esc(o.detail) || '—'}${o.notes ? `<br><small>${esc(o.notes)}</small>` : ''}</td><td class="num"><b>${rs(o.amount)}</b></td>
+              <td><small>${esc(o.pickupAddress)}, ${esc(o.pickupCity)}</small></td>
+              <td style="white-space:nowrap"><input class="input cl-tn" placeholder="CityLine tracking" style="width:150px"> <button class="btn btn-gold adm-mini" data-assign>Save</button></td></tr>`),
+            'Koi CityLine order book hone ke liye baqi nahi.')}
+        </div></div>`;
+      main.querySelectorAll('[data-assign]').forEach(b => b.onclick = async () => {
+        const tr = b.closest('tr'), tracking = tr.querySelector('.cl-tn').value.trim();
+        if(!tracking){ toast('Tracking number likhein.'); return; }
+        busy(b, true, '…');
+        const r = await admCall('admin_cityline_assign', {id: tr.dataset.id, tracking}, 'Order Booked ✓');
+        if(r){ tr.querySelector('td:last-child').innerHTML = `${statusPill('Booked')}<br><small>${esc(r.tracking)} · ${esc(r.weight)} kg</small>`; }
+        else busy(b, false, 'Save');
+      });
+    },
+
     /* ---------- Manual Distribution: tracking numbers → per-client invoices ---------- */
     async distribution(main){
       main.innerHTML = `
@@ -1800,7 +1829,34 @@
           <div><label>Delivered Tracking Numbers</label><textarea class="input" id="dsDel" rows="8" placeholder="Har line me ek tracking number"></textarea></div>
           <div><label>Return Tracking Numbers</label><textarea class="input" id="dsRet" rows="8" placeholder="Har line me ek tracking number"></textarea></div>
         </div><div style="display:flex;gap:10px;margin-top:12px"><button class="btn btn-navy" id="dsPrev">Check / Preview</button><button class="btn btn-gold" id="dsGen" disabled>⚡ Generate Invoice</button></div></div>
+        <div class="adm-card"><h3>CityLine payment invoices</h3><p class="adm-sub">CityLine ki aakhri 5 payments. "Numbers bharein" se us invoice ke tracking numbers upar aa jayenge (COD wale Delivered, baqi Return — ek nazar check kar lein).</p>
+          <button class="btn btn-light" id="clInvLoad">CityLine invoices laayen</button><div id="clInv" class="adm-table-wrap" style="margin-top:12px"></div></div>
         <div id="dsOut"></div>`;
+      document.getElementById('clInvLoad').onclick = async e => {
+        const btn = e.currentTarget; busy(btn, true, 'Loading…');
+        const r = await admCall('admin_cityline_invoices');
+        busy(btn, false, 'CityLine invoices laayen');
+        if(!r) return;
+        const box = document.getElementById('clInv');
+        box.innerHTML = table(['Ref No', 'Date', {t:'Amount', num:1}, ''], r.invoices.map(i => `<tr><td><b>${esc(i.ref)}</b></td><td>${esc(i.date)}</td><td class="num">${rs(i.amount)}</td>
+          <td style="white-space:nowrap"><button class="btn btn-navy adm-mini" data-fill="${esc(i.ref)}">Numbers bharein</button>
+          ${i.recorded ? '<span class="pill-s ok">Received me jud chuki</span>' : `<button class="btn btn-gold adm-mini" data-rec="${esc(i.ref)}">Payment Received me jodein</button>`}</td></tr>`), 'CityLine se koi invoice nahi aayi.');
+        box.querySelectorAll('[data-fill]').forEach(b => b.onclick = async () => {
+          busy(b, true, '…');
+          const d = await admCall('admin_cityline_invoice', {ref: b.dataset.fill});
+          busy(b, false, 'Numbers bharein');
+          if(!d) return;
+          document.getElementById('dsDel').value = d.delivered.join('\n');
+          document.getElementById('dsRet').value = d.returned.join('\n');
+          gen.disabled = true;
+          toast(`${d.delivered.length} delivered, ${d.returned.length} return numbers bhar diye — ab Check / Preview dabayein.`);
+        });
+        box.querySelectorAll('[data-rec]').forEach(b => b.onclick = async () => {
+          busy(b, true, '…');
+          const d = await admCall('admin_cityline_record', {ref: b.dataset.rec}, 'Payment "Courier Payment Received" me jud gayi.');
+          if(d) b.outerHTML = '<span class="pill-s ok">Received me jud chuki</span>'; else busy(b, false, 'Payment Received me jodein');
+        });
+      };
       const data = () => ({delivered: document.getElementById('dsDel').value, returned: document.getElementById('dsRet').value});
       const gen = document.getElementById('dsGen'), out = document.getElementById('dsOut');
       ['dsDel','dsRet'].forEach(id => document.getElementById(id).oninput = () => { gen.disabled = true; });
@@ -1875,7 +1931,7 @@
       const d = await admLoad('admin_api');
       main.innerHTML = `
         <h2>Courier API</h2><p class="adm-sub">TCL ke PostEx aur CityLine account ki API token yahan lagayen — TCL System courier account se jud jayega.</p>
-        <div class="adm-note">PostEx: merchant portal se API token len (ya PostEx representative se). CityLine ki API documentation abhi nahi mili — token save ho jayega, connection CityLine ke docs milne par banega.</div>
+        <div class="adm-note">PostEx: merchant portal se API token len (ya PostEx representative se). CityLine: API key CityLine se milti hai. CityLine ki API me order create nahi hota — CityLine orders "CityLine Booking" page se tracking number laga kar book hote hain; status, cancel aur payment invoice API se aate hain.</div>
         ${d.accounts.map(a => `<div class="adm-card" data-courier="${esc(a.courier)}">
           <h3>${esc(a.courier)} ${statusPill(a.status)}</h3>
           <p class="adm-sub" style="margin-bottom:12px">${a.token ? 'Token: ' + esc(a.token) + ' · ' : ''}${a.lastChecked ? 'Last checked: ' + esc(a.lastChecked) : 'Abhi token nahi laga'}</p>
@@ -2015,7 +2071,7 @@
           toast(`Order book ho gaya ✓ Tracking: ${res.tracking}`);
           msg.textContent = `${order.orderRef} ${order.courier} par book ho gaya — Tracking: ${res.tracking}`; msg.classList.add('ok'); msg.classList.remove('hidden');
         } else {
-          toast('Order save ho gaya (Unbooked). CityLine API judne par book hoga.');
+          toast('Order save ho gaya (Unbooked). TCL CityLine par book kar ke tracking number laga dega.');
         }
         if(printAfter && res.tracking) downloadAirwayBills([{id:res.id, courier:order.courier, ref:order.orderRef, tracking:res.tracking, date:res.date, amount:Number(order.amount),
           customer:order.customerName, phone:order.customerPhone, city:order.deliveryCity, address:order.deliveryAddress, items:order.items || 1,
@@ -2032,7 +2088,7 @@
    * undispatched: booked but not picked up · loadsheet: booked, not on a load sheet, still on the way */
   const isFinalSt = s => /^(delivered|returned)\b/i.test(String(s || '').trim());
   const ORDER_LISTS = {
-    cancel: {filter: o => o.status === 'Unbooked', empty: 'Koi Unbooked order nahi jo cancel ho sake.'},
+    cancel: {filter: o => o.status === 'Unbooked' || (o.courier === 'CityLine' && o.tracking && /^booked$/i.test(String(o.status).trim())), empty: 'Koi Unbooked order nahi jo cancel ho sake.'},
     awb: {filter: o => o.tracking && !o.loadSheet && !isFinalSt(o.status), select: 1, empty: 'Sab booked orders ki load sheet ban chuki hai. Purani slip ke liye Again Airway Bill dekhein.'},
     again: {filter: o => o.tracking, select: 1, empty: 'Abhi koi booked order nahi.'},
     undispatched: {filter: o => /^booked$/i.test(String(o.status).trim()), select: 1, empty: 'Koi un-dispatched order nahi — sab orders courier ne utha liye.'},
@@ -2055,7 +2111,7 @@
       b.disabled = true;
       const res = await authApi('client_cancel_order', {id:b.dataset.cancel});
       if(res.ok){ toast('Order cancel ho gaya.'); loadOrdersPage('cancel'); loadClientDashboard(); }
-      else { toast(res.error === 'not_cancellable' ? 'Yeh order ab cancel nahi ho sakta.' : 'Cancel nahi ho saka.'); b.disabled = false; }
+      else { toast(res.error === 'not_cancellable' ? 'Yeh order ab cancel nahi ho sakta.' : res.message || 'Cancel nahi ho saka.'); b.disabled = false; }
     });
     const shown = tr => tr.style.display !== 'none';
     const all = document.getElementById('pgAll');
