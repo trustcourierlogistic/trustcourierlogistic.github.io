@@ -538,6 +538,7 @@
   .cd-bar span,.cd-legend i{background:#c9cfdd}
   .cd-bar .ok,.cd-legend .ok{background:var(--green)} .cd-bar .bad,.cd-legend .bad{background:var(--red)} .cd-bar .mid,.cd-legend .mid{background:var(--gold)}
   .rt-bar{height:10px;margin-bottom:4px}
+  .adm-pick{min-width:180px;font-size:12px!important;padding:7px 10px!important}
   .fn-head{color:var(--navy);font-size:20px;margin:22px 0 2px}
   #admin .fn-4{grid-template-columns:repeat(4,1fr)}
   @media (max-width:800px){ #admin .fn-4{grid-template-columns:1fr 1fr} }
@@ -1838,17 +1839,23 @@
 
     /* ---------- Client Setting ---------- */
     async settings(main){
-      const d = await admLoad('admin_client_settings');
+      // TCL's PostEx pickup addresses; if PostEx can't be reached the code can still be typed
+      const [d, pa] = await Promise.all([admLoad('admin_client_settings'), authApi('admin_postex_addresses')]);
+      const addrs = pa.ok ? pa.addresses : [];
+      const pickupCell = c => addrs.length
+        ? `<select class="input adm-pick" data-k="pickupCode"><option value="">PostEx default</option>${addrs.map(a => `<option value="${esc(a.code)}" ${a.code === String(c.pickupCode) ? 'selected' : ''}>${esc(a.city)} — ${esc(a.address).slice(0, 40)} (${esc(a.code)})</option>`).join('')}</select>`
+        : `<input class="input adm-pick" data-k="pickupCode" value="${esc(c.pickupCode)}" placeholder="Code (blank = default)">`;
       main.innerHTML = `
         <h2>Client Setting</h2><p class="adm-sub">Har client ke parcel par kitne charges kaatne hain. Courier booking TCL ke apne account se hoti hai (Courier API).</p>
         <div class="adm-note">Har parcel: <b>Charges</b> = 1st kg rate + (vazan − 1 kg) × rate × Extra KG % (jitna vazan utna hisaab; 1 kg tak sirf 1st kg rate) · <b>GST</b> = Charges × GST % · <b>Govt Tax</b> = (COD − Charges − GST) × Tax % · Client ko milega = COD − Charges − GST − Tax. Returned parcel par COD 0 gina jata hai.</div>
         <div class="adm-card"><div class="adm-table-wrap">
-          ${table(['Client', {t:'1st KG Charges (Rs)', num:1}, {t:'Extra KG %', num:1}, {t:'GST %', num:1}, {t:'Govt Tax %', num:1}, 'Misaal: COD Rs 1,000', ''],
+          ${table(['Client', {t:'1st KG Charges (Rs)', num:1}, {t:'Extra KG %', num:1}, {t:'GST %', num:1}, {t:'Govt Tax %', num:1}, 'PostEx Pickup Address', 'Misaal: COD Rs 1,000', ''],
             d.clients.map(c => `<tr data-id="${esc(c.id)}"><td><b>${esc(c.client)}</b><br><small>${esc(c.id)}${c.sheet ? ' · Sheet: ' + esc(c.sheet) : ''}</small></td>
               <td class="num"><input class="input adm-num" type="number" min="0" step="any" data-k="charges" value="${esc(c.charges)}"></td>
               <td class="num"><input class="input adm-num" type="number" min="0" max="100" step="any" data-k="extraPct" value="${esc(c.extraPct)}"></td>
               <td class="num"><input class="input adm-num" type="number" min="0" max="100" step="any" data-k="gst" value="${esc(c.gst)}"></td>
               <td class="num"><input class="input adm-num" type="number" min="0" max="100" step="any" data-k="tax" value="${esc(c.tax)}"></td>
+              <td>${pickupCell(c)}</td>
               <td class="adm-eg"></td>
               <td><button class="btn btn-navy adm-mini" data-save>Save</button></td></tr>`),
             'Abhi koi active client nahi. Clients me client Approve karein.')}
@@ -1869,7 +1876,7 @@
         tr.querySelector('[data-save]').onclick = async e => {
           const g = k => tr.querySelector(`[data-k="${k}"]`).value;
           busy(e.target, true);
-          const r = await admCall('admin_client_settings_save', {clientId:tr.dataset.id, charges:g('charges'), extraPct:g('extraPct'), gst:g('gst'), tax:g('tax')}, 'Setting save ho gayi.');
+          const r = await admCall('admin_client_settings_save', {clientId:tr.dataset.id, charges:g('charges'), extraPct:g('extraPct'), gst:g('gst'), tax:g('tax'), pickupCode:g('pickupCode')}, 'Setting save ho gayi.');
           busy(e.target, false);
         };
       });
