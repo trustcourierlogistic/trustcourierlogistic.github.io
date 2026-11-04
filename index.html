@@ -304,6 +304,22 @@
   .w-hero-card h3{color:var(--navy);font-size:22px}
   .w-hero-card>p{color:var(--muted);margin:4px 0 16px}
   .w-track-form{display:flex;gap:10px}
+  .w-track-res{margin-top:16px;border:1px solid #e6e9f2;border-radius:14px;padding:14px 16px;background:#fbfcfe}
+  .w-tr-msg{margin:0;color:#3d4660;font-size:14px}
+  .w-tr-wa{display:inline-block;margin-top:8px;color:#1fa463;font-weight:700;font-size:14px}
+  .w-tr-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .w-tr-head small,.w-tr-route small{display:block;color:#6b7590;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  .w-tr-head b{color:#0d2b6b;word-break:break-all}
+  .w-tr-st{background:#e6eefc;color:#2d6cdf;font-weight:700;font-size:13px;padding:6px 12px;border-radius:999px;white-space:nowrap}
+  .w-tr-st.ok{background:#e3f7ec;color:#1fa463} .w-tr-st.bad{background:#fdecea;color:#e0524a}
+  .w-tr-route{display:flex;align-items:center;gap:14px;margin-top:12px}
+  .w-tr-route span{color:#d4a017;font-weight:800}
+  .w-tr-meta{margin:10px 0 0;color:#6b7590;font-size:12px}
+  .w-tr-hist{list-style:none;margin:12px 0 0;padding:0 0 0 14px;border-left:2px solid #d4a017;max-height:170px;overflow:auto}
+  .w-tr-hist li{position:relative;padding:0 0 10px 8px;font-size:13px}
+  .w-tr-hist li::before{content:'';position:absolute;left:-21px;top:4px;width:10px;height:10px;border-radius:50%;background:#d4a017}
+  .w-tr-hist li:first-child::before{background:#1fa463}
+  .w-tr-hist small{display:block;color:#6b7590;font-size:11px}
   .w-track-form input{flex:1;padding:13px 16px;border:1.5px solid var(--line);border-radius:30px;font-size:14px;outline:none;font-family:inherit;min-width:0}
   .w-track-form input:focus{border-color:var(--gold)}
   .w-track-res{margin-top:20px;padding-left:4px}
@@ -670,11 +686,12 @@
 
       <div class="w-hero-card" id="w-track">
         <h3>Track Your Parcel</h3>
-        <p>Apna tracking number likhein, hamari team WhatsApp par status bata degi</p>
+        <p>Apna tracking number likhein aur parcel ka status yahin dekhein</p>
         <form onsubmit="siteTrack(event)" class="w-track-form">
-          <input id="siteTrackIn" placeholder="e.g. TCL2344175020828">
-          <button class="w-btn w-btn-gold">Track</button>
+          <input id="siteTrackIn" placeholder="e.g. 29538740006050" autocomplete="off">
+          <button class="w-btn w-btn-gold" id="siteTrackBtn">Track</button>
         </form>
+        <div class="w-track-res hidden" id="siteTrackRes" aria-live="polite"></div>
         <div class="w-pay-mini">
           <div class="w-pay-ico">₨</div>
           <div><b>Weekly COD Settlement</b><small>Har hafte payment — Bank / JazzCash / Easypaisa</small></div>
@@ -1207,12 +1224,29 @@
     document.getElementById('site').classList.remove('hidden');
     window.scrollTo(0,0);
   }
-  function siteTrack(e){
+  // live parcel status from the TCL system (status and route only, no customer details)
+  async function siteTrack(e){
     e.preventDefault();
-    const v = document.getElementById('siteTrackIn').value.trim();
-    if(!v){ toast('Please enter a tracking number'); return; }
-    window.open(waLink('Assalam o Alaikum Trust Courier, mere parcel ka status bata dein.\nTracking number: '+v.toUpperCase()),'_blank','noopener');
-    toast('WhatsApp khul raha hai...');
+    const v = document.getElementById('siteTrackIn').value.trim(), box = document.getElementById('siteTrackRes'), btn = document.getElementById('siteTrackBtn');
+    const h = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const show = html => { box.innerHTML = html; box.classList.remove('hidden'); };
+    if(!v){ show('<p class="w-tr-msg">Tracking number likhein.</p>'); return; }
+    if(!LOGIN_API){ show('<p class="w-tr-msg">Tracking abhi dastyab nahi.</p>'); return; }
+    btn.disabled = true; btn.textContent = '…';
+    try{
+      const r = await loginApi({action:'track', tracking:v});
+      if(!r.ok){
+        const msg = {not_found:'Is tracking number ka koi parcel nahi mila. Number check kar ke dobara likhein.', bad_tracking:'Tracking number sahi likhein (sirf harf aur hindse).', busy:'Abhi bohat log track kar rahe hain — ek minute baad try karein.'}[r.error] || 'Status nahi mil saka, dobara try karein.';
+        show(`<p class="w-tr-msg">${msg}</p>${r.error === 'not_found' ? `<a class="w-tr-wa" href="${h(waLink('Assalam o Alaikum Trust Courier, mere parcel ka status bata dein.\nTracking number: ' + v.toUpperCase()))}" target="_blank" rel="noopener">WhatsApp par poochein</a>` : ''}`);
+        return;
+      }
+      const cls = /^delivered/i.test(r.status) ? 'ok' : /^return/i.test(r.status) ? 'bad' : '';
+      show(`<div class="w-tr-head"><div><small>Tracking</small><b>${h(r.tracking)}</b></div><span class="w-tr-st ${cls}">${h(r.status)}</span></div>
+        <div class="w-tr-route"><div><small>From</small><b>${h(r.from) || '—'}</b></div><span>→</span><div><small>To</small><b>${h(r.to) || '—'}</b></div></div>
+        <p class="w-tr-meta">${h(r.courier)} · Booked ${h(r.date)}${r.updated ? ' · Last update ' + h(String(r.updated).replace('T', ' ').slice(0, 16)) : ''}</p>
+        ${r.history && r.history.length ? `<ol class="w-tr-hist">${r.history.slice().reverse().map(x => `<li><b>${h(x.status)}</b><small>${h(String(x.time).replace('T', ' ').slice(0, 16))}</small></li>`).join('')}</ol>` : ''}`);
+    }catch(err){ show('<p class="w-tr-msg">Internet connection check karein.</p>'); }
+    finally{ btn.disabled = false; btn.textContent = 'Track'; }
   }
   document.querySelectorAll('#wNav a').forEach(a=>a.addEventListener('click',()=>document.getElementById('wNav').classList.remove('show')));
 
