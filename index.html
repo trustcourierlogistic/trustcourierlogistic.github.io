@@ -1559,7 +1559,7 @@
     not_bookable: 'Yeh order ab Unbooked nahi.', cityline_token: 'CityLine API key ghalat hai ya Courier API me nahi lagi.', already_recorded: 'Yeh payment pehle hi jud chuki hai.'
   };
   const statusPill = s => {
-    const cls = /^(Active|Settled|Connected|Delivered)$/i.test(s) ? 'ok' : /^(Pending|Unsettled|Not tested|Saved)/.test(s) ? 'warn' : /^(Inactive|Invalid|Error|Returned)/i.test(s) ? 'bad' : '';
+    const cls = /^(Active|Settled|Delivered)$|^Connected/i.test(s) ? 'ok' : /^(Pending|Unsettled|Not tested|Saved)/.test(s) ? 'warn' : /^(Inactive|Invalid|Error|Returned)/i.test(s) ? 'bad' : '';
     return `<span class="pill-s ${cls}">${esc(s || '—')}</span>`;
   };
   const table = (heads, rows, empty) => rows.length
