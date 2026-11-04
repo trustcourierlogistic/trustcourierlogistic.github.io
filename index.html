@@ -538,6 +538,7 @@
   .cd-bar span,.cd-legend i{background:#c9cfdd}
   .cd-bar .ok,.cd-legend .ok{background:var(--green)} .cd-bar .bad,.cd-legend .bad{background:var(--red)} .cd-bar .mid,.cd-legend .mid{background:var(--gold)}
   .rt-bar{height:10px;margin-bottom:4px}
+  .inv-file{display:flex;gap:8px}.inv-file .input{flex:1;min-width:0}.inv-file .btn{white-space:nowrap}
   .adm-pick{min-width:180px;font-size:12px!important;padding:7px 10px!important}
   .fn-head{color:var(--navy);font-size:20px;margin:22px 0 2px}
   #admin .fn-4{grid-template-columns:repeat(4,1fr)}
@@ -1592,6 +1593,52 @@
     + FIG_FIELDS.map(([k, l, ph]) => `<div><label>${l}</label><input class="input" type="number" min="0" step="any" id="${p}${k}" placeholder="${ph || '0'}"></div>`).join('');
   const figValues = p => Object.fromEntries(['date','reference'].concat(FIG_FIELDS.map(f => f[0])).map(k => [k, val(p + k)]));
   // Excel/CSV courier statements: add up the columns whose headings look like these figures, for the admin to check
+  // Courier CPR PDFs (PostEx layout: summary labels on the left, amounts on the same line to the right).
+  // Fills the payment fields and returns the delivered/returned tracking numbers listed in the PDF.
+  async function readCourierPdf(file, p){
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdf = await pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
+    const items = [];
+    for(let n = 1; n <= pdf.numPages; n++){
+      const tc = await (await pdf.getPage(n)).getTextContent();
+      tc.items.forEach(it => { const s = it.str.trim(); if(s) items.push({p:n, x:it.transform[4], y:it.transform[5], s}); });
+    }
+    const amount = s => { const m = String(s).replace(/,/g, '').match(/^\(?-?(\d+(?:\.\d+)?)\)?(?:\/-)?$/); return m ? Number(m[1]) : null; };
+    // the right-most amount on the same line as a label (first page = summary)
+    const valueOf = re => items.filter(it => it.p === 1 && re.test(it.s)).map(l => {
+      const row = items.filter(it => it.p === 1 && Math.abs(it.y - l.y) <= 6 && it.x > l.x + 60 && amount(it.s) !== null);
+      return row.length ? amount(row.sort((a, b) => b.x - a.x)[0].s) : null;
+    }).find(v => v !== null);
+    const textAfter = re => { const l = items.find(it => it.p === 1 && re.test(it.s)); if(!l) return '';
+      const r = items.filter(it => it.p === 1 && Math.abs(it.y - l.y) <= 4 && it.x > l.x + 20).sort((a, b) => a.x - b.x)[0]; return r ? r.s : ''; };
+    const set = (k, v) => { if(v !== null && v !== undefined && v !== '') document.getElementById(p + k).value = v; };
+    const found = [];
+    const net = valueOf(/^net\s*(total|payable|amount)$/i);
+    if(net !== null && net !== undefined){ set('amount', net); found.push('Net Total'); }
+    const ship = valueOf(/^(shipping|delivery|courier)\s*charges$/i);
+    if(ship != null){ set('courierCharges', ship); found.push('Shipping Charges'); }
+    const upfront = valueOf(/^upfront\s*charges$/i);
+    if(upfront){ set('shippingCharges', upfront); found.push('Upfront Charges'); }
+    const gst = valueOf(/^gst$/i);
+    if(gst != null){ set('gst', gst); found.push('GST'); }
+    // withholding income tax + withholding sales tax together are the government tax
+    const taxes = items.filter(it => it.p === 1 && /(income|sales)\s*tax|withholding/i.test(it.s) && !/^tax/i.test(it.s))
+      .map(l => valueOf(new RegExp('^' + l.s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$'))).filter(v => v != null);
+    if(taxes.length){ set('govtTax', Math.round(taxes.reduce((t, v) => t + v, 0) * 100) / 100); found.push('WH Taxes'); }
+    const ref = textAfter(/^(cpr|invoice)\s*(number|no\.?)$/i);
+    if(ref){ set('reference', ref); found.push('CPR Number'); }
+    const dm = textAfter(/^(cpr|invoice)\s*date$/i).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(dm){ set('date', `${dm[3]}-${dm[2].padStart(2, '0')}-${dm[1].padStart(2, '0')}`); found.push('CPR Date'); }
+    // order rows: the tracking number sits just above its row, which carries the status
+    const delivered = [], returned = [];
+    items.filter(it => /^\d{8,20}$/.test(it.s) && it.x < 120).forEach(tn => {
+      const st = items.filter(it => it.p === tn.p && /^(delivered|return(ed)?|return to (shipper|origin))$/i.test(it.s) && tn.y - it.y > 0 && tn.y - it.y < 20).sort((a, b) => (tn.y - a.y) - (tn.y - b.y))[0];
+      if(st) (/^deliv/i.test(st.s) ? delivered : returned).push(tn.s);
+    });
+    return {found, delivered: Array.from(new Set(delivered)), returned: Array.from(new Set(returned))};
+  }
+
   async function readCourierSheet(file, p){
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
     const wb = XLSX.read(await file.arrayBuffer(), {type:'array'});
@@ -1777,11 +1824,11 @@
         <div class="adm-card"><h3>Courier Invoice Upload</h3>
           <div class="adm-form">
             <div><label>Courier</label>${courierSelect('invCourier')}</div>
-            <div style="grid-column:span 2"><label>Invoice File (PDF / Excel / CSV)</label><input class="input" type="file" accept=".pdf,.xlsx,.xls,.csv" id="invFile"></div>
+            <div style="grid-column:span 2"><label>Invoice File (PDF / Excel / CSV)</label><div class="inv-file"><input class="input" type="file" accept=".pdf,.xlsx,.xls,.csv" id="invFile"><button class="btn btn-navy" type="button" id="invAutoBtn">⚡ Auto Fill</button></div></div>
             ${figFields('inv_')}
             <div><button class="btn btn-gold" id="invUpload">Upload</button></div>
           </div>
-          <p class="adm-sub" id="invAuto" style="margin:10px 0 0">Excel/CSV file chunein to upar ke khane file se khud bhar jayenge (check zaroor karein). PDF ho to khud likhein.</p>
+          <p class="adm-sub" id="invAuto" style="margin:10px 0 0">File chunein aur <b>⚡ Auto Fill</b> dabayein — PostEx ki CPR PDF ya Excel/CSV se khane khud bhar jayenge. Phir check kar ke Upload karein.</p>
         </div>
         <div class="adm-card"><h3>Uploaded Courier Invoices</h3><div class="adm-table-wrap">
           ${table(['File', 'Courier', 'Date', {t:'Received', num:1}, {t:'Courier Ch.', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Govt Tax', num:1}, 'Status', ''],
@@ -1800,14 +1847,28 @@
         const r = await admCall('admin_invoice_detail', {id: b.dataset.cpr});
         if(r) downloadCpr(r, b);
       });
-      document.getElementById('invFile').onchange = async e => {
-        const file = e.target.files[0], note = document.getElementById('invAuto');
-        if(!file || !/\.(xlsx|xls|csv)$/i.test(file.name)) return;
+      // ⚡ Auto Fill: reads the chosen file (PostEx CPR PDF, or Excel/CSV) into the fields for the admin to check
+      const autoFill = async () => {
+        const file = document.getElementById('invFile').files[0], note = document.getElementById('invAuto'), btn = document.getElementById('invAutoBtn');
+        if(!file){ toast('Pehle invoice file chunein.'); return; }
+        busy(btn, true, 'Parh raha hai…');
         try{
-          const found = await readCourierSheet(file, 'inv_');
-          note.textContent = found.length ? `File se bhare gaye (columns: ${found.join(', ')}) — ek dafa check kar lein.` : 'File me pehchane wale columns nahi mile — khane khud bharein.';
+          if(/\.pdf$/i.test(file.name)){
+            const r = await readCourierPdf(file, 'inv_');
+            window.__cprTracks = (r.delivered.length || r.returned.length) ? {delivered: r.delivered, returned: r.returned, courier: val('invCourier')} : null;
+            note.innerHTML = (r.found.length ? `✅ PDF se bhare gaye: <b>${esc(r.found.join(', '))}</b> — ek dafa check kar lein, phir Upload dabayein.` : 'PDF me pehchane wale figures nahi mile — khane khud bharein.')
+              + (window.__cprTracks ? `<br>Is PDF me <b>${r.delivered.length}</b> delivered aur <b>${r.returned.length}</b> return tracking numbers bhi hain. <a href="#" class="adm-link" id="invToDist">Manual Distribution me bharein →</a>` : '');
+            const go = document.getElementById('invToDist');
+            if(go) go.onclick = ev => { ev.preventDefault(); admGo('distribution'); };
+          } else {
+            const found = await readCourierSheet(file, 'inv_');
+            note.textContent = found.length ? `✅ File se bhare gaye (columns: ${found.join(', ')}) — ek dafa check kar lein.` : 'File me pehchane wale columns nahi mile — khane khud bharein.';
+          }
         }catch(err){ note.textContent = 'File parh nahi saka — khane khud bharein.'; }
+        finally{ busy(btn, false, '⚡ Auto Fill'); }
       };
+      document.getElementById('invAutoBtn').onclick = autoFill;
+      document.getElementById('invFile').onchange = () => { window.__cprTracks = null; autoFill(); };
       document.getElementById('invUpload').onclick = async e => {
         const file = document.getElementById('invFile').files[0];
         if(!file){ toast('Invoice file chunein.'); return; }
@@ -1986,6 +2047,12 @@
         busy(btn, false, 'Save');
         if(r){ FIG_FIELDS.forEach(f => document.getElementById('ce_' + f[0]).value = ''); document.getElementById('ce_reference').value = ''; loadEntries(); }
       };
+      if(window.__cprTracks){
+        document.getElementById('dsDel').value = window.__cprTracks.delivered.join('\n');
+        document.getElementById('dsRet').value = window.__cprTracks.returned.join('\n');
+        toast(`CPR PDF se ${window.__cprTracks.delivered.length} delivered aur ${window.__cprTracks.returned.length} return numbers bhar diye — Check / Preview dabayein.`);
+        window.__cprTracks = null;
+      }
       const data = () => ({delivered: document.getElementById('dsDel').value, returned: document.getElementById('dsRet').value});
       const gen = document.getElementById('dsGen'), out = document.getElementById('dsOut');
       ['dsDel','dsRet'].forEach(id => document.getElementById(id).oninput = () => { gen.disabled = true; });
