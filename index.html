@@ -563,6 +563,7 @@
   .sp-link{display:flex;gap:10px}
   .sp-link .input{font-family:Consolas,monospace;font-size:12px}
   .sp-steps{margin:8px 0 16px 20px;line-height:1.9}
+  .sp-scopes{display:inline-block;margin-top:6px;padding:6px 10px;background:#f3f5fa;border-radius:6px;word-break:break-all;user-select:all}
   .co-form{max-width:760px}
   .co-title{color:#3b2a7a;font-size:22px;margin-bottom:18px}
   .co-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 32px}
@@ -1490,8 +1491,8 @@
       <div class="co-grid"><div class="co-field"><label>Client ID</label><input class="input" id="spCid" autocomplete="off"></div>
         <div class="co-field"><label>Client Secret</label><input class="input" id="spSecret" type="password" autocomplete="off"></div></div>
       <ol class="sp-steps">
-        <li>Shopify admin → <b>Settings → Apps → Develop apps</b> (ya <b>Dev Dashboard</b>) me nayi app banayein, naam "TCL".</li>
-        <li>Admin API scopes: <code>read_orders</code>, <code>write_orders</code>, <code>read_merchant_managed_fulfillment_orders</code>, <code>write_merchant_managed_fulfillment_orders</code>.</li>
+        <li>Shopify <b>Dev Dashboard</b> (ya purane store me <b>Settings → Apps → Develop apps</b>) me nayi app banayein, naam "TCL". App URL me <code>https://trustcourierlogistic.com</code> likh dein; "Embed app in Shopify admin" ka tick hata dein.</li>
+        <li>Scopes ke khane me yeh line bilkul aise hi copy karein (aakhir me full stop nahi):<br><code class="sp-scopes">read_orders,write_orders,read_merchant_managed_fulfillment_orders,write_merchant_managed_fulfillment_orders</code></li>
         <li>App install karein, phir token (ya Client ID + Secret) upar paste kar ke <b>Connect</b> dabayein.</li>
       </ol>
       <div class="login-msg hidden" id="pgMsg"></div>
