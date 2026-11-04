@@ -553,14 +553,15 @@
   .cd-legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;font-size:14px}
   .cd-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
   .awb-pdf{height:350px;margin:0 0 14px;padding:10px 0 12px;border-bottom:1px dashed #9aa1b2;font-family:Arial,Helvetica,sans-serif;color:#111;page-break-inside:avoid;box-sizing:border-box}
-  .awb-top{display:flex;align-items:center;justify-content:space-between;gap:10px;height:48px;margin-bottom:6px}
+  .awb-top{display:flex;align-items:center;justify-content:space-between;gap:10px;height:48px;margin-bottom:6px;padding-right:2px;box-sizing:border-box}
+  .awb-pdf{width:100%}
   .awb-brand{display:flex;align-items:center;gap:12px}
   .awb-mark{font-weight:900;font-size:30px;letter-spacing:-1px;color:#111;line-height:1}
   .awb-px i{color:#6cc04a;font-style:normal}
   .awb-cl{color:#c8102e;font-size:24px;letter-spacing:0}.awb-cl small{display:block;font-size:9px;letter-spacing:3px;color:#0d2b6b;font-weight:700}
-  .awb-logo-img{height:40px;max-width:150px;object-fit:contain}
+  .awb-logo-img{height:44px;width:auto;max-width:150px;object-fit:contain;image-rendering:auto}
   .awb-bc svg{display:block}
-  .awb-route{min-width:90px;text-align:center;font-weight:900;font-size:16px}
+  .awb-route{width:130px;flex-shrink:0;text-align:center;font-weight:900;font-size:14px;padding-right:14px;box-sizing:border-box}
   .awb-grid{display:grid;grid-template-columns:1fr 1fr .78fr;border:1px solid #cfd2d8;border-bottom:0}
   .awb-col{border-right:1px solid #cfd2d8}.awb-col:last-child{border-right:0}
   .awb-h{background:#d4d4d0;text-align:center;font-weight:700;font-size:12px;padding:5px}
@@ -2343,13 +2344,19 @@
     if(document.querySelector(`script[src="${src}"]`)) return ok();
     const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s);
   });
+  // html2pdf copies the element's own style into its render frame, so an element moved off-screen prints a blank page:
+  // only the outer holder is moved away; the element handed to html2pdf has no position of its own
   const pdfWrap = (width, html) => {
+    const holder = document.createElement('div');
+    holder.style.cssText = 'position:fixed;left:-10000px;top:0';
     const wrap = document.createElement('div');
-    wrap.style.cssText = `position:fixed;left:-10000px;top:0;width:${width}px;background:#fff`;
-    wrap.innerHTML = html; document.body.appendChild(wrap); return wrap;
+    wrap.style.cssText = `width:${width}px;background:#fff`;
+    wrap.innerHTML = html; holder.appendChild(wrap); document.body.appendChild(holder);
+    wrap.remove = () => holder.remove();
+    return wrap;
   };
   // courier logo on each slip: an image when one is set here (e.g. 'logos/cityline.png'), otherwise a wordmark
-  const COURIER_LOGOS = { PostEx: '', CityLine: '' };
+  const COURIER_LOGOS = { PostEx: '', CityLine: 'logos/cityline.png' };
   const courierMark = c => COURIER_LOGOS[c] ? `<img class="awb-logo-img" src="${COURIER_LOGOS[c]}" alt="${esc(c)}">`
     : c === 'PostEx' ? '<span class="awb-mark awb-px">PostEx<i>.</i></span>'
     : c === 'CityLine' ? '<span class="awb-mark awb-cl">CityLine<small>COURIERS</small></span>'
