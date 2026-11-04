@@ -1990,9 +1990,6 @@
     async distribution(main){
       main.innerHTML = `
         <h2>Manual Distribution</h2>
-        <div class="adm-card"><h3>Courier se payment</h3><p class="adm-sub">Kis courier se kitna paisa aaya aur us ne kya kaata — yeh Finance → Company me jata hai.</p>
-          <div class="adm-form"><div><label>Courier</label>${courierSelect('ce_courier')}</div>${figFields('ce_')}<div><button class="btn btn-gold" id="ceSave">Save</button></div></div>
-          <div id="ceList" class="adm-table-wrap" style="margin-top:14px"></div></div>
         <p class="adm-sub">Courier ki payment ke tracking numbers paste karein (har line me ek, ya comma se). System har number ka client dhoond kar us ka hisaab alag karega.</p>
         <div class="adm-note">Delivered: COD − shipping charges − GST − Govt Tax · Return: sirf −(shipping charges + GST). Rates Client Setting se. Jo number pehle invoice/settle ho chuka, dobara nahi ginta.</div>
         <div class="adm-card"><div class="adm-form dist-form">
@@ -2026,26 +2023,6 @@
           const d = await admCall('admin_cityline_record', {ref: b.dataset.rec}, 'Payment "Courier Payment Received" me jud gayi.');
           if(d) b.outerHTML = '<span class="pill-s ok">Received me jud chuki</span>'; else busy(b, false, 'Payment Received me jodein');
         });
-      };
-      const loadEntries = async () => {
-        const r = await authApi('admin_invoices');
-        const box = document.getElementById('ceList'); if(!box || !r.ok) return;
-        box.innerHTML = table(['Date', 'Courier', 'Reference', {t:'Received', num:1}, {t:'Courier Ch.', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Govt Tax', num:1}, ''],
-          r.uploads.slice(0, 10).map(u => `<tr><td>${esc(u['Payment Date'] || u['Uploaded At'])}</td><td>${esc(u.Courier)}</td><td>${esc(u.Reference || u['File Name'])}</td><td class="num">${rs(u.Amount)}</td>
-            <td class="num">${rs(u['Courier Charges'] || 0)}</td><td class="num">${rs(u['Shipping Charges'] || 0)}</td><td class="num">${rs(u.GST || 0)}</td><td class="num">${rs(u['Govt Tax'] || 0)}</td>
-            <td>${u.Status === 'Manual' ? `<button class="btn btn-light adm-mini" data-cedel="${esc(u.ID)}">Delete</button>` : '<small>file</small>'}</td></tr>`), 'Abhi koi courier payment nahi likhi.');
-        box.querySelectorAll('[data-cedel]').forEach(b => b.onclick = async () => {
-          if(b.dataset.sure !== '1'){ b.dataset.sure = '1'; b.textContent = 'Pakka?'; return; }
-          if(await admCall('admin_courier_entry_delete', {id: b.dataset.cedel}, 'Entry hata di.')) loadEntries();
-        });
-      };
-      loadEntries();
-      document.getElementById('ceSave').onclick = async e => {
-        if(val('ce_amount') === ''){ toast('Amount Received likhein.'); return; }
-        const btn = e.currentTarget; busy(btn, true, '…');
-        const r = await admCall('admin_courier_entry_add', Object.assign({courier: val('ce_courier')}, figValues('ce_')), 'Courier payment save ho gayi.');
-        busy(btn, false, 'Save');
-        if(r){ FIG_FIELDS.forEach(f => document.getElementById('ce_' + f[0]).value = ''); document.getElementById('ce_reference').value = ''; loadEntries(); }
       };
       if(window.__cprTracks){
         document.getElementById('dsDel').value = window.__cprTracks.delivered.join('\n');
