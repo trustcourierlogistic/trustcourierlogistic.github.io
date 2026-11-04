@@ -552,14 +552,26 @@
   .cpr-total td{font-weight:800;background:#f3f5fa}
   .cd-legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;font-size:14px}
   .cd-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
-  .awb-pdf{border:2px solid #0d2b6b;margin:0 0 14px;padding:14px;font-family:Segoe UI,Arial,sans-serif;color:#1b2540;page-break-inside:avoid}
-  .awb-hd{display:flex;justify-content:space-between;border-bottom:2px solid #d4a017;padding-bottom:6px;margin-bottom:8px;font-size:13px}
-  .awb-hd b{color:#0d2b6b;font-size:17px}
-  .awb-code{text-align:center}
+  .awb-pdf{height:350px;margin:0 0 14px;padding:10px 0 12px;border-bottom:1px dashed #9aa1b2;font-family:Arial,Helvetica,sans-serif;color:#111;page-break-inside:avoid;box-sizing:border-box}
+  .awb-top{display:flex;align-items:center;justify-content:space-between;gap:10px;height:48px;margin-bottom:6px}
+  .awb-brand{display:flex;align-items:center;gap:12px}
+  .awb-mark{font-weight:900;font-size:30px;letter-spacing:-1px;color:#111;line-height:1}
+  .awb-px i{color:#6cc04a;font-style:normal}
+  .awb-cl{color:#c8102e;font-size:24px;letter-spacing:0}.awb-cl small{display:block;font-size:9px;letter-spacing:3px;color:#0d2b6b;font-weight:700}
+  .awb-logo-img{height:40px;max-width:150px;object-fit:contain}
+  .awb-bc svg{display:block}
+  .awb-route{min-width:90px;text-align:center;font-weight:900;font-size:16px}
+  .awb-grid{display:grid;grid-template-columns:1fr 1fr .78fr;border:1px solid #cfd2d8;border-bottom:0}
+  .awb-col{border-right:1px solid #cfd2d8}.awb-col:last-child{border-right:0}
+  .awb-h{background:#d4d4d0;text-align:center;font-weight:700;font-size:12px;padding:5px}
   .awb-pdf table{width:100%;border-collapse:collapse}
-  .awb-pdf td{padding:5px 6px;font-size:13px;border:1px solid #e6e9f2;vertical-align:top}
-  .awb-pdf td:nth-child(odd){color:#6b7590;width:17%;background:#f6f7fb}
-  .awb-cod{font-size:18px;font-weight:800}
+  .awb-pdf td{border-bottom:1px solid #e1e3e8;padding:3px 5px;font-size:11px;vertical-align:top}
+  .awb-k{width:34%;border-right:1px solid #e1e3e8;color:#333}
+  .awb-v b{font-weight:700}
+  .awb-tall{height:26px}
+  .awb-qr{height:92px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #e1e3e8}
+  .awb-qr img{width:80px;height:80px}
+  .awb-detail{border:1px solid #cfd2d8}.awb-detail .awb-k{width:15.5%}.awb-detail td{height:24px}
   .sp-link{display:flex;gap:10px}
   .sp-link .input{font-family:Consolas,monospace;font-size:12px}
   .sp-steps{margin:8px 0 16px 20px;line-height:1.9}
@@ -2336,25 +2348,63 @@
     wrap.style.cssText = `position:fixed;left:-10000px;top:0;width:${width}px;background:#fff`;
     wrap.innerHTML = html; document.body.appendChild(wrap); return wrap;
   };
+  // courier logo on each slip: an image when one is set here (e.g. 'logos/cityline.png'), otherwise a wordmark
+  const COURIER_LOGOS = { PostEx: '', CityLine: '' };
+  const courierMark = c => COURIER_LOGOS[c] ? `<img class="awb-logo-img" src="${COURIER_LOGOS[c]}" alt="${esc(c)}">`
+    : c === 'PostEx' ? '<span class="awb-mark awb-px">PostEx<i>.</i></span>'
+    : c === 'CityLine' ? '<span class="awb-mark awb-cl">CityLine<small>COURIERS</small></span>'
+    : `<span class="awb-mark">${esc(c || 'TCL')}</span>`;
+  const awbDate = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${Number(m[3])}/${Number(m[2])}/${m[1]}` : esc(d); };
+  // airway bills in the courier slip layout: 3 per A4 page, courier logo, order-ref + tracking barcodes, QR of the tracking number
   async function downloadAirwayBills(list, btn){
     const label = btn ? btn.textContent : '';
     busy(btn, true, 'PDF ban rahi hai…');
     try{
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js');
-      const wrap = pdfWrap(760, list.map(o => `<div class="awb-pdf">
-        <div class="awb-hd"><b>TRUST COURIER LOGISTIC</b><span>${esc(o.courier) || '—'} · COD</span></div>
-        <div class="awb-code"><svg class="awb-bar" data-code="${esc(o.tracking || o.ref)}"></svg></div>
-        <table>
-          <tr><td>Tracking</td><td><b>${esc(o.tracking) || 'UNBOOKED'}</b></td><td>Order Ref</td><td><b>${esc(o.ref)}</b></td></tr>
-          <tr><td>Date</td><td>${esc(o.date)}</td><td>Items / Weight</td><td>${esc(o.items)} · ${o.weight ? esc(o.weight) + ' kg' : '—'}</td></tr>
-          <tr><td>Consignee</td><td colspan="3"><b>${esc(o.customer)}</b> · ${esc(o.phone)}</td></tr>
-          <tr><td>Deliver to</td><td colspan="3">${esc(o.address)}, <b>${esc(o.city)}</b></td></tr>
-          <tr><td>Shipper</td><td colspan="3">${esc(o.pickupAddress)}, ${esc(o.pickupCity)}</td></tr>
-          <tr><td>Product</td><td colspan="3">${esc(o.detail) || '—'}</td></tr>
-          <tr><td>COD Amount</td><td colspan="3" class="awb-cod">Rs ${esc(o.amount)}</td></tr>
-        </table></div>`).join(''));
-      wrap.querySelectorAll('.awb-bar').forEach(svg => JsBarcode(svg, svg.dataset.code, {format:'CODE128', height:50, width:2, fontSize:14, margin:4}));
+      await Promise.all([
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'),
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js'),
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js')
+      ]);
+      // shipper = the logged-in client (brand + phone from the Business Profile)
+      if(!window.__shipper){ const p = await authApi('client_profile'); window.__shipper = p.ok ? p.profile : {}; }
+      const sh = window.__shipper;
+      const shipperName = sh.brand || (document.querySelector('.mName') || {}).textContent || '';
+      const row = (k, v, cls) => `<tr><td class="awb-k">${k}</td><td class="awb-v ${cls || ''}">${v}</td></tr>`;
+      const wrap = pdfWrap(760, list.map(o => {
+        const tn = String(o.tracking || ''), ref = String(o.ref || '');
+        return `<div class="awb-pdf">
+        <div class="awb-top">
+          <div class="awb-brand">${courierMark(o.courier)}<div class="awb-bc"><svg class="awb-bar" data-code="${esc(ref)}" data-h="26"></svg></div></div>
+          <div class="awb-bc awb-bc-tn">${tn ? `<svg class="awb-bar" data-code="${esc(tn)}" data-h="34"></svg>` : '<b>UNBOOKED</b>'}</div>
+          <div class="awb-route">${esc(String(o.city || '').toUpperCase())}</div>
+        </div>
+        <div class="awb-grid">
+          <div class="awb-col">
+            <div class="awb-h">Consignee Information</div>
+            <table>${row('Name:', `<b>${esc(o.customer)}</b>`)}${row('Contact:', `<b>${esc(o.phone)}</b>`)}${row('Delivery Address:', `<b>${esc(o.address)}</b>`, 'awb-tall')}</table>
+            <div class="awb-h">Shipper Information</div>
+            <table>${row('Name:', `<b>${esc(shipperName)}</b>`)}${row('Contact:', `<b>${esc(sh.phone || '')}</b>`)}
+              ${row('Pickup Address:', `<b>${esc([o.pickupAddress, o.pickupCity].filter(Boolean).join(' '))}</b>`)}
+              ${row('Return Address:', `<b>${esc([o.returnAddress || o.pickupAddress, o.returnCity || o.pickupCity].filter(Boolean).join(' '))}</b>`)}</table>
+          </div>
+          <div class="awb-col">
+            <div class="awb-h">Shipment Information</div>
+            <table>${row('Pieces:', `<b>${esc(o.items || 1)}</b>`)}${row('Order Ref:', `<b>${esc(ref)}</b>`)}${row('Tracking No:', `<b>${esc(tn) || '—'}</b>`)}
+              ${row('Origin:', `<b>${esc(String(o.pickupCity || '').toUpperCase())}</b>`)}${row('Destination:', `<b>${esc(o.city)}</b>`)}
+              ${row('Return City:', `<b>${esc(String(o.returnCity || o.pickupCity || '').toUpperCase())}</b>`)}${row('Weight:', `<b>${o.weight ? esc(o.weight) + ' kg' : '1 kg'}</b>`)}
+              ${row('Remarks:', esc(o.notes || ''), 'awb-tall')}</table>
+          </div>
+          <div class="awb-col awb-col-s">
+            <div class="awb-h">Order Information</div>
+            <div class="awb-qr">${tn ? `<img class="awb-qrimg" data-code="${esc(tn)}" alt="">` : ''}</div>
+            <table>${row('Amount:', `<b>${Number(o.amount || 0).toFixed(2)}/-</b>`)}${row('Date:', `<b>${awbDate(o.date)}</b>`)}${row('Order Type:', '<b>Normal</b>')}</table>
+          </div>
+        </div>
+        <table class="awb-detail">${row('Order Details:', `<b>${esc(o.detail) || '—'}</b>`)}</table>
+      </div>`;
+      }).join(''));
+      wrap.querySelectorAll('.awb-bar').forEach(svg => JsBarcode(svg, svg.dataset.code, {format:'CODE128', height:Number(svg.dataset.h), width:1.4, fontSize:11, margin:0}));
+      wrap.querySelectorAll('.awb-qrimg').forEach(img => { img.src = new QRious({value: img.dataset.code, size: 220, level: 'M'}).toDataURL(); });
       const name = list.length === 1 ? `AWB-${(list[0].tracking || list[0].ref).replace(/[^\w-]/g, '')}.pdf` : `AWB-${list.length}-orders.pdf`;
       await html2pdf().set({margin:8, filename:name, html2canvas:{scale:2}, jsPDF:{unit:'mm', format:'a4'}, pagebreak:{mode:['css'], avoid:'.awb-pdf'}}).from(wrap).save();
       wrap.remove();
