@@ -546,6 +546,9 @@
   .dist-form textarea{font-family:Consolas,monospace;font-size:13px;resize:vertical}
   details.adm-card summary{cursor:pointer}
   @media (max-width:640px){ .dist-form{grid-template-columns:1fr!important} .cpr-top{flex-direction:column} }
+  .cpr-hd{align-items:center}
+  .cpr-brand{display:flex;align-items:center;gap:16px}
+  .cpr-brand img{height:56px;width:auto}
   .cpr-top{display:flex;gap:24px;margin-bottom:12px}
   .cpr-top table{flex:1}
   .cpr-top td:first-child{color:#6b7590;width:45%;background:#f6f7fb}
@@ -2626,7 +2629,7 @@
       await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
       const i = d.invoice, c = d.client, t = d.totals;
       const kv = (k, v) => `<tr><td>${esc(k)}</td><td><b>${v}</b></td></tr>`;
-      const wrap = pdfWrap(1000, `<div class="ls-pdf cpr-pdf"><div class="ls-hd"><b>TRUST COURIER LOGISTIC — CASH PAYMENT RECEIPT</b><span>${esc(i.invoiceNo)} · ${esc(i.date)}</span></div>
+      const wrap = pdfWrap(1000, `<div class="ls-pdf cpr-pdf"><div class="ls-hd cpr-hd"><div class="cpr-brand"><img src="logo.jpg" alt="Trust Courier Logistic"><b>CASH PAYMENT RECEIPT</b></div><span>${esc(i.invoiceNo)} · ${esc(i.date)}</span></div>
         <div class="cpr-top"><table>${kv('Merchant', esc(c.brand || c.name))}${kv('Merchant ID', esc(c.id))}${kv('Phone', esc(c.phone))}${kv('Bank', esc([c.bankName, c.accountTitle, c.accountNumber].filter(Boolean).join(' · ')) || '—')}</table>
           <table>${kv('Delivered parcels', t.delivered)}${kv('Returned parcels', t.returned)}${kv('COD collected', rs(t.cod))}${kv('Shipping charges', rs(t.charges))}${kv('GST', rs(t.gst))}${kv('Govt Tax', rs(t.tax))}${kv('Net payable', rs(t.net))}${kv('Status', esc(i.status))}</table></div>
         <table><thead><tr><th>#</th><th>Tracking</th><th>Order Ref</th><th>Customer</th><th>Destination</th><th>Status</th><th>COD</th><th>Shipping</th><th>GST</th><th>Govt Tax</th><th>Net</th></tr></thead><tbody>
