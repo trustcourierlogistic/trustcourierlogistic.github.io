@@ -2403,7 +2403,7 @@
     return wrap;
   };
   // courier logo on each slip: an image when one is set here (e.g. 'logos/cityline.png'), otherwise a wordmark
-  const COURIER_LOGOS = { PostEx: '', CityLine: 'logos/cityline.png' };
+  const COURIER_LOGOS = { PostEx: '', CityLine: 'logo.jpg' };   // CityLine slips carry the TCL logo (owner's choice)
   const courierMark = c => COURIER_LOGOS[c] ? `<img class="awb-logo-img" src="${COURIER_LOGOS[c]}" alt="${esc(c)}">`
     : c === 'PostEx' ? '<span class="awb-mark awb-px">PostEx<i>.</i></span>'
     : c === 'CityLine' ? '<span class="awb-mark awb-cl">CityLine<small>COURIERS</small></span>'
