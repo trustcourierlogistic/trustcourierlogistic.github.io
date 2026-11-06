@@ -1964,7 +1964,7 @@
     async cityline(main){
       const d = await admLoad('admin_cityline_pending');
       main.innerHTML = `
-        <h2>CityLine Booking</h2><p class="adm-sub">Clients ke CityLine orders. CityLine portal par book karein, phir us ka tracking number yahan daal kar Save karein — order client ke portal me "Booked" ho jayega.</p>
+        <h2>CityLine Booking</h2><p class="adm-sub">Ab CityLine orders Save par khud book ho jate hain. Yahan sirf purane "Unbooked" CityLine orders hain — CityLine portal par book kar ke tracking number daalein, ya client ke portal se dobara book karwa lein.</p>
         <div class="adm-note">Tracking number CityLine API se check hota hai, aur CityLine wala weight lag jata hai. Us ke baad status khud update hota rahega.</div>
         <div class="adm-card"><div class="adm-table-wrap">
           ${table(['Client', 'Order', 'Customer', 'Deliver to', 'Product', {t:'COD', num:1}, 'Pickup', 'Tracking Number'],
@@ -2104,7 +2104,7 @@
       const d = await admLoad('admin_api');
       main.innerHTML = `
         <h2>Courier API</h2><p class="adm-sub">TCL ke PostEx aur CityLine account ki API token yahan lagayen — TCL System courier account se jud jayega.</p>
-        <div class="adm-note">PostEx: merchant portal se API token len (ya PostEx representative se). CityLine: API key CityLine se milti hai. CityLine ki API me order create nahi hota — CityLine orders "CityLine Booking" page se tracking number laga kar book hote hain; status, cancel aur payment invoice API se aate hain.</div>
+        <div class="adm-note">PostEx: merchant portal se API token len (ya PostEx representative se). CityLine: API key CityLine se milti hai. Save dabate hi order CityLine par khud book hota hai (packet API); status, cancel aur payment invoice bhi API se aate hain.</div>
         ${d.accounts.map(a => `<div class="adm-card" data-courier="${esc(a.courier)}">
           <h3>${esc(a.courier)} ${statusPill(a.status)}</h3>
           <p class="adm-sub" style="margin-bottom:12px">${a.token ? 'Token: ' + esc(a.token) + ' · ' : ''}${a.lastChecked ? 'Last checked: ' + esc(a.lastChecked) : 'Abhi token nahi laga'}</p>
@@ -2237,14 +2237,14 @@
       try{
         const res = await authApi('client_create_order', order);
         // a failed courier booking saves nothing, so the form keeps its values for a retry
-        if(!res.ok) return show(res.error === 'postex_book' || res.error === 'postex_token'
+        if(!res.ok) return show(['postex_book', 'postex_token', 'cityline_book', 'cityline_token'].includes(res.error)
           ? `Order ${order.courier} par book nahi hua (save bhi nahi hua): ${res.message || 'courier ne jawab nahi diya'}`
           : ORDER_ERRORS[res.error] || res.message || 'Order save nahi ho saka, dobara try karein.');
         if(res.tracking){
           toast(`Order book ho gaya ✓ Tracking: ${res.tracking}`);
           msg.textContent = `${order.orderRef} ${order.courier} par book ho gaya — Tracking: ${res.tracking}`; msg.classList.add('ok'); msg.classList.remove('hidden');
         } else {
-          toast('Order save ho gaya (Unbooked). TCL CityLine par book kar ke tracking number laga dega.');
+          toast('Order save ho gaya (Unbooked).');
         }
         if(printAfter && res.tracking) downloadAirwayBills([{id:res.id, courier:order.courier, ref:order.orderRef, tracking:res.tracking, date:res.date, amount:Number(order.amount),
           customer:order.customerName, phone:order.customerPhone, city:order.deliveryCity, address:order.deliveryAddress, items:order.items || 1,
