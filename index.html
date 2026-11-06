@@ -997,7 +997,8 @@
         <div class="w-form-row"><input class="input" id="mPhone" type="tel" placeholder="Phone Number" required><input class="input" id="mCity" placeholder="City"></div>
         <select class="input" id="mOrders"><option value="">Orders per day</option><option>1 – 20</option><option>20 – 100</option><option>100+</option></select>
         <textarea class="input" id="mMsg" rows="3" placeholder="Message (optional)"></textarea>
-        <div class="w-form-row"><input class="input" id="mEmail" type="email" placeholder="Email (login ke liye)" autocomplete="email" required><input class="input" id="mPass" type="password" placeholder="Password (kam az kam 8)" minlength="8" autocomplete="new-password" required></div>
+        <div class="w-form-row"><input class="input" id="mEmail" type="email" placeholder="Email (login ke liye)" autocomplete="email" required><input class="input" id="mUser" placeholder="Username (optional, login ke liye)" maxlength="30" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+        <input class="input" id="mPass" type="password" placeholder="Password (kam az kam 8)" minlength="8" autocomplete="new-password" required>
         <div class="w-form-row"><input class="input" id="mBank" placeholder="Bank Name (optional)"><input class="input" id="mAccTitle" placeholder="Account Title (optional)"></div>
         <input class="input" id="mAccNum" placeholder="Account Number / IBAN (optional)">
         <button class="w-btn w-btn-gold w-btn-lg" style="width:100%" id="mSubmit">Create Merchant Account</button>
@@ -1085,8 +1086,8 @@
       <h2 class="login-h">Welcome Back 👋</h2>
       <p class="sub">Login to your merchant account</p>
       <div class="field">
-        <label>Email</label>
-        <input class="input" type="email" id="loginUser" placeholder="merchant@example.com" autocomplete="username" required>
+        <label>Email ya Username</label>
+        <input class="input" type="text" id="loginUser" placeholder="merchant@example.com ya username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
       </div>
       <div class="field">
         <label>Password</label>
@@ -1268,7 +1269,9 @@
     exists: 'Is email se account pehle se bana hua hai. Login karein.',
     bad_email: 'Email sahi likhein.',
     short_password: 'Password kam az kam 8 characters ka ho.',
-    missing: 'Name, Brand, Phone aur Email zaroori hain.'
+    missing: 'Name, Brand, Phone aur Email zaroori hain.',
+    bad_username: 'Username 3–30 harf ka ho: sirf a-z, 0-9, nuqta (.), dash (-) ya underscore (_), shuru harf/hindse se.',
+    username_taken: 'Yeh username pehle se kisi ka hai — koi aur chunein.'
   };
   async function merchantSignup(e){
     e.preventDefault();
@@ -1288,7 +1291,7 @@
     btn.disabled = true; btn.textContent = 'Submitting…';
     try{
       const r = await loginApi({action:'register', name:v('mName'), brand:v('mBrand'), phone:v('mPhone'), city:v('mCity'),
-        orders:v('mOrders'), message:v('mMsg'), email:v('mEmail'), password:document.getElementById('mPass').value,
+        orders:v('mOrders'), message:v('mMsg'), email:v('mEmail'), username:v('mUser'), password:document.getElementById('mPass').value,
         bankName:v('mBank'), accountTitle:v('mAccTitle'), accountNumber:v('mAccNum')});
       if(!r.ok){ toast(SIGNUP_ERRORS[r.error] || 'Account nahi ban saka. Dobara try karein.'); return; }
       e.target.reset();
@@ -1310,8 +1313,8 @@
     m.textContent = text; m.classList.toggle('ok', !!ok); m.classList.toggle('hidden', !text);
   }
   const LOGIN_ERRORS = {
-    invalid: 'Email ya password ghalat hai.',
-    missing: 'Email aur password dono likhein.',
+    invalid: 'Email/Username ya password ghalat hai.',
+    missing: 'Email/Username aur password dono likhein.',
     inactive: 'Yeh account band hai. Trust Courier se rabta karein.',
     pending: 'Aapka account abhi review me hai. Approve hote hi login ho sakega.',
     locked: 'Bohat zyada ghalat koshishen. 15 minute baad try karein.',
@@ -1377,13 +1380,13 @@
   // a random new password is emailed to the account (the reply is the same for unknown emails)
   async function forgotPassword(){
     const email = document.getElementById('loginUser').value.trim();
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ loginMsg('Pehle upar apna login Email likhein, phir Forgot password dabayein.'); return; }
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !/^[a-z0-9][a-z0-9._-]{2,29}$/i.test(email)){ loginMsg('Pehle upar apna Email ya Username likhein, phir Forgot password dabayein.'); return; }
     if(!LOGIN_API){ loginMsg('Merchant login abhi setup ho raha hai.'); return; }
     loginMsg('Bhej rahe hain…', true);
     try{
       const r = await loginApi({action:'forgot', email});
-      if(r.ok) loginMsg('Agar yeh email TCL me registered aur active hai to naya password us email par bhej diya gaya hai. Inbox (aur Spam) check karein.', true);
-      else loginMsg(r.error === 'busy' || r.error === 'mail_failed' ? 'Abhi email nahi ja saki — thori der baad try karein ya WhatsApp 0305-8391111 karein.' : 'Email sahi likhein.');
+      if(r.ok) loginMsg('Agar yeh account TCL me registered aur active hai to naya password us ki email par bhej diya gaya hai. Inbox (aur Spam) check karein.', true);
+      else loginMsg(r.error === 'busy' || r.error === 'mail_failed' ? 'Abhi email nahi ja saki — thori der baad try karein ya WhatsApp 0305-8391111 karein.' : 'Email ya Username sahi likhein.');
     }catch(err){ loginMsg('Internet connection check karein.'); }
   }
   function logout(){
@@ -1656,6 +1659,7 @@
     'Packaging Logs': () => `<div class="card"><p class="adm-empty">Abhi koi packaging request nahi.</p></div>`,
     'Business Profile': () => `<form class="card co-form" id="pgForm" novalidate><h3 class="co-title">Business Profile</h3><div class="co-grid">
       <div class="co-field"><label>Business Name <span class="co-req">*</span></label><input class="input" id="bpBrand" maxlength="120"></div>
+      <div class="co-field"><label>Username <small>(login ke liye, optional)</small></label><input class="input" id="bpUser" maxlength="30" placeholder="jaise: twistymart" autocapitalize="none" spellcheck="false"><small class="co-hint">Login par email ki jagah yeh bhi likh sakte hain.</small></div>
       <div class="co-field"><label>Phone <span class="co-req">*</span></label><input class="input" id="bpPhone" placeholder="03xxxxxxxxx" inputmode="numeric" maxlength="13"></div>
       <div class="co-field"><label>CNIC</label><input class="input" id="bpCnic" placeholder="xxxxx-xxxxxxx-x" maxlength="15"></div>
       <div class="co-field"><label>City <span class="co-req">*</span></label><input class="input" id="bpCity" list="bpCityList" placeholder="Search" autocomplete="off"><datalist id="bpCityList"></datalist><small class="co-hint" id="bpCityHint"></small></div>
@@ -2875,6 +2879,7 @@
   /* ---------- client portal: settings pages ---------- */
   const SETTING_ERRORS = {
     missing: 'Star (*) wale saare khane bharein.', bad_phone: 'Phone 03xxxxxxxxx likhein.', bad_cnic: 'CNIC 13 hindse ka hona chahiye (xxxxx-xxxxxxx-x).',
+    bad_username: 'Username 3–30 harf ka ho: sirf a-z, 0-9, nuqta (.), dash (-) ya underscore (_).', username_taken: 'Yeh username pehle se kisi ka hai — koi aur chunein.',
     bad_city: 'City list me se chunein.', wrong_password: 'Old password ghalat hai.', short_password: 'Naya password kam az kam 8 characters ka ho.',
     password_mismatch: 'New aur Confirm password ek jaise nahi.'
   };
@@ -2897,11 +2902,11 @@
     const [p, c] = await Promise.all([authApi('client_profile'), authApi('client_courier_cities', {courier:'PostEx'})]);
     if(!document.getElementById('pgForm') || !p.ok) return;
     const v = p.profile, set = (id, x) => document.getElementById(id).value = x || '';
-    set('bpBrand', v.brand); set('bpPhone', v.phone); set('bpCnic', v.cnic); set('bpCity', v.city); set('bpAddr', v.address);
+    set('bpBrand', v.brand); set('bpUser', v.username); set('bpPhone', v.phone); set('bpCnic', v.cnic); set('bpCity', v.city); set('bpAddr', v.address);
     const cities = c.ok ? c.cities : [];
     fillList('bpCityList', cities);
     document.getElementById('bpCityHint').textContent = cities.length ? `Poore Pakistan ki ${cities.length} cities` : '';
-    settingsForm('client_profile_save', () => ({brand:val('bpBrand'), phone:val('bpPhone'), cnic:val('bpCnic'), city:val('bpCity'), address:val('bpAddr')}),
+    settingsForm('client_profile_save', () => ({brand:val('bpBrand'), username:val('bpUser'), phone:val('bpPhone'), cnic:val('bpCnic'), city:val('bpCity'), address:val('bpAddr')}),
       'Business profile save ho gayi.', loadClientDashboard);
   }
   async function initBankPage(){
