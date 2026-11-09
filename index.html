@@ -695,7 +695,9 @@
   .cpr-total td{font-weight:800;background:#f3f5fa}
   .cd-legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;font-size:14px}
   .cd-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
-  .awb-pdf{height:350px;margin:0 0 14px;padding:10px 0 12px;border-bottom:1px dashed #9aa1b2;font-family:Arial,Helvetica,sans-serif;color:#111;page-break-inside:avoid;box-sizing:border-box}
+  .awb-page{width:794px;height:1123px;padding:26px 17px;box-sizing:border-box;background:#fff;overflow:hidden}
+  .awb-pdf{height:357px;margin:0;padding:12px 0;border-bottom:1px dashed #9aa1b2;font-family:Arial,Helvetica,sans-serif;color:#111;box-sizing:border-box;overflow:hidden}
+  .awb-pdf:last-child{border-bottom:0}
   .awb-top{display:flex;align-items:center;justify-content:space-between;gap:10px;height:48px;margin-bottom:6px;padding-right:2px;box-sizing:border-box}
   .awb-pdf{width:100%}
   .awb-brand{display:flex;align-items:center;gap:12px}
@@ -2591,7 +2593,8 @@
     busy(btn, true, 'PDF ban rahi hai…');
     try{
       await Promise.all([
-        loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'),
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'),
+        loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
         loadScript('https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js'),
         loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js')
       ]);
@@ -2600,7 +2603,7 @@
       const sh = window.__shipper;
       const shipperName = sh.brand || (document.querySelector('.mName') || {}).textContent || '';
       const row = (k, v, cls) => `<tr><td class="awb-k">${k}</td><td class="awb-v ${cls || ''}">${v}</td></tr>`;
-      const wrap = pdfWrap(760, list.map(o => {
+      const slip = o => {
         const tn = String(o.tracking || ''), ref = String(o.ref || '');
         return `<div class="awb-pdf">
         <div class="awb-top">
@@ -2632,11 +2635,39 @@
         </div>
         <table class="awb-detail">${row('Order Details:', `<b>${esc(o.detail) || '—'}</b>`)}</table>
       </div>`;
-      }).join(''));
+      };
+      // every A4 page is drawn on its own (3 slips each): one tall picture of all slips breaks past ~20 pages
+      const pages = [];
+      for(let i = 0; i < list.length; i += 3) pages.push(list.slice(i, i + 3));
+      const wrap = pdfWrap(794, pages.map(p => `<div class="awb-page">${p.map(slip).join('')}</div>`).join(''));
       wrap.querySelectorAll('.awb-bar').forEach(svg => JsBarcode(svg, svg.dataset.code, {format:'CODE128', height:Number(svg.dataset.h), width:1.4, fontSize:11, margin:0}));
       wrap.querySelectorAll('.awb-qrimg').forEach(img => { img.src = new QRious({value: img.dataset.code, size: 220, level: 'M'}).toDataURL(); });
       const name = list.length === 1 ? `AWB-${(list[0].tracking || list[0].ref).replace(/[^\w-]/g, '')}.pdf` : `AWB-${list.length}-orders.pdf`;
-      await html2pdf().set({margin:8, filename:name, html2canvas:{scale:2}, jsPDF:{unit:'mm', format:'a4'}, pagebreak:{mode:['css'], avoid:'.awb-pdf'}}).from(wrap).save();
+      await Promise.all([...wrap.querySelectorAll('img')].map(img => img.complete ? null : new Promise(ok => { img.onload = img.onerror = ok; })));
+      const pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4', compress:true});
+      // html2canvas copies the whole document on every call (~3 s), so pages are drawn 6 at a time (a picture well
+      // inside the browser's canvas limit) and cut into A4 pages; the rest of the site is skipped while copying
+      const holder = wrap.parentElement;
+      const skip = el => el.parentNode === document.body && el !== holder;
+      const els = [...wrap.querySelectorAll('.awb-page')], PER = 6;
+      for(let i = 0; i < els.length; i += PER){
+        const group = document.createElement('div');
+        els.slice(i, i + PER).forEach(p => group.appendChild(p));
+        wrap.appendChild(group);
+        if(btn) btn.textContent = `PDF ban rahi hai… ${Math.min(i + PER, els.length)}/${els.length}`;
+        const big = await html2canvas(group, {scale:2, backgroundColor:'#ffffff', useCORS:true, scrollX:0, scrollY:0,
+          windowWidth:group.scrollWidth, windowHeight:group.scrollHeight, ignoreElements:skip, logging:false});
+        const n = group.children.length, h = big.height / n;
+        for(let k = 0; k < n; k++){
+          const page = document.createElement('canvas');
+          page.width = big.width; page.height = Math.round(h);
+          page.getContext('2d').drawImage(big, 0, Math.round(k * h), big.width, Math.round(h), 0, 0, big.width, Math.round(h));
+          if(i + k) pdf.addPage();
+          pdf.addImage(page.toDataURL('image/jpeg', 0.82), 'JPEG', 0, 0, 210, 297);
+        }
+        group.remove();
+      }
+      pdf.save(name);
       wrap.remove();
       toast('Airway bill PDF download ho gayi.');
     }catch(err){ toast('PDF nahi ban saki — internet check karein.'); }
