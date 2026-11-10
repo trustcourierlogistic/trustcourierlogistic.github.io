@@ -670,6 +670,15 @@
   .cd-tools .input{width:auto;background:#fff}
   .cd-link{cursor:pointer;transition:transform .15s}
   .cd-link:hover{transform:translateY(-2px)}
+  .cd-day{margin-top:18px}
+  .day-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .day-head .co-title{font-size:18px;margin:0}
+  .day-tools{display:flex;gap:8px}
+  .day-tools .input{width:auto;background:#fff}
+  .day-body .adm-stats{margin-top:0}
+  .day-split{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-size:13px}
+  .day-split small{color:var(--muted);font-weight:700;min-width:58px}
+  .day-split span{background:#f1f4fa;border-radius:20px;padding:5px 12px}
   .cd-ratio{margin-top:18px}
   .cd-ratio .co-title{font-size:18px;margin-bottom:12px}
   .cd-ratio .co-title small{font-size:13px;color:var(--muted);font-weight:500}
@@ -1221,6 +1230,7 @@
         </div>
       </div>
       <div class="card cd-info" id="cdInfo"><p class="adm-empty">Loading…</p></div>
+      <div class="card cd-day" id="cdDay"></div>
       <div class="adm-stats" id="cdStats"></div>
       <div class="card cd-ratio" id="cdRatio"></div>
     </section>
@@ -1958,11 +1968,13 @@
           ${stat('Remaining Amount', signed(s.remaining), 'gold', 'Received − Expense − Settled')}
           ${stat('Profit / Loss', signed(s.profitLoss), 'green', 'Formula aap batayenge')}
         </div>
+        <div class="adm-card" id="admDay"></div>
         <div class="adm-card"><h3>Recent Invoices</h3><div class="adm-table-wrap">
           ${table(['Invoice', 'Client', 'Courier', 'Date', {t:'Amount', num:1}, 'Status'],
             d.recentInvoices.map(i => `<tr><td>${esc(i['Invoice No'] || i.ID)}</td><td>${esc(i.Client)}</td><td>${esc(i.Courier)}</td><td>${esc(i['Invoice Date'])}</td><td class="num">${rs(i.Amount)}</td><td>${statusPill(i.Status)}</td></tr>`),
             'Abhi koi client invoice nahi bani.')}
         </div></div>`;
+      dayBox(document.getElementById('admDay'), async date => { const x = await authApi('admin_day_orders', {date}); return x.ok ? x.orders : null; });
       // Refresh also pulls the latest PostEx statuses/weights into every client's orders
       document.getElementById('admRefresh').onclick = async e => {
         busy(e.currentTarget, true, 'Refreshing…');
@@ -3055,6 +3067,37 @@
   }
   /* ---------- client portal: own details, totals and orders from the client's ledger sheet ---------- */
   // refresh=true also asks PostEx for the latest statuses and weights (the backend allows that once a minute)
+  // "Din ke Orders" card: orders of one date (today by default) — total, booked / unbooked, COD, and the split per courier and per brand.
+  // fetchList(date) returns that day's orders ({status, amount, courier, brand or shipper}) or null on error. Keeps the picked date on redraws.
+  function dayBox(box, fetchList){
+    const prev = box.querySelector('input'), d0 = prev && prev.value ? prev.value : today();
+    box.innerHTML = `<div class="day-head"><h3 class="co-title">📅 Din ke Orders</h3>
+      <div class="day-tools"><input type="date" class="input" aria-label="Date" value="${d0}"><button class="btn btn-gold" type="button">Aaj</button></div></div><div class="day-body"></div>`;
+    const inp = box.querySelector('input'), body = box.querySelector('.day-body');
+    let seq = 0;
+    const draw = async () => {
+      const d = inp.value || today(), n = ++seq;
+      body.innerHTML = '<p class="adm-empty">Loading…</p>';
+      let list = null; try{ list = await fetchList(d); }catch(e){}
+      if(n !== seq) return;
+      if(!list){ body.innerHTML = '<p class="adm-empty">Data load nahi ho saka.</p>'; return; }
+      const st = o => String(o.status || '').trim().toLowerCase();
+      const live = list.filter(o => st(o) !== 'cancelled'), cancelled = list.length - live.length;
+      const unb = live.filter(o => st(o) === 'unbooked').length, cod = live.reduce((t, o) => t + Number(o.amount || 0), 0);
+      const label = d === today() ? 'Aaj' : d.split('-').reverse().join('-');
+      const tile = (k, v, cls, note) => `<div class="adm-stat ${cls||''}"><small>${esc(k)}</small><b>${v}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
+      const group = key => { const m = {}; live.forEach(o => { const k = key(o) || '—'; m[k] = m[k] || {n: 0, cod: 0}; m[k].n++; m[k].cod += Number(o.amount || 0); });
+        return Object.entries(m).sort((a, b) => b[1].n - a[1].n); };
+      const split = (t, g) => `<div class="day-split"><small>${t}</small>${g.map(([k, v]) => `<span><b>${esc(k)}</b> ${v.n} · ${rs(v.cod)}</span>`).join('')}</div>`;
+      const brands = group(o => o.brand !== undefined ? o.brand : brandOf(o));
+      body.innerHTML = `<div class="adm-stats">${tile('Total Orders', live.length, '', label + (cancelled ? ` · ${cancelled} cancel` : ''))}${tile('Booked', live.length - unb, 'green', 'Courier par book')}
+        ${tile('Unbooked', unb, 'red', 'Abhi book nahi hue')}${tile('COD Kul', rs(cod), 'gold', label + ' ke orders')}</div>
+        ${live.length ? split('Courier', group(o => o.courier)) : ''}${brands.length > 1 ? split('Brand', brands) : ''}`;
+    };
+    inp.onchange = draw;
+    box.querySelector('button').onclick = () => { inp.value = today(); draw(); };
+    draw();
+  }
   async function loadClientDashboard(refresh){
     const info = document.getElementById('cdInfo'), stats = document.getElementById('cdStats'), ratio = document.getElementById('cdRatio');
     const btn = document.getElementById('cdRefresh');
@@ -3069,6 +3112,7 @@
         : `<div class="cd-grid">${row('Client', c.brand || c.name)}${row('Client ID', c.id)}${row('Phone', c.phone)}${row('Email', c.email)}
         ${row('Bank', c.bankName)}${row('Account Title', c.accountTitle)}${row('Account / IBAN', c.accountNumber)}</div>`;
       if(refresh === true) dropOrders();
+      dayBox(document.getElementById('cdDay'), async d => { const r = await getOrders(); return r.ok ? r.orders.filter(o => String(o.date || '').slice(0, 10) === d) : null; });
       const stat = (label, value, cls, note, go) => `<div class="adm-stat ${cls||''}${go ? ' cd-link' : ''}"${go ? ` data-go="${go}" role="button" tabindex="0"` : ''}><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
       const period = days ? `Pichle ${days} din` : 'Shuru se ab tak';
       stats.innerHTML = stat('Total Orders', s.total, '', period) + stat('Delivered', s.delivered, 'green', period) + stat('Returned', s.returned, 'red', period)
