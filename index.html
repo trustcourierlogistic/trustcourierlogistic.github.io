@@ -677,6 +677,13 @@
   .cd-bar span,.cd-legend i{background:#c9cfdd}
   .cd-bar .ok,.cd-legend .ok{background:var(--green)} .cd-bar .bad,.cd-legend .bad{background:var(--red)} .cd-bar .mid,.cd-legend .mid{background:var(--gold)}
   .rt-bar{height:10px;margin-bottom:4px}
+  #app[data-role="Staff"] .no-staff{display:none!important}
+  .staff-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff;border:1px solid #e3e7f1;border-radius:14px;padding:12px 14px;margin:0 0 16px}
+  .staff-bar b{color:var(--navy);margin-right:6px}
+  .sb-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #d9deea;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;background:#f6f8fc}
+  .sb-chip:has(input:checked){background:#fff8e6;border-color:#d4a017;color:#0d2b6b}
+  .sb-all{background:#0d2b6b;color:#fff;border-color:#0d2b6b}
+  .brand-tag{color:#a87a0c;font-weight:700}
   .inv-file{display:flex;gap:8px}.inv-file .input{flex:1;min-width:0}.inv-file .btn{white-space:nowrap}
   .adm-pick{min-width:180px;font-size:12px!important;padding:7px 10px!important}
   .fn-head{color:var(--navy);font-size:20px;margin:22px 0 2px}
@@ -1122,7 +1129,7 @@
             <div class="mega-col">
               <h5>Manage Orders</h5>
               <a href="#" data-go="Create Order">Create Order</a>
-              <a href="#" data-go="Cancel Order">Cancel Order</a>
+              <a href="#" data-go="Cancel Order" class="no-staff">Cancel Order</a>
               <a href="#" data-go="Order Logs">Order Logs</a>
               <a href="#" data-go="Airway Bills">Airway Bills</a>
               <a href="#" data-go="Again Airway Bill">Again Airway Bill</a>
@@ -1133,7 +1140,7 @@
               <a href="#" data-go="Generate Load Sheet">Generate Load Sheet</a>
               <a href="#" data-go="Load Sheet Logs">Load Sheet Logs</a>
             </div>
-            <div class="mega-col">
+            <div class="mega-col no-staff">
               <h5>Payments</h5>
               <a href="#" data-go="Cash Payment Receipts (CPR)">Cash Payment Receipts (CPR)</a>
               <a href="#" data-go="Finance Report">Finance Report</a>
@@ -1144,7 +1151,7 @@
           </div>
         </div>
 
-        <div class="menu-item">
+        <div class="menu-item no-staff">
           <button class="menu-link" onclick="toggleMenu(this)">Delivery Ratio <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg></button>
           <div class="mega">
             <div class="mega-intro"><h4>Delivery Ratio</h4><p>Dekhein kaun sa courier, shehar aur product sab se behtar deliver hota hai.</p></div>
@@ -1157,7 +1164,7 @@
           </div>
         </div>
 
-        <div class="menu-item">
+        <div class="menu-item no-staff">
           <button class="menu-link" onclick="toggleMenu(this)">Setting <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"/></svg></button>
           <div class="mega">
             <div class="mega-intro"><h4>Setting</h4><p>Manage your business profile, password, bank account and Shopify integration.</p></div>
@@ -1192,7 +1199,7 @@
           <button class="icon-btn" onclick="toggleDD('ddUser',event)" title="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></button>
           <div class="dropdown" id="ddUser">
             <div class="dd-head"><b id="ddName"></b><small id="ddEmail"></small></div>
-            <a href="#" data-go="Business Profile">My Profile</a>
+            <a href="#" data-go="Business Profile" class="no-staff">My Profile</a>
             <a href="#" data-go="Change Password">Change Password</a>
             <a href="#" onclick="logout();return false" style="color:var(--red)">Logout</a>
           </div>
@@ -1204,6 +1211,7 @@
 
   <main>
     <!-- ============ DASHBOARD ============ -->
+    <div class="staff-bar hidden" id="staffBar"></div>
     <section id="page-dashboard">
       <div class="cd-top">
         <p class="welcome">Welcome, <b class="mName"></b>!</p>
@@ -1355,8 +1363,10 @@
     document.getElementById('site').classList.add('hidden');
     document.getElementById('login').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
+    IS_STAFF = false; STAFF_BRANDS = []; dropOrders();
+    document.getElementById('staffBar').classList.add('hidden');
     go('dashboard');
-    loadClientDashboard();
+    if(user.role === 'Staff') startStaff().then(() => loadClientDashboard()); else loadClientDashboard();
     window.scrollTo(0,0);
   }
   async function doLogin(e){
@@ -1575,10 +1585,54 @@
     const v = document.getElementById('trackInput').value.trim();
     if(!v){ toast('Tracking number ya Order Ref likhein'); return; }
     try{
-      const r = await authApi('client_orders');
+      const r = await getOrders();
       const o = r.ok && r.orders.find(o => o.tracking === v || o.ref.toLowerCase() === v.toLowerCase());
       toast(o ? `${o.ref}${o.tracking ? ' · ' + o.tracking : ''} — ${o.status} (${o.city})` : 'Is number ka koi order aap ke account me nahi mila.');
     }catch(err){ toast('Internet connection check karein.'); }
+  }
+
+  /* ---------- staff (office) mode: one login for every active brand ----------
+   * The chips at the top choose the brands; every list, dashboard, airway bill and load sheet follows them. */
+  let IS_STAFF = false, STAFF_BRANDS = [], staffSel = [], curPage = 'dashboard', staffFormBrand = '';
+  const staffQ = () => ({clientIds: staffSel});
+  const ordersCache = {};
+  // orders of this brand (or of the chosen brands); kept 20 s so moving between pages doesn't wait for the server again
+  async function getOrders(fresh){
+    const key = IS_STAFF ? 'S' + staffSel.join(',') : 'C';
+    const hit = ordersCache[key];
+    if(!fresh && hit && Date.now() - hit.t < 20000) return hit.r;
+    const r = IS_STAFF ? await authApi('staff_orders', staffQ()) : await authApi('client_orders');
+    if(r.ok) ordersCache[key] = {t: Date.now(), r};
+    return r;
+  }
+  const dropOrders = () => Object.keys(ordersCache).forEach(k => delete ordersCache[k]);
+  const brandOf = o => o.shipper ? o.shipper.brand : '';
+  async function startStaff(){
+    IS_STAFF = true;
+    const r = await authApi('staff_brands');
+    STAFF_BRANDS = r.ok ? r.brands : [];
+    let saved = [];
+    try{ saved = JSON.parse(localStorage.getItem('tclStaffBrands') || '[]'); }catch(e){}
+    staffSel = saved.filter(id => STAFF_BRANDS.some(b => b.id === id));
+    if(!staffSel.length) staffSel = STAFF_BRANDS.map(b => b.id);
+    renderStaffBar();
+  }
+  function renderStaffBar(){
+    const bar = document.getElementById('staffBar');
+    bar.classList.remove('hidden');
+    bar.innerHTML = `<b>Brands</b><label class="sb-chip sb-all"><input type="checkbox" id="sbAll" ${staffSel.length === STAFF_BRANDS.length ? 'checked' : ''}> Sab (${STAFF_BRANDS.length})</label>`
+      + STAFF_BRANDS.map(b => `<label class="sb-chip"><input type="checkbox" class="sbOne" value="${esc(b.id)}" ${staffSel.includes(b.id) ? 'checked' : ''}> ${esc(b.brand)}</label>`).join('');
+    const apply = () => {
+      try{ localStorage.setItem('tclStaffBrands', JSON.stringify(staffSel)); }catch(e){}
+      renderStaffBar();
+      if(curPage === 'dashboard') loadClientDashboard(); else go(curPage);
+    };
+    document.getElementById('sbAll').onchange = e => { staffSel = e.target.checked ? STAFF_BRANDS.map(b => b.id) : STAFF_BRANDS.slice(0, 1).map(b => b.id); apply(); };
+    bar.querySelectorAll('.sbOne').forEach(c => c.onchange = () => {
+      const picked = [...bar.querySelectorAll('.sbOne:checked')].map(x => x.value);
+      if(!picked.length){ c.checked = true; toast('Kam az kam ek brand chunein.'); return; }
+      staffSel = picked; apply();
+    });
   }
 
   /* ---------- router ---------- */
@@ -1590,6 +1644,7 @@
     'Courier Delivery Check':'Delivery Ratio','Cities Delivery Check':'Delivery Ratio','Product Delivery Check':'Delivery Ratio'
   };
   function go(page){
+    curPage = page;
     closeAll();
     document.getElementById('menu').classList.remove('show');
     const dash = document.getElementById('page-dashboard'), sub = document.getElementById('page-sub');
@@ -1653,7 +1708,8 @@
       <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="pgPrint">Download AWB PDF</button></div></div>`,
     'Un-Dispatched Orders': () => `<div class="card"><p class="pg-note">Yeh orders courier par book hain lekin abhi courier ne pick nahi kiye. Slip gum ho gayi ho to select kar ke dobara print karein.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
       <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="pgPrint">Download AWB PDF</button></div></div>`,
-    'Generate Load Sheet': () => `<div class="card"><p class="pg-note">Booked orders select karein jo courier ko de rahe hain — load sheet ban jayegi aur yeh orders Airway Bills list se hat jayenge. Ek load sheet me ek hi courier ke orders.</p><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
+    'Generate Load Sheet': () => `<div class="card"><p class="pg-note">Courier chunein — us ke saare booked orders khud select ho jayenge (chahein to kuch hata dein). Phir Generate dabayein; yeh orders Airway Bills list se hat jayenge.</p>
+      <div class="ol-filter"><div class="co-field"><label>Courier</label><select class="input" id="lsCourier"><option value="">— Courier chunein —</option><option>PostEx</option><option>CityLine</option></select></div><div class="co-field"><label>&nbsp;</label><small class="co-hint" id="lsCount"></small></div></div><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div>
       <div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="pgLoad">Generate Load Sheet</button></div></div>`,
     'Load Sheet Logs': () => `<div class="card"><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
     'Cash Payment Receipts (CPR)': () => `<div class="card"><div id="pgList" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>`,
@@ -2374,7 +2430,13 @@
   }
   async function initCreateOrder(){
     const form = document.getElementById('coForm');
-    const r = await authApi('client_order_form');
+    if(IS_STAFF){
+      const chosen = STAFF_BRANDS.filter(b => staffSel.includes(b.id));
+      if(!chosen.some(b => b.id === staffFormBrand)) staffFormBrand = chosen.length ? chosen[0].id : '';
+      form.querySelector('.co-grid').insertAdjacentHTML('afterbegin', `<div class="co-field co-wide"><label>Brand <span class="co-req">*</span></label><select class="input" id="coBrand">${chosen.map(b => `<option value="${esc(b.id)}" ${b.id === staffFormBrand ? 'selected' : ''}>${esc(b.brand)}</option>`).join('')}</select><small class="co-hint">Yeh order is brand ke account me jayega; pickup isi ki Business Profile se.</small></div>`);
+      document.getElementById('coBrand').onchange = e => { staffFormBrand = e.target.value; go('Create Order'); };
+    }
+    const r = IS_STAFF ? await authApi('staff_order_form', {clientId: staffFormBrand}) : await authApi('client_order_form');
     if(!r.ok) return;
     document.getElementById('coDate').value = r.today;                  // server's today; the field is read-only
     coPrev = r;
@@ -2413,7 +2475,8 @@
       const btns = form.querySelectorAll('button');
       btns.forEach(b => b.disabled = true);
       try{
-        const res = await authApi('client_create_order', order);
+        const res = IS_STAFF ? await authApi('staff_create_order', Object.assign({clientId: staffFormBrand}, order)) : await authApi('client_create_order', order);
+        if(res.ok) dropOrders();
         // a failed courier booking saves nothing, so the form keeps its values for a retry
         if(!res.ok) return show(['postex_book', 'postex_token', 'cityline_book', 'cityline_token'].includes(res.error)
           ? `Order ${order.courier} par book nahi hua (save bhi nahi hua): ${res.message || 'courier ne jawab nahi diya'}`
@@ -2426,7 +2489,8 @@
         }
         if(printAfter && res.tracking) downloadAirwayBills([{id:res.id, courier:order.courier, ref:order.orderRef, tracking:res.tracking, date:res.date, amount:Number(order.amount),
           customer:order.customerName, phone:order.customerPhone, city:order.deliveryCity, address:order.deliveryAddress, items:order.items || 1,
-          weight:order.weight || 1, pickupCity:order.pickupCity, pickupAddress:order.pickupAddress, detail:order.orderDetail}]);
+          weight:order.weight || 1, pickupCity:order.pickupCity, pickupAddress:order.pickupAddress, detail:order.orderDetail,
+          shipper: IS_STAFF ? STAFF_BRANDS.find(b => b.id === staffFormBrand) : undefined}]);
         ['coRef','coAmount','coName','coPhone','coCity','coAddr','coWeight','coDetail','coNotes'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('coItems').value = 1;
         loadClientDashboard();
@@ -2448,12 +2512,12 @@
   const orderAddr = o => `${esc(o.address)}<br><small><b>${esc(o.city)}</b></small>`;
   async function loadOrdersPage(kind){
     const box = document.getElementById('pgList'), cfg = ORDER_LISTS[kind];
-    const r = await authApi('client_orders');
+    const r = await getOrders();
     if(!document.getElementById('pgList')) return;                    // user left the page
     if(!r.ok){ box.innerHTML = '<p class="adm-empty">Orders load nahi ho sake.</p>'; return; }
     const list = r.orders.filter(o => o.status !== 'Cancelled' && cfg.filter(o));
     box.innerHTML = list.length ? `<table class="adm-table"><thead><tr>${cfg.select ? `<th><input type="checkbox" id="pgAll"></th>` : ''}<th>Order Ref</th><th>Tracking</th><th>Courier</th><th>Customer</th><th>Address</th><th>Product</th><th class="num">COD</th><th>Date</th><th>Status</th>${kind === 'cancel' ? '<th></th>' : ''}</tr></thead><tbody>
-      ${list.map(o => `<tr data-q="${esc((o.ref + ' ' + o.tracking + ' ' + o.customer + ' ' + o.phone).toLowerCase())}">${cfg.select ? `<td><input type="checkbox" class="pgSel" value="${esc(o.id)}"></td>` : ''}<td><b>${esc(o.ref)}</b>${o.loadSheet ? `<br><small>${esc(o.loadSheet)}</small>` : ''}</td><td>${esc(o.tracking) || '—'}</td><td>${esc(o.courier) || '—'}</td>
+      ${list.map(o => `<tr data-courier="${esc(o.courier)}" data-q="${esc((o.ref + ' ' + o.tracking + ' ' + o.customer + ' ' + o.phone + ' ' + brandOf(o)).toLowerCase())}">${cfg.select ? `<td><input type="checkbox" class="pgSel" value="${esc(o.id)}"></td>` : ''}<td><b>${esc(o.ref)}</b>${IS_STAFF ? `<br><small class="brand-tag">${esc(brandOf(o))}</small>` : ''}${o.loadSheet ? `<br><small>${esc(o.loadSheet)}</small>` : ''}</td><td>${esc(o.tracking) || '—'}</td><td>${esc(o.courier) || '—'}</td>
         <td>${esc(o.customer)}<br><small>${esc(o.phone)}</small></td><td>${orderAddr(o)}</td><td>${esc(o.detail) || '—'}</td><td class="num">${rs(o.amount)}</td><td>${esc(o.date)}</td><td>${statusPill(o.status)}</td>
         ${kind === 'cancel' ? `<td><button class="btn btn-light adm-mini" style="color:var(--red)" data-cancel="${esc(o.id)}">Cancel</button></td>` : ''}</tr>`).join('')}
       </tbody></table>` : `<p class="adm-empty">${cfg.empty}</p>`;
@@ -2461,12 +2525,18 @@
       if(b.dataset.sure !== '1'){ b.dataset.sure = '1'; b.textContent = 'Pakka?'; return; }
       b.disabled = true;
       const res = await authApi('client_cancel_order', {id:b.dataset.cancel});
-      if(res.ok){ toast('Order cancel ho gaya.'); loadOrdersPage('cancel'); loadClientDashboard(); }
+      if(res.ok){ toast('Order cancel ho gaya.'); dropOrders(); loadOrdersPage('cancel'); loadClientDashboard(); }
       else { toast(res.error === 'not_cancellable' ? 'Yeh order ab cancel nahi ho sakta.' : res.message || 'Cancel nahi ho saka.'); b.disabled = false; }
     });
     const shown = tr => tr.style.display !== 'none';
     const all = document.getElementById('pgAll');
     if(all) all.onchange = () => box.querySelectorAll('tbody tr').forEach(tr => { if(shown(tr)) tr.querySelector('.pgSel').checked = all.checked; });
+    const lsc = document.getElementById('lsCourier');
+    if(lsc) lsc.onchange = () => {
+      let n = 0;
+      box.querySelectorAll('tbody tr').forEach(tr => { const on = !!lsc.value && tr.dataset.courier === lsc.value; tr.querySelector('.pgSel').checked = on; if(on) n++; });
+      document.getElementById('lsCount').textContent = lsc.value ? `${lsc.value} ke ${n} orders select ho gaye` : '';
+    };
     const search = document.getElementById('pgSearch');
     if(search) search.oninput = () => {
       const q = search.value.trim().toLowerCase();
@@ -2484,10 +2554,11 @@
       const sel = chosen(); if(!sel.length) return;
       if(new Set(sel.map(o => o.courier)).size > 1){ toast('Ek load sheet me ek hi courier ke orders chunein.'); return; }
       busy(load, true, 'Ban rahi hai…');
-      const res = await authApi('client_create_load_sheet', {ids: sel.map(o => o.id)});
+      const res = IS_STAFF ? await authApi('staff_create_load_sheet', Object.assign({ids: sel.map(o => o.id)}, staffQ())) : await authApi('client_create_load_sheet', {ids: sel.map(o => o.id)});
       busy(load, false, 'Generate Load Sheet');
       if(!res.ok){ toast(({not_loadable:'Kuch orders ki load sheet pehle hi ban chuki hai — page refresh karein.', mixed_courier:'Ek load sheet me ek hi courier ke orders chunein.'})[res.error] || 'Load sheet nahi ban saki.'); return; }
       toast(`Load sheet ${res.id} ban gayi (${res.orders} orders).`);
+      dropOrders();
       await downloadLoadSheet({id: res.id, date: res.date, courier: sel[0].courier}, sel, load);
       loadOrdersPage('loadsheet');
     };
@@ -2496,7 +2567,7 @@
   /* ---------- Load Sheet Logs: every load sheet with a reprint ---------- */
   async function loadLoadSheetLogs(){
     const box = document.getElementById('pgList');
-    const [ls, ord] = await Promise.all([authApi('client_load_sheets'), authApi('client_orders')]);
+    const [ls, ord] = await Promise.all([IS_STAFF ? authApi('staff_load_sheets', staffQ()) : authApi('client_load_sheets'), getOrders()]);
     if(!document.getElementById('pgList')) return;
     if(!ls.ok || !ord.ok){ box.innerHTML = '<p class="adm-empty">Load sheets load nahi ho sakin.</p>'; return; }
     box.innerHTML = table(['Load Sheet', 'Date', 'Courier', {t:'Orders', num:1}, {t:'COD Total', num:1}, ''],
@@ -2516,7 +2587,7 @@
     const iso = d => new Date(d - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
     document.getElementById('olTo').value = iso(new Date());
     document.getElementById('olFrom').value = iso(new Date(Date.now() - 30*86400e3));
-    const r = await authApi('client_orders');
+    const r = await getOrders();
     if(!document.getElementById('olGo')) return;
     const all = r.ok ? r.orders : [];
     let list = [];
@@ -2526,7 +2597,7 @@
       const box = document.getElementById('pgList');
       box.innerHTML = list.length ? `<p class="pg-note">${list.length} orders · COD kul: <b>${rs(list.reduce((t, o) => t + (o.status === 'Cancelled' ? 0 : o.amount), 0))}</b></p>
         <table class="adm-table"><thead><tr><th>Date</th><th>Order Ref</th><th>Tracking</th><th>Courier</th><th>Customer</th><th>Address</th><th>Product</th><th class="num">Items</th><th class="num">Weight</th><th class="num">COD</th><th>Status</th></tr></thead><tbody>
-        ${list.map(o => `<tr><td>${esc(o.date)}</td><td><b>${esc(o.ref)}</b></td><td>${esc(o.tracking) || '—'}</td><td>${esc(o.courier) || '—'}</td>
+        ${list.map(o => `<tr><td>${esc(o.date)}</td><td><b>${esc(o.ref)}</b>${IS_STAFF ? `<br><small class="brand-tag">${esc(brandOf(o))}</small>` : ''}</td><td>${esc(o.tracking) || '—'}</td><td>${esc(o.courier) || '—'}</td>
           <td>${esc(o.customer)}<br><small>${esc(o.phone)}</small></td><td>${orderAddr(o)}</td><td>${esc(o.detail) || '—'}</td><td class="num">${esc(o.items)}</td>
           <td class="num">${o.weight ? esc(o.weight) + ' kg' : '—'}</td><td class="num">${rs(o.amount)}</td><td>${statusPill(o.status)}</td></tr>`).join('')}</tbody></table>`
         : '<p class="adm-empty">Is date range / status me koi order nahi.</p>';
@@ -2587,89 +2658,86 @@
     : c === 'CityLine' ? '<span class="awb-mark awb-cl">CityLine<small>COURIERS</small></span>'
     : `<span class="awb-mark">${esc(c || 'TCL')}</span>`;
   const awbDate = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${Number(m[3])}/${Number(m[2])}/${m[1]}` : esc(d); };
-  // airway bills in the courier slip layout: 3 per A4 page, courier logo, order-ref + tracking barcodes, QR of the tracking number
+  // airway bills drawn straight into the PDF (text, lines, barcode and QR pictures): 3 slips per A4, a few ms per page.
+  // Every slip carries its own brand's Business Profile (o.shipper from the staff list, else the logged-in account).
   async function downloadAirwayBills(list, btn){
     const label = btn ? btn.textContent : '';
     busy(btn, true, 'PDF ban rahi hai…');
     try{
       await Promise.all([
         loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'),
-        loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
         loadScript('https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js'),
         loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js')
       ]);
-      // shipper = the logged-in client (brand + phone from the Business Profile)
       // read fresh every time: another account may have logged in on this browser since the last print
-      const prof = await authApi('client_profile');
-      const sh = prof.ok ? prof.profile : {};
-      const shipperName = sh.brand || (document.querySelector('.mName') || {}).textContent || '';
-      const row = (k, v, cls) => `<tr><td class="awb-k">${k}</td><td class="awb-v ${cls || ''}">${v}</td></tr>`;
-      const slip = o => {
-        const tn = String(o.tracking || ''), ref = String(o.ref || '');
-        return `<div class="awb-pdf">
-        <div class="awb-top">
-          <div class="awb-brand">${courierMark(o.courier)}<div class="awb-bc"><svg class="awb-bar" data-code="${esc(ref)}" data-h="26"></svg></div></div>
-          <div class="awb-bc awb-bc-tn">${tn ? `<svg class="awb-bar" data-code="${esc(tn)}" data-h="34"></svg>` : '<b>UNBOOKED</b>'}</div>
-          <div class="awb-route">${esc(String(o.city || '').toUpperCase())}</div>
-        </div>
-        <div class="awb-grid">
-          <div class="awb-col">
-            <div class="awb-h">Consignee Information</div>
-            <table>${row('Name:', `<b>${esc(o.customer)}</b>`)}${row('Contact:', `<b>${esc(o.phone)}</b>`)}${row('Delivery Address:', `<b>${esc(o.address)}</b>`, 'awb-tall')}</table>
-            <div class="awb-h">Shipper Information</div>
-            <table>${row('Name:', `<b>${esc(shipperName)}</b>`)}${row('Contact:', `<b>${esc(sh.phone || '')}</b>`)}
-              ${row('Pickup Address:', `<b>${esc([o.pickupAddress || sh.address, o.pickupCity || sh.city].filter(Boolean).join(' '))}</b>`)}
-              ${row('Return Address:', `<b>${esc([o.returnAddress || o.pickupAddress || sh.address, o.returnCity || o.pickupCity || sh.city].filter(Boolean).join(' '))}</b>`)}</table>
-          </div>
-          <div class="awb-col">
-            <div class="awb-h">Shipment Information</div>
-            <table>${row('Pieces:', `<b>${esc(o.items || 1)}</b>`)}${row('Order Ref:', `<b>${esc(ref)}</b>`)}${row('Tracking No:', `<b>${esc(tn) || '—'}</b>`)}
-              ${row('Origin:', `<b>${esc(String(o.pickupCity || '').toUpperCase())}</b>`)}${row('Destination:', `<b>${esc(o.city)}</b>`)}
-              ${row('Return City:', `<b>${esc(String(o.returnCity || o.pickupCity || '').toUpperCase())}</b>`)}${row('Weight:', `<b>${o.weight ? esc(o.weight) + ' kg' : '1 kg'}</b>`)}
-              ${row('Remarks:', esc(o.notes || ''), 'awb-tall')}</table>
-          </div>
-          <div class="awb-col awb-col-s">
-            <div class="awb-h">Order Information</div>
-            <div class="awb-qr">${tn ? `<img class="awb-qrimg" data-code="${esc(tn)}" alt="">` : ''}</div>
-            <table>${row('Amount:', `<b>${Number(o.amount || 0).toFixed(2)}/-</b>`)}${row('Date:', `<b>${awbDate(o.date)}</b>`)}${row('Order Type:', '<b>Normal</b>')}</table>
-          </div>
-        </div>
-        <table class="awb-detail">${row('Order Details:', `<b>${esc(o.detail) || '—'}</b>`)}</table>
-      </div>`;
-      };
-      // every A4 page is drawn on its own (3 slips each): one tall picture of all slips breaks past ~20 pages
-      const pages = [];
-      for(let i = 0; i < list.length; i += 3) pages.push(list.slice(i, i + 3));
-      const wrap = pdfWrap(794, pages.map(p => `<div class="awb-page">${p.map(slip).join('')}</div>`).join(''));
-      wrap.querySelectorAll('.awb-bar').forEach(svg => JsBarcode(svg, svg.dataset.code, {format:'CODE128', height:Number(svg.dataset.h), width:1.4, fontSize:11, margin:0}));
-      wrap.querySelectorAll('.awb-qrimg').forEach(img => { img.src = new QRious({value: img.dataset.code, size: 220, level: 'M'}).toDataURL(); });
-      const name = list.length === 1 ? `AWB-${(list[0].tracking || list[0].ref).replace(/[^\w-]/g, '')}.pdf` : `AWB-${list.length}-orders.pdf`;
-      await Promise.all([...wrap.querySelectorAll('img')].map(img => img.complete ? null : new Promise(ok => { img.onload = img.onerror = ok; })));
-      const pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4', compress:true});
-      // html2canvas copies the whole document on every call (~3 s), so pages are drawn 6 at a time (a picture well
-      // inside the browser's canvas limit) and cut into A4 pages; the rest of the site is skipped while copying
-      const holder = wrap.parentElement;
-      const skip = el => el.parentNode === document.body && el !== holder;
-      const els = [...wrap.querySelectorAll('.awb-page')], PER = 6;
-      for(let i = 0; i < els.length; i += PER){
-        const group = document.createElement('div');
-        els.slice(i, i + PER).forEach(p => group.appendChild(p));
-        wrap.appendChild(group);
-        if(btn) btn.textContent = `PDF ban rahi hai… ${Math.min(i + PER, els.length)}/${els.length}`;
-        const big = await html2canvas(group, {scale:2, backgroundColor:'#ffffff', useCORS:true, scrollX:0, scrollY:0,
-          windowWidth:group.scrollWidth, windowHeight:group.scrollHeight, ignoreElements:skip, logging:false});
-        const n = group.children.length, h = big.height / n;
-        for(let k = 0; k < n; k++){
-          const page = document.createElement('canvas');
-          page.width = big.width; page.height = Math.round(h);
-          page.getContext('2d').drawImage(big, 0, Math.round(k * h), big.width, Math.round(h), 0, 0, big.width, Math.round(h));
-          if(i + k) pdf.addPage();
-          pdf.addImage(page.toDataURL('image/jpeg', 0.82), 'JPEG', 0, 0, 210, 297);
-        }
-        group.remove();
+      let own = null;
+      if(list.some(o => !o.shipper)){ const prof = await authApi('client_profile'); own = prof.ok ? prof.profile : {}; }
+      const shipperOf = o => o.shipper || {brand: own.brand || (document.querySelector('.mName') || {}).textContent || '', phone: own.phone, address: own.address, city: own.city};
+      // images used on the slips
+      const barcode = (code, h) => { const c = document.createElement('canvas'); JsBarcode(c, code, {format:'CODE128', height:h, width:2, margin:0, displayValue:false}); return {src: c.toDataURL('image/png'), w: c.width, h: c.height}; };
+      const qr = code => new QRious({value: code, size: 240, level: 'M'}).toDataURL('image/png');
+      const logos = {};
+      for(const c of new Set(list.map(o => o.courier))){
+        if(!COURIER_LOGOS[c] || logos[c]) continue;
+        logos[c] = await new Promise(ok => { const img = new Image(); img.onload = () => { const cv = document.createElement('canvas'); cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+          cv.getContext('2d').drawImage(img, 0, 0); ok({src: cv.toDataURL('image/jpeg', 0.92), w: img.naturalWidth, h: img.naturalHeight}); }; img.onerror = () => ok(null); img.src = COURIER_LOGOS[c]; });
       }
+      const pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4', compress:true});
+      const X = 8, W = 194, SLIP = 93, TOP = 7;
+      const cols = [{x: X, w: 76}, {x: X + 76, w: 70}, {x: X + 146, w: 48}];
+      const GREY = [212, 212, 208], LINE = [207, 210, 216];
+      const fit = (t, w, max) => { const lines = pdf.splitTextToSize(String(t == null ? '' : t), w); return lines.length > max ? lines.slice(0, max - 1).concat([lines.slice(max - 1).join(' ').slice(0, 60)]) : lines; };
+      // one "Label: value" row; returns its height
+      const rowAt = (col, y, k, v, lines, kwPart) => {
+        const kw = col.w * (kwPart || 0.36), vw = col.w - kw - 2.4, vl = fit(v, vw, lines || 1), h = Math.max(4.6, 1.6 + vl.length * 3.2);
+        pdf.setDrawColor(...LINE); pdf.setLineWidth(0.2); pdf.line(col.x, y + h, col.x + col.w, y + h); pdf.line(col.x + kw, y, col.x + kw, y + h);
+        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.setTextColor(60, 60, 60); pdf.text(k, col.x + 1.2, y + 3.2);
+        pdf.setFont('helvetica', 'bold'); pdf.setTextColor(17, 17, 17); pdf.text(vl, col.x + kw + 1.2, y + 3.2);
+        return h;
+      };
+      const head = (col, y, t) => { pdf.setFillColor(...GREY); pdf.rect(col.x, y, col.w, 5, 'F'); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8); pdf.setTextColor(20, 20, 20); pdf.text(t, col.x + col.w / 2, y + 3.5, {align: 'center'}); return 5; };
+      list.forEach((o, n) => {
+        if(n && n % 3 === 0) pdf.addPage();
+        const y0 = TOP + (n % 3) * (SLIP + 1.5), sh = shipperOf(o), tn = String(o.tracking || ''), ref = String(o.ref || '');
+        // top row: courier logo, order-ref barcode, tracking barcode, destination
+        const lg = logos[o.courier];
+        if(lg){ const h = 11, w = Math.min(28, h * lg.w / lg.h); pdf.addImage(lg.src, 'JPEG', X, y0 + 1, w, h); }
+        else { pdf.setFont('helvetica', 'bold'); pdf.setFontSize(17); pdf.setTextColor(17, 17, 17); pdf.text(String(o.courier || 'TCL'), X, y0 + 9);
+          if(o.courier === 'PostEx'){ pdf.setTextColor(108, 192, 74); pdf.text('.', X + pdf.getTextWidth('PostEx'), y0 + 9); } }
+        if(ref){ const b = barcode(ref, 40); pdf.addImage(b.src, 'PNG', X + 32, y0 + 1.5, 36, 7.5); pdf.setFont('helvetica', 'normal'); pdf.setFontSize(6.5); pdf.setTextColor(17, 17, 17); pdf.text(ref, X + 50, y0 + 11.5, {align: 'center'}); }
+        if(tn){ const b = barcode(tn, 50); pdf.addImage(b.src, 'PNG', X + 80, y0 + 1, 52, 9.5); pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7); pdf.text(tn, X + 106, y0 + 13, {align: 'center'}); }
+        else { pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11); pdf.text('UNBOOKED', X + 106, y0 + 8, {align: 'center'}); }
+        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11); pdf.setTextColor(17, 17, 17); pdf.text(fit(String(o.city || '').toUpperCase(), 40, 2), X + W - 1, y0 + 6, {align: 'right'});
+        // three columns
+        const gy = y0 + 15;
+        let y = gy;
+        y += head(cols[0], y, 'Consignee Information');
+        y += rowAt(cols[0], y, 'Name:', o.customer); y += rowAt(cols[0], y, 'Contact:', o.phone); y += rowAt(cols[0], y, 'Delivery Address:', o.address, 3);
+        y += head(cols[0], y, 'Shipper Information');
+        y += rowAt(cols[0], y, 'Name:', sh.brand); y += rowAt(cols[0], y, 'Contact:', sh.phone || '');
+        y += rowAt(cols[0], y, 'Pickup Address:', [o.pickupAddress || sh.address, o.pickupCity || sh.city].filter(Boolean).join(' '), 2);
+        y += rowAt(cols[0], y, 'Return Address:', [o.returnAddress || o.pickupAddress || sh.address, o.returnCity || o.pickupCity || sh.city].filter(Boolean).join(' '), 2);
+        let y2 = gy;
+        y2 += head(cols[1], y2, 'Shipment Information');
+        y2 += rowAt(cols[1], y2, 'Pieces:', String(o.items || 1)); y2 += rowAt(cols[1], y2, 'Order Ref:', ref); y2 += rowAt(cols[1], y2, 'Tracking No:', tn || '—');
+        y2 += rowAt(cols[1], y2, 'Origin:', String(o.pickupCity || sh.city || '').toUpperCase()); y2 += rowAt(cols[1], y2, 'Destination:', o.city);
+        y2 += rowAt(cols[1], y2, 'Return City:', String(o.returnCity || o.pickupCity || sh.city || '').toUpperCase());
+        y2 += rowAt(cols[1], y2, 'Weight:', o.weight ? o.weight + ' kg' : '1 kg'); y2 += rowAt(cols[1], y2, 'Remarks:', o.notes || '', 2);
+        let y3 = gy;
+        y3 += head(cols[2], y3, 'Order Information');
+        if(tn) pdf.addImage(qr(tn), 'PNG', cols[2].x + cols[2].w / 2 - 12, y3 + 1.5, 24, 24);
+        y3 += 27; pdf.setDrawColor(...LINE); pdf.line(cols[2].x, y3, cols[2].x + cols[2].w, y3);
+        y3 += rowAt(cols[2], y3, 'Amount:', Number(o.amount || 0).toFixed(2) + '/-'); y3 += rowAt(cols[2], y3, 'Date:', awbDate(o.date)); y3 += rowAt(cols[2], y3, 'Order Type:', 'Normal');
+        const gb = Math.max(y, y2, y3);
+        pdf.setDrawColor(...LINE); pdf.setLineWidth(0.3); pdf.rect(X, gy, W, gb - gy); pdf.line(cols[1].x, gy, cols[1].x, gb); pdf.line(cols[2].x, gy, cols[2].x, gb);
+
+        const dh = rowAt({x: X, w: W}, gb, 'Order Details:', o.detail || '—', 2, 0.14);
+        pdf.rect(X, gb, W, dh);
+        // cut line between slips
+        if(n % 3 !== 2 && n !== list.length - 1){ pdf.setLineDashPattern([1.5, 1.5], 0); pdf.setDrawColor(150, 155, 170); pdf.line(X, y0 + SLIP, X + W, y0 + SLIP); pdf.setLineDashPattern([], 0); }
+      });
+      const name = list.length === 1 ? `AWB-${(list[0].tracking || list[0].ref).replace(/[^\w-]/g, '')}.pdf` : `AWB-${list.length}-orders.pdf`;
       pdf.save(name);
-      wrap.remove();
       toast('Airway bill PDF download ho gayi.');
     }catch(err){ toast('PDF nahi ban saki — internet check karein.'); }
     finally{ busy(btn, false, label); }
@@ -2679,16 +2747,47 @@
     const label = btn ? btn.textContent : '';
     busy(btn, true, 'PDF ban rahi hai…');
     try{
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
-      const shipper = (document.querySelector('.mName') || {}).textContent || '';
-      const wrap = pdfWrap(760, `<div class="ls-pdf"><div class="ls-hd"><b>TRUST COURIER LOGISTIC — LOAD SHEET</b><span>${esc(ls.id)}</span></div>
-        <p>Shipper: <b>${esc(shipper)}</b> · Courier: <b>${esc(ls.courier)}</b> · Date: <b>${esc(ls.date)}</b> · Parcels: <b>${list.length}</b> · COD kul: <b>${rs(list.reduce((t, o) => t + Number(o.amount || 0), 0))}</b></p>
-        <table><thead><tr><th>#</th><th>Tracking</th><th>Order Ref</th><th>Customer</th><th>City</th><th>Weight</th><th>COD</th></tr></thead><tbody>
-        ${list.map((o, i) => `<tr><td>${i + 1}</td><td><b>${esc(o.tracking)}</b></td><td>${esc(o.ref)}</td><td>${esc(o.customer)}</td><td>${esc(o.city)}</td><td>${o.weight ? esc(o.weight) + ' kg' : '—'}</td><td>${rs(o.amount)}</td></tr>`).join('')}
-        </tbody></table>
-        <div class="ls-sign"><div>Rider Name &amp; Signature</div><div>Shipper Signature</div></div></div>`);
-      await html2pdf().set({margin:8, filename:`LoadSheet-${ls.id}.pdf`, html2canvas:{scale:2}, jsPDF:{unit:'mm', format:'a4'}, pagebreak:{mode:['css','legacy'], avoid:'tr'}}).from(wrap).save();
-      wrap.remove();
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+      const pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4', compress:true});
+      const brands = Array.from(new Set(list.map(o => brandOf(o)).filter(Boolean)));
+      const shipper = brands.length ? brands.join(', ') : ((document.querySelector('.mName') || {}).textContent || '');
+      const multi = brands.length > 1;
+      const cod = list.reduce((t, o) => t + Number(o.amount || 0), 0);
+      // columns (mm); a Brand column only when the sheet holds several brands
+      const cols = [['#', 8], multi ? ['Brand', 30] : null, ['Tracking', 34], ['Order Ref', 24], ['Customer', multi ? 34 : 48], ['City', multi ? 24 : 32], ['Weight', 14], ['COD', 22]].filter(Boolean);
+      const X = 10, W = cols.reduce((t, c) => t + c[1], 0);
+      const cell = (o, i) => [String(i + 1)].concat(multi ? [brandOf(o)] : [], [o.tracking, o.ref, o.customer, o.city, o.weight ? o.weight + ' kg' : '—', rs(o.amount)]);
+      let y = 12;
+      const header = () => {
+        pdf.setFont('helvetica', 'bold'); pdf.setFontSize(13); pdf.setTextColor(13, 43, 107); pdf.text('TRUST COURIER LOGISTIC — LOAD SHEET', X, y + 5);
+        pdf.setFontSize(9); pdf.setTextColor(17, 17, 17); pdf.text(String(ls.id), X + W, y + 5, {align: 'right'});
+        pdf.setDrawColor(212, 160, 23); pdf.setLineWidth(0.6); pdf.line(X, y + 7.5, X + W, y + 7.5);
+        y += 11;
+      };
+      const tableHead = () => {
+        pdf.setFillColor(13, 43, 107); pdf.rect(X, y, W, 6, 'F'); pdf.setTextColor(255, 255, 255); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(8);
+        let x = X; cols.forEach(c => { pdf.text(c[0], x + 1.5, y + 4.2); x += c[1]; }); y += 6;
+      };
+      header();
+      pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8.5); pdf.setTextColor(17, 17, 17);
+      pdf.text(pdf.splitTextToSize(`Shipper: ${shipper}   ·   Courier: ${ls.courier}   ·   Date: ${ls.date}   ·   Parcels: ${list.length}   ·   COD kul: ${rs(cod)}`, W), X, y + 3);
+      y += multi ? 10 : 7;
+      tableHead();
+      list.forEach((o, i) => {
+        if(y > 270){ pdf.addPage(); y = 12; header(); tableHead(); }
+        const vals = cell(o, i);
+        pdf.setFont('helvetica', 'normal'); pdf.setFontSize(8); pdf.setTextColor(17, 17, 17); pdf.setDrawColor(217, 221, 232); pdf.setLineWidth(0.2);
+        let x = X;
+        cols.forEach((c, k) => { const t = pdf.splitTextToSize(String(vals[k] == null ? '' : vals[k]), c[1] - 2)[0] || ''; if(c[0] === 'Tracking') pdf.setFont('helvetica', 'bold'); pdf.text(t, x + 1.5, y + 4); pdf.setFont('helvetica', 'normal'); x += c[1]; });
+        pdf.line(X, y + 6, X + W, y + 6);
+        y += 6;
+      });
+      // signatures
+      if(y > 255){ pdf.addPage(); y = 20; }
+      y += 22;
+      pdf.setDrawColor(17, 17, 17); pdf.line(X, y, X + 80, y); pdf.line(X + W - 80, y, X + W, y);
+      pdf.setFontSize(9); pdf.text('Rider Name & Signature', X + 40, y + 5, {align: 'center'}); pdf.text('Shipper Signature', X + W - 40, y + 5, {align: 'center'});
+      pdf.save(`LoadSheet-${ls.id}.pdf`);
     }catch(err){ toast('PDF nahi ban saki — internet check karein.'); }
     finally{ busy(btn, false, label); }
   }
@@ -2962,12 +3061,14 @@
     busy(btn, true, refresh ? 'Refreshing…' : '⟳ Refresh');
     try{
       const days = Number(document.getElementById('cdDays').value);
-      const r = await authApi('client_dashboard', {days, refresh: refresh === true});
+      const r = IS_STAFF ? await authApi('staff_dashboard', Object.assign({days, refresh: refresh === true}, staffQ())) : await authApi('client_dashboard', {days, refresh: refresh === true});
       if(!r.ok){ info.innerHTML = '<p class="adm-empty">Data load nahi ho saka.</p>'; return; }
       const c = r.client, s = r.summary, o = r.overall;
       const row = (k, v) => `<div><small>${esc(k)}</small><b>${esc(v) || '—'}</b></div>`;
-      info.innerHTML = `<div class="cd-grid">${row('Client', c.brand || c.name)}${row('Client ID', c.id)}${row('Phone', c.phone)}${row('Email', c.email)}
+      info.innerHTML = IS_STAFF ? `<div class="cd-grid">${row('Office login', staffSel.length + ' brands chune hue')}${row('Brands', STAFF_BRANDS.filter(b => staffSel.includes(b.id)).map(b => b.brand).join(', '))}</div>`
+        : `<div class="cd-grid">${row('Client', c.brand || c.name)}${row('Client ID', c.id)}${row('Phone', c.phone)}${row('Email', c.email)}
         ${row('Bank', c.bankName)}${row('Account Title', c.accountTitle)}${row('Account / IBAN', c.accountNumber)}</div>`;
+      if(refresh === true) dropOrders();
       const stat = (label, value, cls, note, go) => `<div class="adm-stat ${cls||''}${go ? ' cd-link' : ''}"${go ? ` data-go="${go}" role="button" tabindex="0"` : ''}><small>${esc(label)}</small><b>${value}</b>${note ? `<em>${esc(note)}</em>` : ''}</div>`;
       const period = days ? `Pichle ${days} din` : 'Shuru se ab tak';
       stats.innerHTML = stat('Total Orders', s.total, '', period) + stat('Delivered', s.delivered, 'green', period) + stat('Returned', s.returned, 'red', period)
