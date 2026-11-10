@@ -2599,8 +2599,9 @@
         loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js')
       ]);
       // shipper = the logged-in client (brand + phone from the Business Profile)
-      if(!window.__shipper){ const p = await authApi('client_profile'); window.__shipper = p.ok ? p.profile : {}; }
-      const sh = window.__shipper;
+      // read fresh every time: another account may have logged in on this browser since the last print
+      const prof = await authApi('client_profile');
+      const sh = prof.ok ? prof.profile : {};
       const shipperName = sh.brand || (document.querySelector('.mName') || {}).textContent || '';
       const row = (k, v, cls) => `<tr><td class="awb-k">${k}</td><td class="awb-v ${cls || ''}">${v}</td></tr>`;
       const slip = o => {
@@ -2617,8 +2618,8 @@
             <table>${row('Name:', `<b>${esc(o.customer)}</b>`)}${row('Contact:', `<b>${esc(o.phone)}</b>`)}${row('Delivery Address:', `<b>${esc(o.address)}</b>`, 'awb-tall')}</table>
             <div class="awb-h">Shipper Information</div>
             <table>${row('Name:', `<b>${esc(shipperName)}</b>`)}${row('Contact:', `<b>${esc(sh.phone || '')}</b>`)}
-              ${row('Pickup Address:', `<b>${esc([o.pickupAddress, o.pickupCity].filter(Boolean).join(' '))}</b>`)}
-              ${row('Return Address:', `<b>${esc([o.returnAddress || o.pickupAddress, o.returnCity || o.pickupCity].filter(Boolean).join(' '))}</b>`)}</table>
+              ${row('Pickup Address:', `<b>${esc([o.pickupAddress || sh.address, o.pickupCity || sh.city].filter(Boolean).join(' '))}</b>`)}
+              ${row('Return Address:', `<b>${esc([o.returnAddress || o.pickupAddress || sh.address, o.returnCity || o.pickupCity || sh.city].filter(Boolean).join(' '))}</b>`)}</table>
           </div>
           <div class="awb-col">
             <div class="awb-h">Shipment Information</div>
