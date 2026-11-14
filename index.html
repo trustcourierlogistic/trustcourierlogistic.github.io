@@ -1258,8 +1258,6 @@
       <button data-tab="invoices">🧾 Invoice Distribute</button>
       <button data-tab="expenses">📉 Expense</button>
       <button data-tab="settings">⚙️ Client Setting</button>
-      <button data-tab="cityline">🚚 CityLine Booking</button>
-      <button data-tab="distribution">📦 Manual Distribution</button>
       <button data-tab="finance">📒 Finance</button>
       <button data-tab="api">🔌 Courier API</button>
     </nav>
@@ -1958,8 +1956,8 @@
         <div class="cd-top"><div><h2>Dashboard</h2><p class="adm-sub">Poore business ka khulasa — TCL System sheet se live.</p></div>
           <button class="btn btn-light" id="admRefresh">⟳ Refresh</button></div>
         <div class="adm-card adm-gen">
-          <div><h3>Generate Invoice</h3><p class="adm-sub" style="margin:0">Courier ki payment ke delivered aur return tracking numbers Manual Distribution me daalein — har client ki invoice (CPR) alag ban kar us ke portal me chali jayegi.</p></div>
-          <button class="btn btn-gold" id="genInv">⚡ Manual Distribution</button>
+          <div><h3>Generate Invoice</h3><p class="adm-sub" style="margin:0">Courier ki invoice Invoice Distribute me upload karein, phir us ke saamne Generate Invoice dabayein — har client ki invoice (CPR) alag ban kar us ke portal me chali jayegi.</p></div>
+          <button class="btn btn-gold" id="genInv">⚡ Invoice Distribute</button>
         </div>
         <div class="adm-stats">
           ${stat('Total Clients', s.totalClients, '', s.pendingClients ? s.pendingClients + ' approval ke intezar me' : 'Active clients')}
@@ -1983,7 +1981,7 @@
         try{ await ADMIN_VIEWS.dashboard(main, true); toast('Dashboard update ho gaya.'); }
         catch(err){ toast('Refresh nahi ho saka.'); busy(document.getElementById('admRefresh'), false, '⟳ Refresh'); }
       };
-      document.getElementById('genInv').onclick = () => admGo('distribution');
+      document.getElementById('genInv').onclick = () => admGo('invoices');
     },
 
     /* ---------- Payment Settled ---------- */
@@ -2065,37 +2063,123 @@
     },
 
     /* ---------- Invoice Distribute ---------- */
+    /* ---------- Invoice Distribute: upload the courier payment (its tracking numbers split into delivered / return),
+     * then ⚡ Generate Invoice on that upload makes every client's invoice (CPR) and puts it in their portal ---------- */
     async invoices(main){
       const d = await admLoad('admin_invoices');
+      const tracks = s => String(s || '').split(/[\s,;]+/).map(x => x.replace(/^'/, '').trim()).filter(Boolean);
+      const pdfLink = f => /^https:\/\/(drive|docs)\.google\.com\//.test(f) ? `<a class="adm-link" href="${esc(f)}" target="_blank" rel="noopener">Open</a>` : '';
       main.innerHTML = `
-        <h2>Invoice Distribute</h2><p class="adm-sub">Courier ki invoice upload karein, phir Dashboard par "Generate Invoice" dabayein — har client ka hisaab alag ho kar us ke portal me chala jayega.</p>
+        <h2>Invoice Distribute</h2><p class="adm-sub">Courier ki invoice (CPR PDF) upload karein — delivered aur return tracking numbers khud alag ho jayenge. Phir us invoice ke saamne <b>⚡ Generate Invoice</b> dabayein: har client ki invoice (CPR) ban kar us ke portal me chali jayegi.</p>
         <div class="adm-card"><h3>Courier Invoice Upload</h3>
           <div class="adm-form">
             <div><label>Courier</label>${courierSelect('invCourier')}</div>
             <div style="grid-column:span 2"><label>Invoice File (PDF / Excel / CSV)</label><div class="inv-file"><input class="input" type="file" accept=".pdf,.xlsx,.xls,.csv" id="invFile"><button class="btn btn-navy" type="button" id="invAutoBtn">⚡ Auto Fill</button></div></div>
             ${figFields('inv_')}
-            <div><button class="btn btn-gold" id="invUpload">Upload</button></div>
           </div>
-          <p class="adm-sub" id="invAuto" style="margin:10px 0 0">File chunein aur <b>⚡ Auto Fill</b> dabayein — PostEx ki CPR PDF ya Excel/CSV se khane khud bhar jayenge. Phir check kar ke Upload karein.</p>
+          <p class="adm-sub" id="invAuto" style="margin:10px 0 0">File chunein — PostEx ki CPR PDF se rakam aur tracking numbers khud bhar jayenge. Phir check kar ke Upload karein.</p>
+          <div class="adm-form dist-form" style="margin-top:12px">
+            <div><label>Delivered Tracking Numbers <b id="invDelN"></b></label><textarea class="input" id="invDel" rows="6" placeholder="PDF se khud bharenge — ya har line me ek number"></textarea></div>
+            <div><label>Return Tracking Numbers <b id="invRetN"></b></label><textarea class="input" id="invRet" rows="6" placeholder="PDF se khud bharenge — ya har line me ek number"></textarea></div>
+          </div>
+          <div style="margin-top:12px"><button class="btn btn-gold" id="invUpload">Upload</button></div>
         </div>
+        <div id="invGenOut"></div>
         <div class="adm-card"><h3>Uploaded Courier Invoices</h3><div class="adm-table-wrap">
-          ${table(['File', 'Courier', 'Date', {t:'Received', num:1}, {t:'Courier Ch.', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Govt Tax', num:1}, 'Status', ''],
-            d.uploads.map(u => `<tr><td>${esc(u['File Name'])}<br><small>${esc(u.ID)}</small></td><td>${esc(u.Courier)}</td><td>${esc(u['Payment Date'] || u['Uploaded At'])}</td><td class="num">${rs(u.Amount)}</td>
-              <td class="num">${rs(u['Courier Charges'] || 0)}</td><td class="num">${rs(u['Shipping Charges'] || 0)}</td><td class="num">${rs(u.GST || 0)}</td><td class="num">${rs(u['Govt Tax'] || 0)}</td><td>${statusPill(u.Status)}</td>
-              <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(u.File) ? `<a class="adm-link" href="${esc(u.File)}" target="_blank" rel="noopener">Open</a>` : '—'}</td></tr>`),
+          ${table(['File', 'Courier', 'Date', {t:'Received', num:1}, {t:'Delivered', num:1}, {t:'Return', num:1}, 'Status', ''],
+            d.uploads.map(u => { const del = tracks(u['Delivered Tracking']), ret = tracks(u['Return Tracking']), open = u.Status === 'Uploaded';
+              return `<tr data-up="${esc(u.ID)}"><td>${esc(u['File Name'])}<br><small>${esc(u.ID)}</small> ${pdfLink(u.File)}</td><td>${esc(u.Courier)}</td><td>${esc(u['Payment Date'] || u['Uploaded At'])}</td><td class="num">${rs(u.Amount)}</td>
+              <td class="num">${del.length || '—'}</td><td class="num">${ret.length || '—'}</td><td>${statusPill(open ? 'Generate baqi' : u.Status)}</td>
+              <td style="white-space:nowrap">${!open ? '' : del.length + ret.length ? '<button class="btn btn-gold adm-mini" data-gen>⚡ Generate Invoice</button>'
+                : '<label class="btn btn-navy adm-mini" style="cursor:pointer">PDF se numbers<input type="file" accept=".pdf" data-pdf hidden></label>'}</td></tr>`; }),
             'Abhi koi courier invoice upload nahi hui.')}
         </div></div>
+        <div class="adm-card"><h3>CityLine payment invoices</h3><p class="adm-sub">CityLine ki aakhri 5 payments (CityLine API se). <b>⚡ Generate Invoice</b> us payment ke parcels se har client ki invoice bana deta hai (COD wale Delivered, baqi Return).</p>
+          <button class="btn btn-light" id="clInvLoad">CityLine invoices laayen</button><div id="clInv" class="adm-table-wrap" style="margin-top:12px"></div></div>
         <div class="adm-card"><h3>Client Invoices (generated)</h3><div class="adm-table-wrap">
           ${table(['Invoice', 'Client', 'Courier', 'Date', {t:'Amount', num:1}, 'Status', 'PDF'],
             d.invoices.map(i => `<tr><td>${esc(i['Invoice No'] || '—')}<br><small>${esc(i.ID)}</small></td><td>${esc(i.Client)}</td><td>${esc(i.Courier)}</td><td>${esc(i['Invoice Date'])}</td><td class="num">${rs(i.Amount)}</td><td>${statusPill(i.Status)}</td>
-              <td>${/^https:\/\/(drive|docs)\.google\.com\//.test(i.File) ? `<a class="adm-link" href="${esc(i.File)}" target="_blank" rel="noopener">Open</a>` : `<button class="btn btn-light adm-mini" data-cpr="${esc(i.ID)}">PDF</button>`}</td></tr>`),
-            'Abhi koi client invoice nahi bani. Manual Distribution se banayein.')}
+              <td>${pdfLink(i.File) || `<button class="btn btn-light adm-mini" data-cpr="${esc(i.ID)}">PDF</button>`}</td></tr>`),
+            'Abhi koi client invoice nahi bani.')}
         </div></div>`;
       main.querySelectorAll('[data-cpr]').forEach(b => b.onclick = async () => {
         const r = await admCall('admin_invoice_detail', {id: b.dataset.cpr});
         if(r) downloadCpr(r, b);
       });
-      // ⚡ Auto Fill: reads the chosen file (PostEx CPR PDF, or Excel/CSV) into the fields for the admin to check
+      const del = document.getElementById('invDel'), ret = document.getElementById('invRet');
+      const counts = () => { document.getElementById('invDelN').textContent = tracks(del.value).length ? `(${tracks(del.value).length})` : '';
+        document.getElementById('invRetN').textContent = tracks(ret.value).length ? `(${tracks(ret.value).length})` : ''; };
+      del.oninput = ret.oninput = counts;
+
+      /* preview → confirm → generate; uploadId (if any) is marked Processed */
+      const out = document.getElementById('invGenOut');
+      const errs = {missing: 'Is invoice me koi tracking number nahi.', tracking_both: 'Yeh number delivered aur return dono me hai: ', too_many: 'Ek dafa me 2000 numbers tak.', nothing_to_generate: 'Koi naya parcel nahi — sab pehle invoice ho chuke ya kisi client ke nahi mile.'};
+      const note = (list, text) => list.length ? `<div class="adm-note">${text} (${list.length}): <code>${esc(list.slice(0, 40).join(', '))}${list.length > 40 ? ' …' : ''}</code></div>` : '';
+      const generate = async (title, delivered, returned, uploadId, btn) => {
+        const label = btn ? btn.textContent : '';
+        busy(btn, true, 'Check ho raha hai…');
+        const q = {delivered: delivered.join('\n'), returned: returned.join('\n')};
+        const r = await authApi('admin_distribution_preview', q);
+        busy(btn, false, label);
+        if(!r.ok){ toast((errs[r.error] || r.message || 'Check nahi ho saka.') + (r.error === 'tracking_both' ? r.message : '')); return; }
+        const sum = k => r.clients.reduce((t, c) => t + c[k], 0);
+        out.innerHTML = `<div class="adm-card"><h3>${esc(title)} — har client ka hisaab</h3>` + note(r.unknown, '⚠️ Yeh numbers kisi client ke nahi mile') + note(r.already, 'Pehle invoice/settle ho chuke, chhod diye')
+          + `<div class="adm-table-wrap">${table(['Client', {t:'Delivered', num:1}, {t:'Return', num:1}, {t:'COD', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Govt Tax', num:1}, {t:'Client ko dena', num:1}],
+            r.clients.map(c => `<tr><td><b>${esc(c.client)}</b><br><small>${esc(c.id)}</small></td><td class="num">${c.delivered}</td><td class="num">${c.returned}</td><td class="num">${rs(c.cod)}</td><td class="num">${rs(c.charges)}</td><td class="num">${rs(c.gst)}</td><td class="num">${rs(c.tax)}</td><td class="num"><b>${rs(c.net)}</b></td></tr>`)
+            .concat(r.clients.length > 1 ? [`<tr class="cpr-total"><td>Overall</td><td class="num">${sum('delivered')}</td><td class="num">${sum('returned')}</td><td class="num">${rs(sum('cod'))}</td><td class="num">${rs(sum('charges'))}</td><td class="num">${rs(sum('gst'))}</td><td class="num">${rs(sum('tax'))}</td><td class="num"><b>${rs(sum('net'))}</b></td></tr>`] : []),
+            'Koi naya parcel nahi mila — sab pehle invoice ho chuke ya kisi client ke nahi.')}</div>
+          ${r.clients.length ? `<div style="display:flex;gap:10px;margin-top:12px"><button class="btn btn-gold" id="genGo">✅ Pakka — ${r.clients.length} invoices banayein</button><button class="btn btn-light" id="genNo">Cancel</button></div>` : '<button class="btn btn-light" id="genNo" style="margin-top:12px">Band karein</button>'}</div>`;
+        out.scrollIntoView({behavior: 'smooth', block: 'start'});
+        document.getElementById('genNo').onclick = () => { out.innerHTML = ''; };
+        const go = document.getElementById('genGo');
+        if(go) go.onclick = async () => {
+          busy(go, true, 'Invoices ban rahi hain…');
+          const g = await authApi('admin_distribution_generate', Object.assign(q, {uploadId: uploadId || ''}));
+          if(!g.ok){ busy(go, false, '✅ Pakka — invoices banayein'); toast(errs[g.error] || g.message || 'Invoice nahi ban saki.'); return; }
+          toast(`${g.invoices.length} client invoices ban gayi — har client ke portal (CPR) me chali gayi.`);
+          await admGo('invoices');
+        };
+      };
+      main.querySelectorAll('tr[data-up]').forEach(tr => {
+        const u = d.uploads.find(x => String(x.ID) === tr.dataset.up); if(!u) return;
+        const title = `${u.Courier} — ${u['File Name']}`;
+        const b = tr.querySelector('[data-gen]');
+        if(b) b.onclick = () => generate(title, tracks(u['Delivered Tracking']), tracks(u['Return Tracking']), u.ID, b);
+        // older uploads were saved without their numbers: read them again from the same PDF
+        const pick = tr.querySelector('[data-pdf]');
+        if(pick) pick.onchange = async () => {
+          const f = pick.files[0]; if(!f) return;
+          try{ const p = await readCourierPdf(f, 'none_');
+            if(!p.delivered.length && !p.returned.length){ toast('Is PDF me tracking numbers nahi mile.'); return; }
+            generate(title, p.delivered, p.returned, u.ID, null); }
+          catch(err){ toast('PDF parh nahi saka.'); }
+        };
+      });
+
+      // CityLine payments come from the CityLine API (no file)
+      document.getElementById('clInvLoad').onclick = async e => {
+        const btn = e.currentTarget; busy(btn, true, 'Loading…');
+        const r = await admCall('admin_cityline_invoices');
+        busy(btn, false, 'CityLine invoices laayen');
+        if(!r) return;
+        const box = document.getElementById('clInv');
+        box.innerHTML = table(['Ref No', 'Date', {t:'Amount', num:1}, ''], r.invoices.map(i => `<tr><td><b>${esc(i.ref)}</b></td><td>${esc(i.date)}</td><td class="num">${rs(i.amount)}</td>
+          <td style="white-space:nowrap"><button class="btn btn-gold adm-mini" data-clgen="${esc(i.ref)}">⚡ Generate Invoice</button>
+          ${i.recorded ? '<span class="pill-s ok">Received me jud chuki</span>' : `<button class="btn btn-navy adm-mini" data-rec="${esc(i.ref)}">Payment Received me jodein</button>`}</td></tr>`), 'CityLine se koi invoice nahi aayi.');
+        box.querySelectorAll('[data-clgen]').forEach(b => b.onclick = async () => {
+          busy(b, true, '…');
+          const x = await admCall('admin_cityline_invoice', {ref: b.dataset.clgen});
+          busy(b, false, '⚡ Generate Invoice');
+          if(x) generate('CityLine ' + x.ref, x.delivered, x.returned, '', b);
+        });
+        box.querySelectorAll('[data-rec]').forEach(b => b.onclick = async () => {
+          busy(b, true, '…');
+          const x = await admCall('admin_cityline_record', {ref: b.dataset.rec}, 'Payment "Courier Payment Received" me jud gayi.');
+          if(x) b.outerHTML = '<span class="pill-s ok">Received me jud chuki</span>'; else busy(b, false, 'Payment Received me jodein');
+        });
+      };
+
+      // ⚡ Auto Fill: reads the chosen file (PostEx CPR PDF, or Excel/CSV) into the fields; a PDF also splits its tracking numbers
       const autoFill = async () => {
         const file = document.getElementById('invFile').files[0], note = document.getElementById('invAuto'), btn = document.getElementById('invAutoBtn');
         if(!file){ toast('Pehle invoice file chunein.'); return; }
@@ -2103,20 +2187,19 @@
         try{
           if(/\.pdf$/i.test(file.name)){
             const r = await readCourierPdf(file, 'inv_');
-            window.__cprTracks = (r.delivered.length || r.returned.length) ? {delivered: r.delivered, returned: r.returned, courier: val('invCourier')} : null;
-            note.innerHTML = (r.found.length ? `✅ PDF se bhare gaye: <b>${esc(r.found.join(', '))}</b> — ek dafa check kar lein, phir Upload dabayein.` : 'PDF me pehchane wale figures nahi mile — khane khud bharein.')
-              + (window.__cprTracks ? `<br>Is PDF me <b>${r.delivered.length}</b> delivered aur <b>${r.returned.length}</b> return tracking numbers bhi hain. <a href="#" class="adm-link" id="invToDist">Manual Distribution me bharein →</a>` : '');
-            const go = document.getElementById('invToDist');
-            if(go) go.onclick = ev => { ev.preventDefault(); admGo('distribution'); };
+            del.value = r.delivered.join('\n'); ret.value = r.returned.join('\n'); counts();
+            note.innerHTML = (r.found.length ? `✅ PDF se bhare gaye: <b>${esc(r.found.join(', '))}</b>` : 'PDF me rakam ke figures nahi mile — khane khud bharein.')
+              + (r.delivered.length || r.returned.length ? ` · <b>${r.delivered.length}</b> delivered aur <b>${r.returned.length}</b> return tracking numbers alag ho gaye.` : ' · Tracking numbers nahi mile — neeche khud paste karein.')
+              + ' Check kar ke Upload dabayein.';
           } else {
             const found = await readCourierSheet(file, 'inv_');
-            note.textContent = found.length ? `✅ File se bhare gaye (columns: ${found.join(', ')}) — ek dafa check kar lein.` : 'File me pehchane wale columns nahi mile — khane khud bharein.';
+            note.textContent = (found.length ? `✅ File se bhare gaye (columns: ${found.join(', ')}).` : 'File me pehchane wale columns nahi mile — khane khud bharein.') + ' Tracking numbers neeche paste karein.';
           }
         }catch(err){ note.textContent = 'File parh nahi saka — khane khud bharein.'; }
         finally{ busy(btn, false, '⚡ Auto Fill'); }
       };
       document.getElementById('invAutoBtn').onclick = autoFill;
-      document.getElementById('invFile').onchange = () => { window.__cprTracks = null; autoFill(); };
+      document.getElementById('invFile').onchange = autoFill;
       document.getElementById('invUpload').onclick = async e => {
         const file = document.getElementById('invFile').files[0];
         if(!file){ toast('Invoice file chunein.'); return; }
@@ -2124,12 +2207,14 @@
         if(file.size > 10*1024*1024){ toast(ADMIN_ERRORS.file_too_big); return; }
         busy(e.target, true, 'Uploading…');
         const fileBase64 = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.onerror = no; fr.readAsDataURL(file); });
-        // the tracking numbers read from the PDF are saved with the upload, so Manual Distribution can fill them in any time later
-        const tr = window.__cprTracks || {delivered: [], returned: []};
-        const r = await admCall('admin_invoice_upload', {courier:val('invCourier'), ...figValues('inv_'), fileName:file.name, fileBase64, delivered: tr.delivered, returned: tr.returned},
-          'Invoice upload ho gayi. Ab Manual Distribution me Check / Preview, phir Generate Invoice dabayein.');
+        const r = await admCall('admin_invoice_upload', {courier:val('invCourier'), ...figValues('inv_'), fileName:file.name, fileBase64, delivered: tracks(del.value), returned: tracks(ret.value)},
+          'Invoice upload ho gayi — ab us ke saamne ⚡ Generate Invoice dabayein.');
         busy(e.target, false, 'Upload');
-        if(r){ window.__cprTracks = null; admGo('distribution'); }
+        if(!r) return;
+        await admGo('invoices');
+        // straight to the preview of the invoice just uploaded
+        const b = document.querySelector(`tr[data-up="${CSS.escape(r.id)}"] [data-gen]`);
+        if(b) b.click();
       };
     },
 
@@ -2238,124 +2323,6 @@
       });
     },
 
-    /* ---------- Manual Distribution: tracking numbers → per-client invoices ---------- */
-    async distribution(main){
-      main.innerHTML = `
-        <h2>Manual Distribution</h2>
-        <p class="adm-sub">Courier ki payment ke tracking numbers paste karein (har line me ek, ya comma se). System har number ka client dhoond kar us ka hisaab alag karega.</p>
-        <div class="adm-note">Delivered: COD − shipping charges − GST − Govt Tax · Return: sirf −(shipping charges + GST). Rates Client Setting se. Jo number pehle invoice/settle ho chuka, dobara nahi ginta.</div>
-        <div class="adm-card"><h3>Upload ki gayi courier invoices — generate baqi</h3>
-          <p class="adm-sub">Invoice Distribute me upload ki gayi PDF ke tracking numbers yahan se ek click me neeche bhar jate hain. Generate ke baad yeh list se hat jati hai.</p>
-          <div id="dsUploads" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>
-        <div class="adm-card"><div class="adm-form dist-form">
-          <div><label>Delivered Tracking Numbers</label><textarea class="input" id="dsDel" rows="8" placeholder="Har line me ek tracking number"></textarea></div>
-          <div><label>Return Tracking Numbers</label><textarea class="input" id="dsRet" rows="8" placeholder="Har line me ek tracking number"></textarea></div>
-        </div><div style="display:flex;gap:10px;margin-top:12px"><button class="btn btn-navy" id="dsPrev">Check / Preview</button><button class="btn btn-gold" id="dsGen" disabled>⚡ Generate Invoice</button></div></div>
-        <div class="adm-card"><h3>CityLine payment invoices</h3><p class="adm-sub">CityLine ki aakhri 5 payments. "Numbers bharein" se us invoice ke tracking numbers upar aa jayenge (COD wale Delivered, baqi Return — ek nazar check kar lein).</p>
-          <button class="btn btn-light" id="clInvLoad">CityLine invoices laayen</button><div id="clInv" class="adm-table-wrap" style="margin-top:12px"></div></div>
-        <div id="dsOut"></div>`;
-      document.getElementById('clInvLoad').onclick = async e => {
-        const btn = e.currentTarget; busy(btn, true, 'Loading…');
-        const r = await admCall('admin_cityline_invoices');
-        busy(btn, false, 'CityLine invoices laayen');
-        if(!r) return;
-        const box = document.getElementById('clInv');
-        box.innerHTML = table(['Ref No', 'Date', {t:'Amount', num:1}, ''], r.invoices.map(i => `<tr><td><b>${esc(i.ref)}</b></td><td>${esc(i.date)}</td><td class="num">${rs(i.amount)}</td>
-          <td style="white-space:nowrap"><button class="btn btn-navy adm-mini" data-fill="${esc(i.ref)}">Numbers bharein</button>
-          ${i.recorded ? '<span class="pill-s ok">Received me jud chuki</span>' : `<button class="btn btn-gold adm-mini" data-rec="${esc(i.ref)}">Payment Received me jodein</button>`}</td></tr>`), 'CityLine se koi invoice nahi aayi.');
-        box.querySelectorAll('[data-fill]').forEach(b => b.onclick = async () => {
-          busy(b, true, '…');
-          const d = await admCall('admin_cityline_invoice', {ref: b.dataset.fill});
-          busy(b, false, 'Numbers bharein');
-          if(!d) return;
-          document.getElementById('dsDel').value = d.delivered.join('\n');
-          document.getElementById('dsRet').value = d.returned.join('\n');
-          gen.disabled = true; uploadId = '';
-          toast(`${d.delivered.length} delivered, ${d.returned.length} return numbers bhar diye — ab Check / Preview dabayein.`);
-        });
-        box.querySelectorAll('[data-rec]').forEach(b => b.onclick = async () => {
-          busy(b, true, '…');
-          const d = await admCall('admin_cityline_record', {ref: b.dataset.rec}, 'Payment "Courier Payment Received" me jud gayi.');
-          if(d) b.outerHTML = '<span class="pill-s ok">Received me jud chuki</span>'; else busy(b, false, 'Payment Received me jodein');
-        });
-      };
-      if(window.__cprTracks){
-        document.getElementById('dsDel').value = window.__cprTracks.delivered.join('\n');
-        document.getElementById('dsRet').value = window.__cprTracks.returned.join('\n');
-        toast(`CPR PDF se ${window.__cprTracks.delivered.length} delivered aur ${window.__cprTracks.returned.length} return numbers bhar diye — Check / Preview dabayein.`);
-        window.__cprTracks = null;
-      }
-      const data = () => ({delivered: document.getElementById('dsDel').value, returned: document.getElementById('dsRet').value});
-      const gen = document.getElementById('dsGen'), out = document.getElementById('dsOut');
-      ['dsDel','dsRet'].forEach(id => document.getElementById(id).oninput = () => { gen.disabled = true; });
-      // pending courier uploads: their saved tracking numbers fill the boxes; the one used is marked Processed on Generate
-      let uploadId = '';
-      const fill = (u, del, ret) => {
-        document.getElementById('dsDel').value = del.join('\n'); document.getElementById('dsRet').value = ret.join('\n');
-        uploadId = u.id; gen.disabled = true;
-        toast(`${u.courier} invoice ke ${del.length} delivered aur ${ret.length} return numbers bhar diye — Check ho raha hai…`);
-        document.getElementById('dsPrev').click();
-      };
-      const loadUploads = async auto => {
-        const box = document.getElementById('dsUploads');
-        const r = await authApi('admin_pending_uploads');
-        if(!document.body.contains(box)) return;
-        if(!r.ok){ box.innerHTML = '<p class="adm-empty">List load nahi ho saki.</p>'; return; }
-        box.innerHTML = table(['Courier', 'File', 'Date', {t:'Amount', num:1}, {t:'Numbers', num:1}, ''], r.uploads.map(u => `<tr data-up="${esc(u.id)}"><td>${esc(u.courier)}</td><td>${esc(u.fileName)}</td><td>${esc(u.date)}</td><td class="num">${rs(u.amount)}</td>
-          <td class="num">${u.delivered.length + u.returned.length ? `${u.delivered.length} + ${u.returned.length}` : '—'}</td>
-          <td style="white-space:nowrap">${u.delivered.length + u.returned.length ? '<button class="btn btn-gold adm-mini" data-use>Numbers bharein</button>'
-            : '<label class="btn btn-navy adm-mini" style="cursor:pointer">PDF se numbers<input type="file" accept=".pdf" data-pdf hidden></label>'}</td></tr>`), 'Koi upload baqi nahi — sab ki invoices ban chuki hain.');
-        r.uploads.forEach(u => {
-          const tr = box.querySelector(`tr[data-up="${CSS.escape(u.id)}"]`); if(!tr) return;
-          const use = tr.querySelector('[data-use]'); if(use) use.onclick = () => fill(u, u.delivered, u.returned);
-          // older uploads were saved without the numbers: read them again from the same PDF
-          const pick = tr.querySelector('[data-pdf]');
-          if(pick) pick.onchange = async () => {
-            const f = pick.files[0]; if(!f) return;
-            try{ const p = await readCourierPdf(f, 'dsx_');
-              if(!p.delivered.length && !p.returned.length){ toast('Is PDF me tracking numbers nahi mile — khud paste karein.'); return; }
-              fill(u, p.delivered, p.returned); }
-            catch(err){ toast('PDF parh nahi saka.'); }
-          };
-        });
-        // one upload waiting with its numbers and empty boxes → fill it straight away
-        const ready = r.uploads.filter(u => u.delivered.length + u.returned.length);
-        if(auto && ready.length === 1 && !document.getElementById('dsDel').value.trim() && !document.getElementById('dsRet').value.trim()) fill(ready[0], ready[0].delivered, ready[0].returned);
-      };
-      loadUploads(true);
-      const errs = {missing: 'Kam az kam ek tracking number daalein.', tracking_both: 'Yeh number delivered aur return dono me hai: ', too_many: 'Ek dafa me 2000 numbers tak.', nothing_to_generate: 'Koi naya parcel nahi — sab pehle invoice ho chuke ya mile nahi.'};
-      const note = (list, text) => list.length ? `<div class="adm-note">${text} (${list.length}): <code>${esc(list.slice(0, 40).join(', '))}${list.length > 40 ? ' …' : ''}</code></div>` : '';
-      document.getElementById('dsPrev').onclick = async e => {
-        const btn = e.currentTarget; busy(btn, true, 'Checking…');
-        const r = await authApi('admin_distribution_preview', data());
-        busy(btn, false, 'Check / Preview');
-        if(!r.ok){ toast((errs[r.error] || r.message || 'Check nahi ho saka.') + (r.error === 'tracking_both' ? r.message : '')); return; }
-        gen.disabled = !r.clients.length;
-        const sum = k => r.clients.reduce((t, c) => t + c[k], 0);
-        out.innerHTML = note(r.unknown, '⚠️ Yeh numbers kisi client ke nahi mile') + note(r.already, 'Pehle invoice/settle ho chuke, chhod diye')
-          + `<div class="adm-card"><h3>Har client ka hisaab</h3><div class="adm-table-wrap">${table(['Client', {t:'Delivered', num:1}, {t:'Return', num:1}, {t:'COD', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Govt Tax', num:1}, {t:'Client ko dena', num:1}],
-            r.clients.map(c => `<tr><td><b>${esc(c.client)}</b><br><small>${esc(c.id)}</small></td><td class="num">${c.delivered}</td><td class="num">${c.returned}</td><td class="num">${rs(c.cod)}</td><td class="num">${rs(c.charges)}</td><td class="num">${rs(c.gst)}</td><td class="num">${rs(c.tax)}</td><td class="num"><b>${rs(c.net)}</b></td></tr>`)
-            .concat(r.clients.length > 1 ? [`<tr class="cpr-total"><td>Overall</td><td class="num">${sum('delivered')}</td><td class="num">${sum('returned')}</td><td class="num">${rs(sum('cod'))}</td><td class="num">${rs(sum('charges'))}</td><td class="num">${rs(sum('gst'))}</td><td class="num">${rs(sum('tax'))}</td><td class="num"><b>${rs(sum('net'))}</b></td></tr>`] : []),
-            'Koi naya parcel nahi mila.')}</div></div>`
-          + r.clients.map(c => `<details class="adm-card"><summary><b>${esc(c.client)}</b> — ${c.lines.length} parcels, ${rs(c.net)}</summary><div class="adm-table-wrap">${table(['Tracking', 'Order Ref', 'City', 'Status', {t:'COD', num:1}, {t:'Weight', num:1}, {t:'Shipping', num:1}, {t:'GST', num:1}, {t:'Tax', num:1}, {t:'Net', num:1}],
-            c.lines.map(l => `<tr><td>${esc(l.tracking)}</td><td>${esc(l.ref)}</td><td>${esc(l.city)}</td><td>${statusPill(l.status)}</td><td class="num">${rs(l.cod)}</td><td class="num">${l.weight ? esc(l.weight) + ' kg' : '—'}</td><td class="num">${rs(l.charges)}</td><td class="num">${rs(l.gst)}</td><td class="num">${rs(l.tax)}</td><td class="num"><b>${rs(l.net)}</b></td></tr>`), '')}</div></details>`).join('');
-      };
-      gen.onclick = async () => {
-        if(gen.dataset.sure !== '1'){ gen.dataset.sure = '1'; gen.textContent = 'Pakka? Invoices banayein'; return; }
-        busy(gen, true, 'Ban rahi hain…');
-        const r = await authApi('admin_distribution_generate', Object.assign(data(), {uploadId}));
-        gen.dataset.sure = ''; busy(gen, true, '⚡ Generate Invoice');
-        if(!r.ok){ toast(errs[r.error] || r.message || 'Invoice nahi ban saki.'); return; }
-        toast(`${r.invoices.length} client invoices ban gayi — client portal (CPR) me nazar aayengi.`);
-        out.innerHTML = `<div class="adm-card"><h3>Invoices ban gayi ✓</h3><div class="adm-table-wrap">${table(['Invoice', 'Client', {t:'Parcels', num:1}, {t:'Amount', num:1}, ''],
-          r.invoices.map(i => `<tr><td><b>${esc(i.invoiceNo)}</b></td><td>${esc(i.client)}</td><td class="num">${i.parcels}</td><td class="num">${rs(i.amount)}</td><td><button class="btn btn-light adm-mini" data-cpr="${esc(i.id)}">PDF</button></td></tr>`), '')}</div>
-          <p class="adm-sub" style="margin-top:10px">Payment dene ke baad Payment Settled me client "Settle" karein.</p></div>` + note(r.unknown, '⚠️ Nahi mile');
-        out.querySelectorAll('[data-cpr]').forEach(b => b.onclick = async () => { const d = await admCall('admin_invoice_detail', {id: b.dataset.cpr}); if(d) downloadCpr(d, b); });
-        document.getElementById('dsDel').value = ''; document.getElementById('dsRet').value = '';
-        uploadId = ''; loadUploads();
-      };
-    },
-
     /* ---------- Finance: Company (courier side) and Client (what TCL charged and paid its clients) ---------- */
     async finance(main, q){
       q = q || {days: 30};
@@ -2370,7 +2337,7 @@
           <div><label>Start Date</label><input class="input" type="date" id="fnFrom" value="${esc(q.from || '')}"></div>
           <div><label>End Date</label><input class="input" type="date" id="fnTo" value="${esc(q.to || '')}"></div>
           <div><button class="btn btn-navy" id="fnGo">Show</button></div></div></div>
-        <h3 class="fn-head">Company</h3><p class="adm-sub">Courier companies ne TCL ko kya diya aur kya kaata (Manual Distribution / Invoice Distribute se).</p>
+        <h3 class="fn-head">Company</h3><p class="adm-sub">Courier companies ne TCL ko kya diya aur kya kaata (Invoice Distribute se).</p>
         <div class="adm-stats fn-4">
           ${stat('Payment Received (COD)', rs(c.received), 'green', c.payments + ' courier payments')}
           ${stat('Shipping Charges', rs(c.courierCharges + c.shippingCharges), 'gold', `Courier charges ${rs(c.courierCharges)} + shipping ${rs(c.shippingCharges)}`)}
