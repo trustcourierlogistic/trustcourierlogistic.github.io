@@ -1456,7 +1456,7 @@
         show(`<p class="w-tr-msg">${msg}</p>${r.error === 'not_found' ? `<a class="w-tr-wa" href="${h(waLink('Assalam o Alaikum Trust Courier, mere parcel ka status bata dein.\nTracking number: ' + v.toUpperCase()))}" target="_blank" rel="noopener">WhatsApp par poochein</a>` : ''}`);
         return;
       }
-      const cls = /^delivered/i.test(r.status) ? 'ok' : /^return/i.test(r.status) ? 'bad' : '';
+      const cls = /^(home )?delivered/i.test(r.status) ? 'ok' : /^return/i.test(r.status) ? 'bad' : '';
       show(`<div class="w-tr-head"><div><small>Tracking</small><b>${h(r.tracking)}</b></div><span class="w-tr-st ${cls}">${h(r.status)}</span></div>
         <div class="w-tr-route"><div><small>From</small><b>${h(r.from) || '—'}</b></div><span>→</span><div><small>To</small><b>${h(r.to) || '—'}</b></div></div>
         <p class="w-tr-meta">${h(r.courier)} · Booked ${h(r.date)}${r.updated ? ' · Last update ' + h(String(r.updated).replace('T', ' ').slice(0, 16)) : ''}</p>
@@ -2515,7 +2515,7 @@
   /* ---------- client portal: order lists ----------
    * cancel: Unbooked · awb: booked, not yet on a load sheet · again: every booked order (reprint)
    * undispatched: booked but not picked up · loadsheet: booked, not on a load sheet, still on the way */
-  const isFinalSt = s => /^(delivered|returned)\b/i.test(String(s || '').trim());
+  const isFinalSt = s => /^((home )?delivered|returned)\b/i.test(String(s || '').trim());
   const ORDER_LISTS = {
     cancel: {filter: o => (o.status === 'Unbooked' && !o.tracking) || (o.courier === 'CityLine' && o.tracking && /^booked$/i.test(String(o.status).trim())), empty: 'Koi Unbooked order nahi jo cancel ho sake.'},
     awb: {filter: o => o.tracking && !o.loadSheet && !isFinalSt(o.status), select: 1, empty: 'Sab booked orders ki load sheet ban chuki hai. Purani slip ke liye Again Airway Bill dekhein.'},
