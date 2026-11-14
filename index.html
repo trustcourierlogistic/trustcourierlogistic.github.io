@@ -2274,7 +2274,15 @@
               <td class="adm-eg"></td>
               <td><button class="btn btn-navy adm-mini" data-save>Save</button></td></tr>`),
             'Abhi koi active client nahi. Clients me client Approve karein.')}
-        </div></div>`;
+        </div></div>
+        <div class="adm-card adm-gen"><div><h3>Purane orders par naye rates</h3><p class="adm-sub" style="margin:0">Save karte hi us client ke purane orders naye rates par aa jate hain. Sab clients ek saath karne ke liye yeh button. Jo orders <b>Invoiced</b> ya <b>Settled</b> ho chuke, un ka hisaab nahi badalta.</p></div>
+          <button class="btn btn-gold" id="recalcAll">⟳ Sab purane orders update karein</button></div>`;
+      document.getElementById('recalcAll').onclick = async e => {
+        const btn = e.currentTarget; busy(btn, true, 'Update ho rahe hain…');
+        const r = await admCall('admin_recalc_rates');
+        busy(btn, false, '⟳ Sab purane orders update karein');
+        if(r) toast(r.updated ? `${r.updated} purane orders naye rates par update ho gaye.` : 'Sab orders pehle se naye rates par hain.');
+      };
       // live preview of the same formula the backend uses (parcelAmounts in Code.gs)
       const preview = tr => {
         const g = k => Number(tr.querySelector(`[data-k="${k}"]`).value) || 0;
@@ -2291,7 +2299,8 @@
         tr.querySelector('[data-save]').onclick = async e => {
           const g = k => tr.querySelector(`[data-k="${k}"]`).value;
           busy(e.target, true);
-          const r = await admCall('admin_client_settings_save', {clientId:tr.dataset.id, charges:g('charges'), extraPct:g('extraPct'), gst:g('gst'), tax:g('tax'), pickupCode:g('pickupCode')}, 'Setting save ho gayi.');
+          const r = await admCall('admin_client_settings_save', {clientId:tr.dataset.id, charges:g('charges'), extraPct:g('extraPct'), gst:g('gst'), tax:g('tax'), pickupCode:g('pickupCode')});
+          if(r) toast(r.updated ? `Setting save ho gayi — ${r.updated} purane orders naye rates par update ho gaye.` : 'Setting save ho gayi.');
           busy(e.target, false);
         };
       });
