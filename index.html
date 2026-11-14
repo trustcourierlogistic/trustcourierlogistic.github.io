@@ -1988,12 +1988,26 @@
     async payments(main){
       const d = await admLoad('admin_payments');
       main.innerHTML = `
-        <h2>Payment Settled</h2><p class="adm-sub">Har client ke orders, invoices aur us ka baqi paisa.</p>
-        <div class="adm-card"><div class="adm-table-wrap">
-          ${table(['Client', 'Bank Account', {t:'Orders (pending / total)', num:1}, {t:'Invoices', num:1}, {t:'Unsettled', num:1}, {t:'Pending', num:1}, ''],
+        <h2>Payment Settled</h2><p class="adm-sub">Har client ki generated invoices aur us ka baqi paisa.</p>
+        ${(() => {
+          const inv = d.clients.flatMap(p => p.invoices.map(i => Object.assign({client:p.client, clientId:p.id}, i)));
+          const tot = inv.reduce((t, i) => t + (Number(i.amount) || 0), 0);
+          return `<div class="adm-card"><h3>Client Invoices — Payment baqi (${inv.length})</h3>
+            <p class="adm-sub">Invoice Distribute se generate hui invoices. Total: <b>${rs(Math.round(tot * 100) / 100)}</b></p>
+            <div class="adm-table-wrap">
+            ${table(['Invoice No', 'Client', 'Courier', 'Date', {t:'Amount', num:1}, 'Status', ''],
+              inv.map(i => `<tr><td><b>${esc(i.invoiceNo || i.id)}</b></td><td>${esc(i.client)}<br><small>${esc(i.clientId)}</small></td><td>${esc(i.courier)}</td><td>${esc(i.date)}</td>
+                <td class="num"><b>${rs(i.amount)}</b></td><td><span class="pill-s warn">Unsettled</span></td>
+                <td style="white-space:nowrap"><button class="btn btn-light adm-mini" data-cpr="${esc(i.id)}">PDF</button> <button class="btn btn-gold adm-mini" data-settle="${esc(i.clientId)}" data-inv="${esc(i.id)}">Settle</button></td></tr>`),
+              'Koi unsettled invoice nahi.')}
+            </div></div>`;
+        })()}
+        <div class="adm-card"><h3>Client-wise baqi</h3><div class="adm-table-wrap">
+          ${table(['Client', 'Bank Account', {t:'Invoices (baqi / total)', num:1}, {t:'Invoice Amount', num:1}, {t:'Orders (invoice nahi bani)', num:1}, {t:'Total Pending', num:1}, ''],
             d.clients.map(p => `<tr><td><b>${esc(p.client)}</b><br><small>${esc(p.id)}</small></td><td>${esc(p.bank) || '<span class="pill-s bad">Bank detail nahi</span>'}</td>
-              <td class="num">${p.pendingOrders ? `<span class="pill-s warn">${p.pendingOrders}</span>` : '0'} / ${p.totalOrders}</td>
-              <td class="num">${p.totalInvoices}</td><td class="num">${p.unsettledInvoices ? `<span class="pill-s warn">${p.unsettledInvoices}</span>` : '0'}</td>
+              <td class="num">${p.unsettledInvoices ? `<span class="pill-s warn">${p.unsettledInvoices}</span>` : '0'} / ${p.totalInvoices}</td>
+              <td class="num"><b>${rs(p.invoiceAmount ?? p.amount)}</b></td>
+              <td class="num">${p.pendingOrders ? `${rs(p.ordersAmount ?? 0)}<br><small>${p.pendingOrders} orders</small>` : '—'}</td>
               <td class="num"><b>${rs(p.amount)}</b></td>
               <td>${p.amount > 0 ? `<button class="btn btn-gold adm-mini" data-settle="${esc(p.id)}">Settle</button>` : ''}</td></tr>`),
             'Abhi koi active client nahi.')}
@@ -2004,7 +2018,11 @@
             d.settlements.map(s => `<tr><td>${esc(s.Date)}</td><td>${esc(s.Client)}</td><td>${esc(s.Method)}</td><td>${esc(s.Reference)}</td><td>${esc(s.Invoices)}</td><td class="num">${rs(s.Amount)}</td></tr>`),
             'Abhi koi settlement nahi.')}
         </div></div>`;
-      main.querySelectorAll('[data-settle]').forEach(b => b.onclick = () => showSettle(d.clients.find(p => p.id === b.dataset.settle)));
+      main.querySelectorAll('[data-settle]').forEach(b => b.onclick = () => showSettle(d.clients.find(p => p.id === b.dataset.settle), b.dataset.inv));
+      main.querySelectorAll('[data-cpr]').forEach(b => b.onclick = async () => {
+        const r = await admCall('admin_invoice_detail', {id: b.dataset.cpr});
+        if(r) downloadCpr(r, b);
+      });
     },
 
     /* ---------- Clients ---------- */
@@ -2411,22 +2429,24 @@
     }
   };
 
-  function showSettle(p){
+  function showSettle(p, onlyInv){
+    // onlyInv: settle just that one invoice (its own orders, not the un-invoiced ones)
+    const one = !!onlyInv && p.invoices.some(i => i.id === onlyInv);
     const box = document.getElementById('settleBox');
     box.style.display = '';
     box.innerHTML = `<h3>Settle — ${esc(p.client)}</h3>
       <p class="adm-sub">${p.bank ? 'Bank: ' + esc(p.bank) : 'Is client ki bank detail nahi — Clients me add karein.'}</p>
-      ${p.pendingOrders ? `<div class="adm-note">${p.pendingOrders} delivered/returned orders bhi client ki sheet me "Settled" ho jayenge.</div>` : ''}
-      <div style="margin-bottom:12px">${p.invoices.map(i => `<label style="display:block;margin:4px 0"><input type="checkbox" class="stInv" value="${esc(i.id)}" data-amount="${Number(i.amount)||0}" checked> ${esc(i.invoiceNo || i.id)} · ${esc(i.date)} · ${rs(i.amount)}</label>`).join('')}</div>
+      ${p.pendingOrders && !one ? `<div class="adm-note">${p.pendingOrders} delivered/returned orders bhi client ki sheet me "Settled" ho jayenge.</div>` : ''}
+      <div style="margin-bottom:12px">${p.invoices.map(i => `<label style="display:block;margin:4px 0"><input type="checkbox" class="stInv" value="${esc(i.id)}" data-amount="${Number(i.amount)||0}" ${!one || i.id === onlyInv ? 'checked' : ''}> ${esc(i.invoiceNo || i.id)} · ${esc(i.date)} · ${rs(i.amount)}</label>`).join('')}</div>
       <div class="adm-form">
         <div><label>Date</label><input class="input" type="date" id="stDate" value="${today()}"></div>
-        <div><label>Amount (Rs)</label><input class="input" type="number" min="0" step="any" id="stAmount" value="${p.amount}"></div>
+        <div><label>Amount (Rs)</label><input class="input" type="number" min="0" step="any" id="stAmount" value="${one ? Number(p.invoices.find(i => i.id === onlyInv).amount) || 0 : p.amount}"></div>
         <div><label>Method</label><select class="input" id="stMethod"><option>Bank Transfer</option><option>Cash</option><option>JazzCash</option><option>EasyPaisa</option><option>Cheque</option></select></div>
         <div><label>Reference / TID</label><input class="input" id="stRef"></div>
         <div><button class="btn btn-gold" id="stSave">Mark Settled</button></div>
       </div>`;
     // pending orders always settle; unticking an invoice only takes that invoice out of the amount
-    const ordersPart = p.amount - p.invoices.reduce((t, i) => t + (Number(i.amount) || 0), 0);
+    const ordersPart = one ? 0 : p.amount - p.invoices.reduce((t, i) => t + (Number(i.amount) || 0), 0);
     box.querySelectorAll('.stInv').forEach(c => c.onchange = () => {
       document.getElementById('stAmount').value = Math.round((ordersPart + [...box.querySelectorAll('.stInv:checked')].reduce((t, x) => t + Number(x.dataset.amount), 0)) * 100) / 100;
     });
@@ -2434,7 +2454,7 @@
     document.getElementById('stSave').onclick = async e => {
       busy(e.target, true);
       const invoiceIds = [...box.querySelectorAll('.stInv:checked')].map(x => x.value);
-      const r = await admCall('admin_settle', {clientId:p.id, date:val('stDate'), amount:val('stAmount'), method:val('stMethod'), reference:val('stRef'), invoiceIds}, 'Payment settle ho gayi.');
+      const r = await admCall('admin_settle', {clientId:p.id, date:val('stDate'), amount:val('stAmount'), method:val('stMethod'), reference:val('stRef'), invoiceIds, includeOrders: !one}, 'Payment settle ho gayi.');
       busy(e.target, false); if(r) admGo('payments');
     };
   }
