@@ -1858,7 +1858,7 @@
     }).find(v => v !== null);
     const textAfter = re => { const l = items.find(it => it.p === 1 && re.test(it.s)); if(!l) return '';
       const r = items.filter(it => it.p === 1 && Math.abs(it.y - l.y) <= 4 && it.x > l.x + 20).sort((a, b) => a.x - b.x)[0]; return r ? r.s : ''; };
-    const set = (k, v) => { if(v !== null && v !== undefined && v !== '') document.getElementById(p + k).value = v; };
+    const set = (k, v) => { const el = document.getElementById(p + k); if(el && v !== null && v !== undefined && v !== '') el.value = v; };
     const found = [];
     const net = valueOf(/^net\s*(total|payable|amount)$/i);
     if(net !== null && net !== undefined){ set('amount', net); found.push('Net Total'); }
@@ -2124,8 +2124,12 @@
         if(file.size > 10*1024*1024){ toast(ADMIN_ERRORS.file_too_big); return; }
         busy(e.target, true, 'Uploading…');
         const fileBase64 = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1]); fr.onerror = no; fr.readAsDataURL(file); });
-        const r = await admCall('admin_invoice_upload', {courier:val('invCourier'), ...figValues('inv_'), fileName:file.name, fileBase64},'Invoice upload ho gayi. Dashboard par Generate Invoice dabayein.');
-        busy(e.target, false, 'Upload'); if(r) admGo('invoices');
+        // the tracking numbers read from the PDF are saved with the upload, so Manual Distribution can fill them in any time later
+        const tr = window.__cprTracks || {delivered: [], returned: []};
+        const r = await admCall('admin_invoice_upload', {courier:val('invCourier'), ...figValues('inv_'), fileName:file.name, fileBase64, delivered: tr.delivered, returned: tr.returned},
+          'Invoice upload ho gayi. Ab Manual Distribution me Check / Preview, phir Generate Invoice dabayein.');
+        busy(e.target, false, 'Upload');
+        if(r){ window.__cprTracks = null; admGo('distribution'); }
       };
     },
 
@@ -2240,6 +2244,9 @@
         <h2>Manual Distribution</h2>
         <p class="adm-sub">Courier ki payment ke tracking numbers paste karein (har line me ek, ya comma se). System har number ka client dhoond kar us ka hisaab alag karega.</p>
         <div class="adm-note">Delivered: COD − shipping charges − GST − Govt Tax · Return: sirf −(shipping charges + GST). Rates Client Setting se. Jo number pehle invoice/settle ho chuka, dobara nahi ginta.</div>
+        <div class="adm-card"><h3>Upload ki gayi courier invoices — generate baqi</h3>
+          <p class="adm-sub">Invoice Distribute me upload ki gayi PDF ke tracking numbers yahan se ek click me neeche bhar jate hain. Generate ke baad yeh list se hat jati hai.</p>
+          <div id="dsUploads" class="adm-table-wrap"><p class="adm-empty">Loading…</p></div></div>
         <div class="adm-card"><div class="adm-form dist-form">
           <div><label>Delivered Tracking Numbers</label><textarea class="input" id="dsDel" rows="8" placeholder="Har line me ek tracking number"></textarea></div>
           <div><label>Return Tracking Numbers</label><textarea class="input" id="dsRet" rows="8" placeholder="Har line me ek tracking number"></textarea></div>
@@ -2263,7 +2270,7 @@
           if(!d) return;
           document.getElementById('dsDel').value = d.delivered.join('\n');
           document.getElementById('dsRet').value = d.returned.join('\n');
-          gen.disabled = true;
+          gen.disabled = true; uploadId = '';
           toast(`${d.delivered.length} delivered, ${d.returned.length} return numbers bhar diye — ab Check / Preview dabayein.`);
         });
         box.querySelectorAll('[data-rec]').forEach(b => b.onclick = async () => {
@@ -2281,6 +2288,41 @@
       const data = () => ({delivered: document.getElementById('dsDel').value, returned: document.getElementById('dsRet').value});
       const gen = document.getElementById('dsGen'), out = document.getElementById('dsOut');
       ['dsDel','dsRet'].forEach(id => document.getElementById(id).oninput = () => { gen.disabled = true; });
+      // pending courier uploads: their saved tracking numbers fill the boxes; the one used is marked Processed on Generate
+      let uploadId = '';
+      const fill = (u, del, ret) => {
+        document.getElementById('dsDel').value = del.join('\n'); document.getElementById('dsRet').value = ret.join('\n');
+        uploadId = u.id; gen.disabled = true;
+        toast(`${u.courier} invoice ke ${del.length} delivered aur ${ret.length} return numbers bhar diye — Check ho raha hai…`);
+        document.getElementById('dsPrev').click();
+      };
+      const loadUploads = async auto => {
+        const box = document.getElementById('dsUploads');
+        const r = await authApi('admin_pending_uploads');
+        if(!document.body.contains(box)) return;
+        if(!r.ok){ box.innerHTML = '<p class="adm-empty">List load nahi ho saki.</p>'; return; }
+        box.innerHTML = table(['Courier', 'File', 'Date', {t:'Amount', num:1}, {t:'Numbers', num:1}, ''], r.uploads.map(u => `<tr data-up="${esc(u.id)}"><td>${esc(u.courier)}</td><td>${esc(u.fileName)}</td><td>${esc(u.date)}</td><td class="num">${rs(u.amount)}</td>
+          <td class="num">${u.delivered.length + u.returned.length ? `${u.delivered.length} + ${u.returned.length}` : '—'}</td>
+          <td style="white-space:nowrap">${u.delivered.length + u.returned.length ? '<button class="btn btn-gold adm-mini" data-use>Numbers bharein</button>'
+            : '<label class="btn btn-navy adm-mini" style="cursor:pointer">PDF se numbers<input type="file" accept=".pdf" data-pdf hidden></label>'}</td></tr>`), 'Koi upload baqi nahi — sab ki invoices ban chuki hain.');
+        r.uploads.forEach(u => {
+          const tr = box.querySelector(`tr[data-up="${CSS.escape(u.id)}"]`); if(!tr) return;
+          const use = tr.querySelector('[data-use]'); if(use) use.onclick = () => fill(u, u.delivered, u.returned);
+          // older uploads were saved without the numbers: read them again from the same PDF
+          const pick = tr.querySelector('[data-pdf]');
+          if(pick) pick.onchange = async () => {
+            const f = pick.files[0]; if(!f) return;
+            try{ const p = await readCourierPdf(f, 'dsx_');
+              if(!p.delivered.length && !p.returned.length){ toast('Is PDF me tracking numbers nahi mile — khud paste karein.'); return; }
+              fill(u, p.delivered, p.returned); }
+            catch(err){ toast('PDF parh nahi saka.'); }
+          };
+        });
+        // one upload waiting with its numbers and empty boxes → fill it straight away
+        const ready = r.uploads.filter(u => u.delivered.length + u.returned.length);
+        if(auto && ready.length === 1 && !document.getElementById('dsDel').value.trim() && !document.getElementById('dsRet').value.trim()) fill(ready[0], ready[0].delivered, ready[0].returned);
+      };
+      loadUploads(true);
       const errs = {missing: 'Kam az kam ek tracking number daalein.', tracking_both: 'Yeh number delivered aur return dono me hai: ', too_many: 'Ek dafa me 2000 numbers tak.', nothing_to_generate: 'Koi naya parcel nahi — sab pehle invoice ho chuke ya mile nahi.'};
       const note = (list, text) => list.length ? `<div class="adm-note">${text} (${list.length}): <code>${esc(list.slice(0, 40).join(', '))}${list.length > 40 ? ' …' : ''}</code></div>` : '';
       document.getElementById('dsPrev').onclick = async e => {
@@ -2301,7 +2343,7 @@
       gen.onclick = async () => {
         if(gen.dataset.sure !== '1'){ gen.dataset.sure = '1'; gen.textContent = 'Pakka? Invoices banayein'; return; }
         busy(gen, true, 'Ban rahi hain…');
-        const r = await authApi('admin_distribution_generate', data());
+        const r = await authApi('admin_distribution_generate', Object.assign(data(), {uploadId}));
         gen.dataset.sure = ''; busy(gen, true, '⚡ Generate Invoice');
         if(!r.ok){ toast(errs[r.error] || r.message || 'Invoice nahi ban saki.'); return; }
         toast(`${r.invoices.length} client invoices ban gayi — client portal (CPR) me nazar aayengi.`);
@@ -2310,6 +2352,7 @@
           <p class="adm-sub" style="margin-top:10px">Payment dene ke baad Payment Settled me client "Settle" karein.</p></div>` + note(r.unknown, '⚠️ Nahi mile');
         out.querySelectorAll('[data-cpr]').forEach(b => b.onclick = async () => { const d = await admCall('admin_invoice_detail', {id: b.dataset.cpr}); if(d) downloadCpr(d, b); });
         document.getElementById('dsDel').value = ''; document.getElementById('dsRet').value = '';
+        uploadId = ''; loadUploads();
       };
     },
 
