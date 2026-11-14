@@ -3158,7 +3158,7 @@
       const period = days ? `Pichle ${days} din` : 'Shuru se ab tak';
       stats.innerHTML = stat('Total Orders', s.total, '', period) + stat('Delivered', s.delivered, 'green', period) + stat('Returned', s.returned, 'red', period)
         + stat('In Transit', s.inTransit, 'gold', 'Raste me orders') + stat('Un-Dispatched', o.undispatched, 'red', 'Book hain, courier ne nahi uthaye — click karein', 'Un-Dispatched Orders')
-        + stat('Payment Pending', rs(s.pending), 'red', 'TCL se milna baqi') + stat('Payment Settled', rs(s.settled), 'green', 'Aap ko mil chuka');
+        + stat('Payment Pending', rs(s.pending), 'red', s.pendingOrders != null ? `TCL se milna baqi · ${s.pendingOrders} orders${s.pendingInvoiced ? ` · Invoice ban gayi: ${rs(s.pendingInvoiced)}` : ''}` : 'TCL se milna baqi') + stat('Payment Settled', rs(s.settled), 'green', 'Aap ko mil chuka');
       // whole-account delivery ratio: delivered / returned / still in process
       const inProcess = o.total - o.delivered - o.returned;
       const pct = n => o.total ? Math.round(n / o.total * 1000) / 10 : 0;
