@@ -2371,9 +2371,9 @@
           ${stat('GST Tax', rs(c.gst), 'gold')}
           ${stat('Govt Tax', rs(c.govtTax), 'gold')}
         </div>
-        <h3 class="fn-head">Client</h3><p class="adm-sub">TCL ne clients se kya kaata (${k.delivered} delivered, ${k.returned} return parcels) aur clients ko kitna bheja.</p>
+        <h3 class="fn-head">Client</h3><p class="adm-sub">Generate hui client invoices me TCL ne kya kaata (${k.invoices ?? 0} invoices · ${k.delivered} delivered, ${k.returned} return parcels) aur clients ko kitna bheja.</p>
         <div class="adm-stats fn-4">
-          ${stat('Payment Send', rs(k.sent), 'green', 'Clients ko settle ki gayi')}
+          ${stat('Payment Send', rs(k.sent), 'green', `Clients ko settle ki gayi · Invoices ka total ${rs(k.invoiced ?? 0)}`)}
           ${stat('Shipping Charges', rs(k.charges), 'gold')}
           ${stat('GST Tax', rs(k.gst), 'gold')}
           ${stat('Govt Tax', rs(k.tax), 'gold')}
